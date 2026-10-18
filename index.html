@@ -387,6 +387,8 @@ function renderShellHeaderState() {
 // =====================================================================
 //  داشبورد
 // =====================================================================
+const mustChangeBanner = () => S.me?.must_change_password ? `<div class="card" style="background:#fef3c7;color:#92400e;margin-bottom:20px">رمز عبور شما هنوز پیش‌فرض است. از بخش <a href="#" onclick="go('profile');return false">پروفایل</a> آن را تغییر دهید.</div>` : '';
+
 function billCard(r, rep) {
   const line = (label, amt, ok) => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)">
@@ -585,7 +587,7 @@ function approveModal(p) {
 
   $('#ap-go', m).addEventListener('click', async () => {
     try {
-      const r = await T('app_admin_review_payment', { p_id: p.id, p_approve: true, p_amount: toNum($('#ap-a', m).value), p_admin_note: $('#ap-n', m).value });
+      await T('app_admin_review_payment', { p_id: p.id, p_approve: true, p_amount: toNum($('#ap-a', m).value), p_admin_note: $('#ap-n', m).value });
       m.remove(); toast('تایید شد'); go('pay');
     } catch (e) { toast(e.message, true); }
   });
@@ -771,11 +773,23 @@ async function viewProfile(el) {
   <form id="pf" class="card grid g2" style="max-width:600px">
     <label class="f">نام<input id="p-n" value="${esc(S.me.full_name||'')}"></label>
     <label class="f">موبایل<input id="p-ph" value="${esc(S.me.phone||'')}"></label>
-    <button class="btn sf" style="grid-column:1/-1">ذخیره</button>
+    <h2 style="grid-column:1/-1;margin:12px 0 0">تغییر رمز عبور</h2>
+    <label class="f">رمز جدید<input id="p-pass" type="password" dir="ltr"></label>
+    <div style="grid-column:1/-1"><button class="btn sf">ذخیره تغییرات</button></div>
   </form>`;
   $('#pf').addEventListener('submit', async e => {
     e.preventDefault();
-    try { await T('app_update_profile', { p_full_name: $('#p-n').value, p_phone: $('#p-ph').value, p_email: S.me.email, p_username: S.me.username }); toast('ذخیره شد'); renderShell(); } catch(err) { toast(err.message, true); }
+    try { 
+      await T('app_update_profile', { 
+        p_full_name: $('#p-n').value, 
+        p_phone: $('#p-ph').value, 
+        p_email: S.me.email, 
+        p_username: S.me.username,
+        p_new_password: $('#p-pass').value || null
+      }); 
+      toast('ذخیره شد'); 
+      renderShell(); 
+    } catch(err) { toast(err.message, true); }
   });
 }
 
