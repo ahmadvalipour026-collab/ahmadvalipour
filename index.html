@@ -16,7 +16,8 @@
   --r: 16px; --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Vazirmatn,sans-serif;font-size:14px;line-height:1.7}
+/* جلوگیری از کشیده شدن صفحه به بیرون */
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Vazirmatn,sans-serif;font-size:14px;line-height:1.7; overflow-x: hidden; width: 100%;}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--accent);text-decoration:none}
 .hidden{display:none!important}
@@ -31,21 +32,16 @@ header.top{background:rgba(255, 255, 255, 0.85);backdrop-filter:blur(12px);posit
 .btn-ghost{background:rgba(0,0,0,0.04);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .2s}
 .btn-ghost:hover{background:rgba(0,0,0,0.08)}
 
+/* منوی کشویی (Hamburger) */
 .menu-dropdown{position:relative;display:inline-block}
-.menu-btn{background:var(--primary);color:#fff;border:0;border-radius:10px;padding:8px 16px;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(15,23,42,0.2)}
+.menu-btn{background:var(--primary);color:#fff;border:0;border-radius:10px;padding:8px 16px;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(15,23,42,0.2); font-size:13px;}
 .menu-btn:hover{background:var(--primary-light)}
-.menu-content{display:none;position:absolute;left:0;top:calc(100% + 8px);background:var(--card);min-width:200px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.1);border:1px solid var(--line);z-index:100;overflow:hidden}
+.menu-content{display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--card);min-width:220px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.1);border:1px solid var(--line);z-index:100;overflow:hidden}
 .menu-content.show{display:block}
 .menu-content button{display:block;width:100%;text-align:right;padding:12px 16px;background:none;border:0;cursor:pointer;color:var(--muted);font-weight:500;border-bottom:1px solid var(--line);font-size:13.5px}
 .menu-content button:last-child{border-bottom:0}
 .menu-content button:hover{background:var(--bg);color:var(--accent)}
 .menu-content button.on{background:rgba(99,102,241,0.08);color:var(--accent);font-weight:700;border-right:3px solid var(--accent)}
-
-nav.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
-nav.tabs::-webkit-scrollbar{display:none}
-nav.tabs button{background:transparent;border:1px solid transparent;color:var(--muted);padding:8px 16px;border-radius:10px;cursor:pointer;font-weight:500;white-space:nowrap;transition:all .2s}
-nav.tabs button:hover{color:var(--accent);background:rgba(99, 102, 241, 0.05)}
-nav.tabs button.on{background:var(--accent);color:#fff;font-weight:700;box-shadow:0 4px 12px rgba(99, 102, 241, 0.3)}
 
 main{max-width:1200px;margin:auto;padding:28px 24px 80px}
 h1{font-size:26px;font-weight:900;margin:0 0 4px;letter-spacing:-.5px}
@@ -53,8 +49,8 @@ h2{font-size:18px;font-weight:700;margin:0 0 12px}
 .sub{color:var(--muted);margin:0 0 24px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px;box-shadow:var(--shadow);transition:transform .2s}
 .grid{display:grid;gap:20px}
-.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
-.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%, 320px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%, 240px),1fr))}
 
 label.f{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weight:500;color:var(--muted)}
 input,select,textarea{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 14px;min-height:46px;width:100%;transition:all .2s}
@@ -291,33 +287,30 @@ async function logout(silent = false) {
 }
 
 // =====================================================================
-//  قالب اصلی
+//  قالب اصلی و منو کشویی
 // =====================================================================
-function tabs() {
+function getMenuItems() {
+  const a = S.me?.is_admin;
   return [
-    ['dash', 'داشبورد'],
+    ['dash', 'داشبورد'], 
+    a && ['units', 'مدیریت واحدها'], 
     ['announcements', 'اعلانات'],
-    ['requests', S.me?.is_admin ? 'درخواست‌ها' : 'ارتباط با مدیر'],
-    ['tx', 'تراکنش‌ها'],
-    ['report', 'گزارش ماهانه'],
-    ['profile', 'پروفایل']
-  ];
-}
-function adminTabs() {
-  return [
-    ['units', 'مدیریت واحدها'],
-    ['pay', 'تایید پرداخت‌ها'],
-    ['rates', 'نرخ‌ها و تنظیمات'],
-    ['activity', 'گزارش فعالیت‌ها']
-  ];
+    ['requests', a ? 'درخواست‌ها' : 'ارتباط با مدیر'],
+    ['tx', 'تراکنش‌ها'], 
+    a && ['pay', 'تایید پرداخت‌ها'], 
+    ['report', 'گزارش ماهانه'], 
+    a && ['rates', 'نرخ‌ها و تنظیمات'], 
+    a && ['activity', 'گزارش فعالیت‌ها'],
+    ['profile', 'پروفایل'] 
+  ].filter(Boolean);
 }
 
 async function renderShell() {
   try { S.me = await T('app_me'); localStorage.setItem('bm_me', JSON.stringify(S.me)); }
   catch(e) { logout(true); return; }
 
-  const is_admin = S.me.is_admin;
-  const currentAdminTab = adminTabs().find(t => t[0] === S.view);
+  const menuItems = getMenuItems();
+  const currentTab = menuItems.find(t => t[0] === S.view);
 
   $('#app').innerHTML = `
     <header class="top">
@@ -325,22 +318,19 @@ async function renderShell() {
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div class="brand"><span></span>${esc(S.building)}</div>
           
-          ${is_admin ? `
-            <div class="menu-dropdown">
-              <button class="menu-btn" id="admin-menu-btn">
-                ⚙️ منوی مدیریت ${currentAdminTab ? `(${currentAdminTab[1]})` : ''} ▼
-              </button>
-              <div class="menu-content" id="admin-menu">
-                ${adminTabs().map(([k,l]) => `<button data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}
-              </div>
+          <!-- منوی کشویی یکپارچه برای همه -->
+          <div class="menu-dropdown">
+            <button class="menu-btn" id="main-menu-btn">
+              ☰ منو ${currentTab ? `(${currentTab[1]})` : ''} ▼
+            </button>
+            <div class="menu-content" id="main-menu">
+              ${menuItems.map(([k,l]) => `<button data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}
             </div>
-          ` : `
-            <nav class="tabs" id="resident-tabs">${tabs().map(([k, l]) => `<button data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}</nav>
-          `}
+          </div>
         </div>
 
         <div class="who">
-          <span>واحد ${fa(S.me.unit_no)} · <b>${esc(S.me.full_name || S.me.username)}</b>${is_admin ? ' (مدیر)' : ''}</span>
+          <span>واحد ${fa(S.me.unit_no)} · <b>${esc(S.me.full_name || S.me.username)}</b>${S.me.is_admin ? ' (مدیر)' : ''}</span>
           <button class="btn-ghost" id="lo">خروج</button>
         </div>
       </div>
@@ -348,21 +338,14 @@ async function renderShell() {
     <main id="view"></main>`;
 
   $('#lo').addEventListener('click', () => logout());
-
-  if (is_admin) {
-    $('#admin-menu-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      $('#admin-menu').classList.toggle('show');
-    });
-    document.addEventListener('click', () => $('#admin-menu').classList.remove('show'));
-    $$('#admin-menu button').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
-    
-    if (!currentAdminTab) {
-      $('.top-in').insertAdjacentHTML('beforeend', `<nav class="tabs" id="resident-tabs" style="width:100%;margin-top:8px;border-top:1px solid var(--line);padding-top:12px">${tabs().map(([k, l]) => `<button data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}</nav>`);
-    }
-  }
   
-  $$('#resident-tabs button').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
+  $('#main-menu-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    $('#main-menu').classList.toggle('show');
+  });
+  document.addEventListener('click', () => $('#main-menu').classList.remove('show'));
+  $$('#main-menu button').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
+
   go(S.view);
 }
 
@@ -380,15 +363,14 @@ function go(v) {
 }
 
 function renderShellHeaderState() {
-  const is_admin = S.me.is_admin;
-  const currentAdminTab = adminTabs().find(t => t[0] === S.view);
-  const menuBtn = $('#admin-menu-btn');
+  const menuItems = getMenuItems();
+  const currentTab = menuItems.find(t => t[0] === S.view);
+  const menuBtn = $('#main-menu-btn');
   
   if (menuBtn) {
-    menuBtn.innerHTML = `⚙️ منوی مدیریت ${currentAdminTab ? `(${currentAdminTab[1]})` : ''} ▼`;
-    $$('#admin-menu button').forEach(b => b.classList.toggle('on', b.dataset.v === S.view));
+    menuBtn.innerHTML = `☰ منو ${currentTab ? `(${currentTab[1]})` : ''} ▼`;
+    $$('#main-menu button').forEach(b => b.classList.toggle('on', b.dataset.v === S.view));
   }
-  $$('#resident-tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === S.view));
 }
 
 // =====================================================================
