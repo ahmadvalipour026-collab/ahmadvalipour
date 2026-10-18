@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نگین ۲ | مدیریت ساختمان</title>
+<title>مجتمع نگین ۲ | مدیریت ساختمان</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366f1'/><path d='M20 80 L20 30 L50 10 L80 30 L80 80 Z' fill='white'/><rect x='40' y='60' width='20' height='20' fill='%236366f1'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -22,21 +22,32 @@ a{color:var(--accent);text-decoration:none}
 .hidden{display:none!important}
 
 header.top{background:rgba(255, 255, 255, 0.85);backdrop-filter:blur(12px);position:sticky;top:0;z-index:20;border-bottom:1px solid var(--line);box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02)}
-.top-in{max-width:1200px;margin:auto;display:flex;flex-direction:column;padding:12px 24px;gap:12px}
-.brand-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.top-in{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:12px 24px;flex-wrap:wrap;gap:16px}
 .brand{font-weight:900;font-size:15px;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg, var(--accent), #818cf8);color:#fff;padding:6px 16px;border-radius:12px;box-shadow:0 4px 12px rgba(99, 102, 241, 0.2)}
 .brand span{width:8px;height:16px;background:#fff;border-radius:4px;display:inline-block}
-
-nav.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
-nav.tabs::-webkit-scrollbar{display:none}
-nav.tabs button{background:transparent;border:1px solid transparent;color:var(--muted);padding:8px 16px;border-radius:10px;cursor:pointer;font-weight:500;white-space:nowrap;transition:all .2s}
-nav.tabs button:hover{color:var(--accent);background:rgba(99, 102, 241, 0.05)}
-nav.tabs button.on{background:var(--accent);color:#fff;font-weight:700;box-shadow:0 4px 12px rgba(99, 102, 241, 0.3)}
 
 .who{display:flex;align-items:center;gap:12px;font-size:13.5px;color:var(--muted)}
 .who b{color:var(--ink)}
 .btn-ghost{background:rgba(0,0,0,0.04);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .2s}
 .btn-ghost:hover{background:rgba(0,0,0,0.08)}
+
+/* منوی کشویی برای مدیر */
+.menu-dropdown{position:relative;display:inline-block}
+.menu-btn{background:var(--primary);color:#fff;border:0;border-radius:10px;padding:8px 16px;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(15,23,42,0.2)}
+.menu-btn:hover{background:var(--primary-light)}
+.menu-content{display:none;position:absolute;left:0;top:calc(100% + 8px);background:var(--card);min-width:180px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.1);border:1px solid var(--line);z-index:100;overflow:hidden}
+.menu-content.show{display:block}
+.menu-content button{display:block;width:100%;text-align:right;padding:12px 16px;background:none;border:0;cursor:pointer;color:var(--muted);font-weight:500;border-bottom:1px solid var(--line);font-size:13.5px}
+.menu-content button:last-child{border-bottom:0}
+.menu-content button:hover{background:var(--bg);color:var(--accent)}
+.menu-content button.on{background:rgba(99,102,241,0.08);color:var(--accent);font-weight:700;border-right:3px solid var(--accent)}
+
+/* تب‌های افقی برای ساکنین */
+nav.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{background:transparent;border:1px solid transparent;color:var(--muted);padding:8px 16px;border-radius:10px;cursor:pointer;font-weight:500;white-space:nowrap;transition:all .2s}
+nav.tabs button:hover{color:var(--accent);background:rgba(99, 102, 241, 0.05)}
+nav.tabs button.on{background:var(--accent);color:#fff;font-weight:700;box-shadow:0 4px 12px rgba(99, 102, 241, 0.3)}
 
 main{max-width:1200px;margin:auto;padding:28px 24px 80px}
 h1{font-size:26px;font-weight:900;margin:0 0 4px;letter-spacing:-.5px}
@@ -79,7 +90,7 @@ tr:hover td{background:#f8fafc}
 
 .login{min-height:100vh;display:grid;grid-template-columns:1.2fr 1fr;background:#fff}
 .login .art{background:linear-gradient(135deg, var(--primary), #1e293b);display:flex;align-items:center;justify-content:center;padding:40px;color:#fff;position:relative;overflow:hidden}
-.login .art h1{font-size:32px;text-align:center;line-height:1.4}
+.login .art h1{font-size:36px;text-align:center;line-height:1.4;font-weight:900}
 .login .form{display:flex;align-items:center;justify-content:center;padding:40px}
 .login .form .card{width:100%;max-width:400px;border:0;box-shadow:none}
 @media(max-width:820px){.login{grid-template-columns:1fr}.login .art{min-height:200px;padding:20px}}
@@ -127,7 +138,7 @@ function toast(msg, err = false) {
 const S = {
   token: localStorage.getItem('bm_token'),
   me: JSON.parse(localStorage.getItem('bm_me') || 'null'),
-  view: 'dash', y: TODAY.y, m: TODAY.m, building: 'نگین ۲',
+  view: 'dash', y: TODAY.y, m: TODAY.m, building: 'مجتمع نگین ۲',
 };
 
 async function api(fn, args = {}) {
@@ -181,7 +192,6 @@ function smsBtn(phone, text, label = 'پیامک') {
   return `<a class="btn lt sm" href="${smsLink(phone, text)}" style="padding:4px 8px;font-size:12px;">✉ ${label}</a>`;
 }
 
-// فشرده‌سازی عکس قبل از ارسال
 async function compressImage(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -191,33 +201,27 @@ async function compressImage(file) {
       img.src = event.target.result;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
-        const MAX_HEIGHT = 800;
-        let width = img.width;
-        let height = img.height;
-        if (width > height) {
-          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-        } else {
-          if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-        }
-        canvas.width = width;
-        canvas.height = height;
+        const MAX_WIDTH = 800; const MAX_HEIGHT = 800;
+        let width = img.width; let height = img.height;
+        if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
+        else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+        canvas.width = width; canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.6)); // کیفیت 60%
+        resolve(canvas.toDataURL('image/jpeg', 0.6));
       };
     };
   });
 }
 
 // =====================================================================
-//  ورود و لاگین
+//  ورود
 // =====================================================================
 async function renderLogin() {
   $('#app').innerHTML = `
     <div class="login">
       <div class="art">
-        <h1>سامانه مدرن مدیریت ساختمان<br><span style="color:var(--accent)">${S.building}</span></h1>
+        <h1 id="login-title">${esc(S.building)}</h1>
       </div>
       <div class="form">
         <div class="card">
@@ -236,8 +240,10 @@ async function renderLogin() {
   
   try {
     const info = await api('app_public_info');
-    S.building = info.building_name || 'نگین ۲';
-    $('.login .art h1').innerHTML = `سامانه مدرن مدیریت ساختمان<br><span style="color:var(--accent)">${S.building}</span>`;
+    if (info.building_name) {
+      S.building = info.building_name;
+      $('#login-title').textContent = S.building;
+    }
   } catch(e){}
 
   $('#lg').addEventListener('submit', async e => {
@@ -280,51 +286,84 @@ async function logout(silent = false) {
 }
 
 // =====================================================================
-//  قالب اصلی
+//  قالب اصلی (هدر و منوها)
 // =====================================================================
 function tabs() {
-  const a = S.me?.is_admin;
   return [
     ['dash', 'داشبورد'],
-    a && ['units', 'واحدها'],
     ['announcements', 'اعلانات'],
-    ['requests', a ? 'درخواست‌ها' : 'ارتباط با مدیر'],
+    ['requests', S.me?.is_admin ? 'درخواست‌ها' : 'ارتباط با مدیر'],
     ['tx', 'تراکنش‌ها'],
-    ['pay', a ? 'تایید پرداخت‌ها' : 'پرداخت بدهی'],
     ['report', 'گزارش ماهانه'],
-    a && ['rates', 'نرخ‌ها و تنظیمات'],
-    a && ['activity', 'گزارش فعالیت‌ها'],
     ['profile', 'پروفایل']
-  ].filter(Boolean);
+  ];
+}
+function adminTabs() {
+  return [
+    ['units', 'مدیریت واحدها'],
+    ['pay', 'تایید پرداخت‌ها'],
+    ['rates', 'نرخ‌ها و تنظیمات'],
+    ['activity', 'گزارش فعالیت‌ها']
+  ];
 }
 
 async function renderShell() {
   try { S.me = await T('app_me'); localStorage.setItem('bm_me', JSON.stringify(S.me)); }
   catch(e) { logout(true); return; }
 
+  const is_admin = S.me.is_admin;
+  const currentAdminTab = adminTabs().find(t => t[0] === S.view);
+
   $('#app').innerHTML = `
     <header class="top">
       <div class="top-in">
-        <div class="brand-row">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div class="brand"><span></span>${esc(S.building)}</div>
-          <div class="who">
-            <span>واحد ${fa(S.me.unit_no)} · <b>${esc(S.me.full_name || S.me.username)}</b>${S.me.is_admin ? ' (مدیر)' : ''}</span>
-            <button class="btn-ghost" id="lo">خروج</button>
-          </div>
+          
+          ${is_admin ? `
+            <div class="menu-dropdown">
+              <button class="menu-btn" id="admin-menu-btn">
+                ⚙️ منوی مدیریت ${currentAdminTab ? `(${currentAdminTab[1]})` : ''} ▼
+              </button>
+              <div class="menu-content" id="admin-menu">
+                ${adminTabs().map(([k,l]) => `<button data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}
+              </div>
+            </div>
+          ` : `
+            <nav class="tabs" id="resident-tabs">${tabs().map(([k, l]) => `<button data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}</nav>
+          `}
         </div>
-        <nav class="tabs">${tabs().map(([k, l]) => `<button data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}</nav>
+
+        <div class="who">
+          <span>واحد ${fa(S.me.unit_no)} · <b>${esc(S.me.full_name || S.me.username)}</b>${is_admin ? ' (مدیر)' : ''}</span>
+          <button class="btn-ghost" id="lo">خروج</button>
+        </div>
       </div>
     </header>
     <main id="view"></main>`;
 
   $('#lo').addEventListener('click', () => logout());
-  $$('nav.tabs button').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
+
+  if (is_admin) {
+    $('#admin-menu-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      $('#admin-menu').classList.toggle('show');
+    });
+    document.addEventListener('click', () => $('#admin-menu').classList.remove('show'));
+    $$('#admin-menu button').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
+    
+    // منوی افقی ساکنین برای مدیر هم در پایین هدر نمایش داده می‌شود تا دسترسی آسان باشد
+    if (!currentAdminTab) {
+      $('.top-in').insertAdjacentHTML('beforeend', `<nav class="tabs" id="resident-tabs" style="width:100%;margin-top:8px;border-top:1px solid var(--line);padding-top:12px">${tabs().map(([k, l]) => `<button data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}</nav>`);
+    }
+  }
+  
+  $$('#resident-tabs button').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
   go(S.view);
 }
 
 function go(v) {
   S.view = v;
-  $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   const el = $('#view');
   el.innerHTML = `<p class="sub">در حال بارگذاری...</p>`;
   
@@ -332,10 +371,21 @@ function go(v) {
     dash: viewDash, announcements: viewAnnouncements, requests: viewRequests, tx: viewTx, 
     pay: viewPay, report: viewReport, units: viewUnits, rates: viewRates, activity: viewActivity, profile: viewProfile 
   };
+  renderShellHeaderState();
   (views[v] || viewDash)(el).catch(e => el.innerHTML = `<div class="card" style="color:var(--danger)">خطا: ${esc(e.message)}</div>`);
 }
 
-const mustChangeBanner = () => S.me?.must_change_password ? `<div class="card" style="background:#fef3c7;color:#92400e;margin-bottom:20px">رمز عبور شما هنوز پیش‌فرض است. از بخش <a href="#" onclick="go('profile');return false">پروفایل</a> آن را تغییر دهید.</div>` : '';
+function renderShellHeaderState() {
+  const is_admin = S.me.is_admin;
+  const currentAdminTab = adminTabs().find(t => t[0] === S.view);
+  const menuBtn = $('#admin-menu-btn');
+  
+  if (menuBtn) {
+    menuBtn.innerHTML = `⚙️ منوی مدیریت ${currentAdminTab ? `(${currentAdminTab[1]})` : ''} ▼`;
+    $$('#admin-menu button').forEach(b => b.classList.toggle('on', b.dataset.v === S.view));
+  }
+  $$('#resident-tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === S.view));
+}
 
 // =====================================================================
 //  داشبورد
@@ -384,7 +434,7 @@ async function viewDash(el) {
         ${r ? billCard(r, rep) : '<div class="card">اطلاعاتی نیست</div>'}
         <div class="card">
           <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h2>پرداخت‌های من</h2>
-          <button class="btn sf" id="paynow">ثبت پرداخت</button></div>
+          <button class="btn sf" id="paynow">💳 پرداخت بدهی</button></div>
           ${reqTable(reqs.slice(0, 8), false)}
         </div>
       </div>`;
@@ -393,335 +443,6 @@ async function viewDash(el) {
     return;
   }
 
-  // داشبورد مدیر
   const fund = await T('app_fund_summary', { p_year: S.y, p_month: S.m });
   const rows = rep.rows;
-  const floors = [];
-  for (let f = rows.length - 1; f >= 0; f -= 2) floors.push(rows.slice(Math.max(0, f - 1), f + 1));
-  const cls = r => r.remaining <= 0 ? 'ok' : r.remaining > r.current_due ? 'no' : 'pd'; // رنگ‌بندی ساده‌شده
-  const totalDebt = rows.reduce((s, r) => s + Math.max(0, r.remaining), 0);
-
-  el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:24px">
-      <div><h1>داشبورد مدیریت</h1><p class="sub" style="margin:0">خلاصه وضعیت صندوق در ${rep.month_name} ${fa(rep.year)}</p></div>
-      ${periodPicker()}
-    </div>
-    ${missing}
-    <div class="grid g3" style="margin-bottom:24px">
-      <div class="card" style="background:var(--accent);color:#fff"><small style="opacity:0.8">موجودی فعلی صندوق</small><div style="font-size:32px;font-weight:900">${fmt(fund.balance)}</div></div>
-      <div class="card"><small style="color:var(--muted)">درآمد این ماه</small><div style="font-size:24px;font-weight:900;color:var(--success)">${money(fund.month_income)}</div></div>
-      <div class="card"><small style="color:var(--muted)">هزینه این ماه</small><div style="font-size:24px;font-weight:900;color:var(--danger)">${money(fund.month_expense)}</div></div>
-      <div class="card"><small style="color:var(--muted)">مطالبات معوق</small><div style="font-size:24px;font-weight:900;color:var(--warning)">${money(totalDebt)}</div></div>
-    </div>
-    
-    <div class="grid g2">
-      <div class="card">
-        <h2>نقشه ساختمان</h2>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px">
-          ${rows.map(r => `<button class="btn" style="background:var(--${cls(r) === 'ok' ? 'success' : cls(r) === 'no' ? 'danger' : 'warning'});padding:16px;flex-direction:column;align-items:flex-start;height:auto" data-u="${r.unit_no}">
-            <span style="font-size:16px;font-weight:900">واحد ${fa(r.unit_no)}</span>
-            <span style="font-size:12px;opacity:0.9">${esc(r.full_name || '')}</span>
-            <span style="font-size:14px;font-weight:700;margin-top:8px">${r.remaining <= 0 ? 'تسویه' : fmt(r.remaining)}</span>
-          </button>`).join('')}
-        </div>
-      </div>
-      <div class="grid" style="align-content:start">
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;margin-bottom:10px"><h2>پرداخت‌های منتظر تایید</h2><button class="btn lt sm" onclick="go('pay')">مشاهده</button></div>
-          <div style="font-size:36px;font-weight:900;color:var(--warning)">${fa(fund.pending_payments)}</div>
-        </div>
-        <div class="card">
-          <h2>هزینه‌های ${rep.month_name}</h2>
-          ${fund.month_expenses.length ? `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><span>...</span></div>` : '<p class="sub">هزینه‌ای ثبت نشده</p>'}
-          <div style="margin-top:12px;font-size:13px;color:var(--muted)">قبض آب: ${fmt(rep.water_total)} · قبض گاز: ${fmt(rep.gas_total)}</div>
-        </div>
-      </div>
-    </div>`;
-    
-  bindPeriod(() => go('dash'));
-  $$('[data-u]').forEach(b => b.addEventListener('click', () => {
-    const r = rows.find(x => x.unit_no == b.dataset.u);
-    const m = modal(`${billCard(r, rep)}<div style="margin-top:20px;display:flex;gap:10px">${smsBtn(r.phone, reminderText(r, rep), 'ارسال یادآوری')}<button class="btn lt sm" id="m-tx">تراکنش‌های این واحد</button></div>`);
-    $('#m-tx', m).addEventListener('click', () => { m.remove(); S.txFilter = { unit: r.unit_no }; go('tx'); });
-  }));
-}
-
-function reminderText(r, rep) {
-  return `${S.building} - واحد ${r.unit_no}\nصورتحساب ${rep.month_name} ${rep.year}:\n` +
-    `شارژ ${fmt(r.charge)} | آب ${fmt(r.water)} | گاز ${fmt(r.gas)} | بازسازی ${fmt(r.repair)}` +
-    (r.parking ? ` | پارکینگ ${fmt(r.parking)}` : '') +
-    `\nبدهی قبلی: ${fmt(r.prev_debt)}\nمانده قابل پرداخت: ${fmt(r.remaining)} تومان`;
-}
-
-// =====================================================================
-//  ثبت پرداخت (با عکس) و تایید پرداخت
-// =====================================================================
-function reqTable(list, admin) {
-  if (!list.length) return `<p class="sub">موردی نیست</p>`;
-  const st = s => s === 'approved' ? '<span class="chip ok">تایید شد</span>' : s === 'rejected' ? '<span class="chip no">رد شد</span>' : '<span class="chip pd">منتظر تایید</span>';
-  return `<div class="tbl-wrap" style="border:0"><table><thead><tr>${admin ? '<th>واحد</th>' : ''}<th>ماه</th><th>مبلغ</th><th>وضعیت</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>
-    ${list.map(p => `<tr>${admin ? `<td><b>واحد ${fa(p.unit_no)}</b><br><span style="font-size:12px;color:var(--muted)">${esc(p.full_name || '')}</span></td>` : ''}<td>${MONTHS[p.month - 1]} ${fa(p.year)}</td><td>${money(p.amount)}</td><td>${st(p.status)}</td>
-      <td>${admin && p.status === 'pending' ? `<button class="btn sm" data-ap="${p.id}">بررسی</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
-}
-
-function payModal(r) {
-  const m = modal(`<h2>ثبت پرداخت و بدهی</h2>
-    <p class="sub">اطمینان حاصل کنید تصویر فیش یا رسید واضح باشد.</p>
-    <form id="pf" class="grid g2">
-      <label class="f">بابت<select id="pf-c">${Object.entries(CATS).sort(([a], [b]) => (a === 'bill' ? -1 : b === 'bill' ? 1 : 0)).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
-      <label class="f">مبلغ (تومان)<input id="pf-a" inputmode="numeric" required value="${r && r.remaining > 0 ? r.remaining : ''}"></label>
-      <label class="f">ماه<select id="pf-m">${monthOptions(S.m)}</select></label>
-      <label class="f">سال<select id="pf-y">${yearOptions(S.y)}</select></label>
-      <label class="f">تاریخ واریز<input id="pf-d" dir="ltr" value="${TODAY.y}/${String(TODAY.m).padStart(2, '0')}/${String(TODAY.d).padStart(2, '0')}"></label>
-      <label class="f">کد پیگیری<input id="pf-r" dir="ltr"></label>
-      <label class="f" style="grid-column:1/-1">بارگذاری تصویر فیش (اختیاری)<input id="pf-img" type="file" accept="image/*"></label>
-      <label class="f" style="grid-column:1/-1">توضیحات<input id="pf-n"></label>
-      <button class="btn sf" style="grid-column:1/-1">ارسال برای تایید</button>
-    </form>`);
-  $('#pf-a', m).addEventListener('input', e => { const n = toNum(e.target.value); e.target.value = n ? fmt(n) : ''; });
-  if ($('#pf-a', m).value) $('#pf-a', m).value = fmt($('#pf-a', m).value);
-  
-  $('#pf', m).addEventListener('submit', async e => {
-    e.preventDefault();
-    const fileInput = $('#pf-img', m);
-    let base64Image = null;
-    if (fileInput.files.length > 0) {
-      base64Image = await compressImage(fileInput.files[0]);
-    }
-    try {
-      await T('app_submit_payment', { 
-        p_year: +$('#pf-y', m).value, p_month: +$('#pf-m', m).value, p_category: $('#pf-c', m).value, 
-        p_amount: toNum($('#pf-a', m).value), p_ref_code: $('#pf-r', m).value, p_note: $('#pf-n', m).value, 
-        p_pay_date: $('#pf-d', m).value, p_receipt_image: base64Image 
-      });
-      m.remove(); toast('پرداخت ثبت شد و منتظر تایید است'); go(S.view);
-    } catch (err) { toast(err.message, true); }
-  });
-}
-
-async function viewPay(el) {
-  const admin = S.me.is_admin;
-  const list = await T('app_get_payment_requests');
-  const pending = list.filter(p => p.status === 'pending');
-  el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
-      <div><h1>${admin ? 'بررسی پرداخت‌ها' : 'پرداخت بدهی'}</h1><p class="sub" style="margin:0">${admin ? 'پرداخت‌های منتظر تایید شما' : 'پرداخت خود را ثبت کنید.'}</p></div>
-      <button class="btn sf" id="np">ثبت پرداخت جدید</button>
-    </div>
-    ${admin ? `<h2>منتظر تایید (${pending.length})</h2>${reqTable(pending, true)}<h2 style="margin-top:28px">سابقه</h2>${reqTable(list.filter(p => p.status !== 'pending'), true)}` : reqTable(list, false)}`;
-  
-  $('#np').addEventListener('click', async () => {
-    let r = null;
-    if (!admin) { const rep = await T('app_report', { p_year: S.y, p_month: S.m }); r = rep.rows[0]; }
-    payModal(r);
-  });
-  
-  $$('[data-ap]').forEach(b => b.addEventListener('click', () => approveModal(list.find(p => p.id == b.dataset.ap))));
-}
-
-function approveModal(p) {
-  const m = modal(`<h2>تایید پرداخت واحد ${fa(p.unit_no)}</h2>
-    <p class="sub">${esc(p.full_name || '')} · بابت ${CATS[p.category]} · ${MONTHS[p.month - 1]} ${fa(p.year)}</p>
-    ${p.receipt_image ? `<div style="margin-bottom:16px;text-align:center"><img src="${p.receipt_image}" style="max-width:100%;max-height:300px;border-radius:12px;border:1px solid var(--line)"></div>` : '<div class="card" style="background:#f8fafc;margin-bottom:16px;text-align:center;color:var(--muted)">تصویری بارگذاری نشده است</div>'}
-    <div class="grid g2">
-      <label class="f">مبلغ تاییدی (تومان)<input id="ap-a" value="${fmt(p.amount)}" inputmode="numeric"></label>
-      <label class="f">یادداشت<input id="ap-n"></label>
-    </div>
-    <div style="margin-top:20px;display:flex;gap:10px">
-      <button class="btn" id="ap-go" style="flex:1">تایید و ثبت</button>
-      <button class="btn rd" id="ap-rj">رد کردن</button>
-    </div>`);
-  $('#ap-a', m).addEventListener('input', e => { const n = toNum(e.target.value); e.target.value = n ? fmt(n) : ''; });
-  
-  $('#ap-rj', m).addEventListener('click', async () => {
-    const note = prompt('دلیل رد:') ?? null;
-    if (note === null) return;
-    try { await T('app_admin_review_payment', { p_id: p.id, p_approve: false, p_admin_note: note }); m.remove(); toast('رد شد'); go('pay'); } catch (e) { toast(e.message, true); }
-  });
-
-  $('#ap-go', m).addEventListener('click', async () => {
-    try {
-      const r = await T('app_admin_review_payment', { p_id: p.id, p_approve: true, p_amount: toNum($('#ap-a', m).value), p_admin_note: $('#ap-n', m).value });
-      m.remove(); toast('تایید شد'); go('pay');
-    } catch (e) { toast(e.message, true); }
-  });
-}
-
-// =====================================================================
-//  اعلانات، درخواست‌ها، فعالیت‌ها
-// =====================================================================
-async function viewAnnouncements(el) {
-  const list = await T('app_get_announcements');
-  const adminForm = S.me.is_admin ? `
-    <form id="af" class="card grid g3" style="margin-bottom:20px; border-color:var(--accent)">
-      <h2 style="grid-column:1/-1;margin:0">ارسال اعلان جدید</h2>
-      <label class="f">عنوان<input id="a-title" required></label>
-      <label class="f">نوع<select id="a-type"><option value="general">اطلاعیه عمومی</option><option value="meeting">دعوت به جلسه</option></select></label>
-      <label class="f" style="grid-column:1/-1">متن کامل<textarea id="a-content" rows="3" required></textarea></label>
-      <div style="grid-column:1/-1"><button class="btn">ثبت اعلان</button></div>
-    </form>` : '';
-
-  el.innerHTML = `<h1>اعلانات ساختمان</h1><p class="sub">اطلاعیه‌ها و دعوت‌نامه‌ها</p>${adminForm}
-  <div class="grid g2">${list.map(a => `<div class="card">
-    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-      <h2 style="margin:0">${esc(a.title)}</h2>
-      <span class="chip ${a.type==='meeting'?'no':'ok'}">${a.type==='meeting'?'جلسه':'اطلاعیه'}</span>
-    </div>
-    <p class="sub" style="font-size:12px">${new Date(a.created_at).toLocaleDateString('fa-IR')}</p>
-    <p style="white-space:pre-wrap;margin-bottom:16px">${esc(a.content)}</p>
-    <div style="display:flex;gap:8px">${S.me.is_admin ? `<button class="btn rd sm" data-del="${a.id}">حذف</button>` : ''}</div>
-  </div>`).join('') || '<div class="card sub">هیچ اعلانی وجود ندارد.</div>'}</div>`;
-  
-  if (S.me.is_admin) {
-    $('#af').addEventListener('submit', async e => {
-      e.preventDefault();
-      try { await T('app_admin_save_announcement', { p_title: $('#a-title').value, p_content: $('#a-content').value, p_type: $('#a-type').value }); toast('ثبت شد'); go('announcements'); } catch (err) { toast(err.message, true); }
-    });
-    $$('[data-del]').forEach(b => b.addEventListener('click', async () => {
-      if (!confirm('حذف شود؟')) return;
-      try { await T('app_admin_delete_announcement', { p_id: +b.dataset.del }); toast('حذف شد'); go('announcements'); } catch (e) { toast(e.message, true); }
-    }));
-  }
-}
-
-async function viewRequests(el) {
-  const list = await T('app_get_requests');
-  const admin = S.me.is_admin;
-  const residentForm = !admin ? `
-    <form id="rf2" class="card grid g3" style="margin-bottom:20px; border-color:var(--accent)">
-      <h2 style="grid-column:1/-1;margin:0">ثبت درخواست جدید</h2>
-      <label class="f">موضوع<select id="rq-type"><option>درخواست تعمیرات</option><option>انتقاد و پیشنهاد</option></select></label>
-      <label class="f" style="grid-column:1/-1">توضیحات<textarea id="rq-desc" rows="3" required></textarea></label>
-      <div style="grid-column:1/-1"><button class="btn">ارسال به مدیر</button></div>
-    </form>` : '';
-
-  el.innerHTML = `<h1>${admin ? 'درخواست‌ها' : 'ارتباط با مدیر'}</h1><p class="sub">${admin ? 'درخواست‌های ساکنین' : 'ثبت درخواست تعمیرات، انتقادات'}</p>${residentForm}
-  <div class="grid g2">${list.map(r => `<div class="card">
-    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-      <h2 style="margin:0">${esc(r.type)}</h2>
-      <span class="chip ${r.status === 'done' ? 'ok' : 'pd'}">${r.status === 'done' ? 'بررسی شد' : 'در حال بررسی'}</span>
-    </div>
-    <p class="sub" style="font-size:12px">واحد ${fa(r.unit_no)} · ${esc(r.full_name || '')}</p>
-    <p style="white-space:pre-wrap;margin-bottom:16px">${esc(r.description)}</p>
-    ${admin && r.status !== 'done' ? `<button class="btn lt sm" data-ok="${r.id}">علامت‌گذاری به عنوان بررسی شده</button>` : ''}
-  </div>`).join('') || '<div class="card sub">موردی وجود ندارد.</div>'}</div>`;
-
-  if (!admin) {
-    $('#rf2').addEventListener('submit', async e => {
-      e.preventDefault();
-      try { await T('app_submit_request', { p_type: $('#rq-type').value, p_description: $('#rq-desc').value }); toast('ثبت شد'); go('requests'); } catch (err) { toast(err.message, true); }
-    });
-  } else {
-    $$('[data-ok]').forEach(b => b.addEventListener('click', async () => {
-      try { await T('app_admin_update_request', { p_id: +b.dataset.ok, p_status: 'done' }); toast('تغییر کرد'); go('requests'); } catch (e) { toast(e.message, true); }
-    }));
-  }
-}
-
-async function viewActivity(el) {
-  const logs = await T('app_admin_get_activity_logs');
-  const today = new Date().toDateString();
-  const todayLogins = logs.filter(l => l.action === 'ورود' && new Date(l.created_at).toDateString() === today).length;
-
-  el.innerHTML = `<h1>گزارش فعالیت‌ها</h1><p class="sub">آخرین رویدادهای ثبت شده</p>
-  <div class="grid g3" style="margin-bottom:20px">
-    <div class="card" style="background:var(--accent);color:#fff"><small>ورودهای امروز</small><div style="font-size:28px;font-weight:900">${fa(todayLogins)} نفر</div></div>
-    <div class="card"><small>کل فعالیت‌ها</small><div style="font-size:28px;font-weight:900">${fa(logs.length)} مورد</div></div>
-  </div>
-  <div class="tbl-wrap"><table><thead><tr><th>کاربر</th><th>واحد</th><th>نوع فعالیت</th><th>جزئیات</th><th>زمان</th></tr></thead><tbody>
-    ${logs.map(l => `<tr><td><b>${esc(l.full_name || 'ناشناس')}</b></td><td>${l.unit_no ? 'واحد ' + fa(l.unit_no) : '—'}</td>
-      <td><span class="chip ${l.action.includes('ورود') ? 'ok' : 'ex'}">${esc(l.action)}</span></td>
-      <td style="color:var(--muted)">${esc(l.details || '—')}</td><td dir="ltr" style="text-align:right;font-size:12px">${new Date(l.created_at).toLocaleString('fa-IR')}</td></tr>`).join('') || '<tr><td colspan="5" class="muted" style="text-align:center">موردی نیست</td></tr>'}
-  </tbody></table></div>`;
-}
-
-// =====================================================================
-//  مدیریت واحدها، نرخ‌ها، پروفایل (منطق اصلی بازگردانده شد)
-// =====================================================================
-async function viewTx(el) {
-  const admin = S.me.is_admin;
-  const f = S.txFilter || (S.txFilter = { y: S.y, m: '', unit: '', type: '' });
-  const list = await T('app_get_transactions', { p_year: f.y ? +f.y : null, p_month: f.m ? +f.m : null, p_unit: admin && f.unit !== '' ? +f.unit : null });
-  const rows = list.filter(t => !f.type || t.tx_type === f.type);
-  const inc = rows.filter(t => t.tx_type === 'درآمد').reduce((s, t) => s + t.amount, 0);
-  const exp = rows.filter(t => t.tx_type === 'هزینه').reduce((s, t) => s + t.amount, 0);
-
-  el.innerHTML = `<h1>تراکنش‌ها</h1><p class="sub">درآمد ${fmt(inc)} · هزینه ${fmt(exp)}</p>
-  <div style="display:flex;gap:10px;margin-bottom:16px">${admin ? '<button class="btn sf" id="tx-new">ثبت تراکنش</button>' : ''}<button class="btn lt" id="tx-csv">خروجی اکسل</button></div>
-  <div class="tbl-wrap"><table><thead><tr><th>تاریخ</th><th>واحد</th><th>نوع</th><th>شرح</th><th>مبلغ</th>${admin?'<th></th>':''}</tr></thead><tbody>
-    ${rows.map(t => `<tr><td dir="ltr" style="text-align:right">${fa(t.tx_date)}</td><td>${t.unit_no?'واحد '+fa(t.unit_no):'ساختمان'}</td><td>${t.tx_type}</td><td>${esc(t.description)}</td><td>${money(t.amount)}</td>
-    ${admin?`<td><button class="btn rd sm" data-dl="${t.id}">حذف</button></td>`:''}</tr>`).join('')}</tbody></table></div>`;
-  
-  $('#tx-csv').addEventListener('click', () => exportCsv(rows));
-  if (admin) {
-    $$('[data-dl]').forEach(b => b.addEventListener('click', async () => {
-      if(confirm('حذف شود؟')) { await T('app_admin_delete_transaction', { p_id: +b.dataset.dl }); go('tx'); }
-    }));
-  }
-}
-function exportCsv(rows) {
-  const sep = ';'; const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const head = ['تاریخ', 'واحد', 'نوع', 'شرح', 'مبلغ'];
-  const lines = [head.map(q).join(sep)].concat(rows.map(t => [t.tx_date, t.unit_no || 'ساختمان', t.tx_type, t.description, t.amount].map(q).join(sep)));
-  const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Transactions.csv'; a.click();
-}
-
-async function viewReport(el) {
-  const rep = await T('app_report', { p_year: S.y, p_month: S.m });
-  el.innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:20px"><h1>گزارش ${rep.month_name}</h1>${periodPicker()}</div>
-  <div class="tbl-wrap"><table><thead><tr><th>واحد</th><th>شارژ</th><th>آب</th><th>گاز</th><th>بازسازی</th><th>بدهی قبلی</th><th>مانده</th></tr></thead><tbody>
-    ${rep.rows.map(r => `<tr><td><b>واحد ${fa(r.unit_no)}</b></td><td>${fmt(r.charge)}</td><td>${fmt(r.water)}</td><td>${fmt(r.gas)}</td><td>${fmt(r.repair)}</td><td>${fmt(r.prev_debt)}</td><td><b>${money(r.remaining)}</b></td></tr>`).join('')}
-  </tbody></table></div>`;
-  bindPeriod(() => go('report'));
-}
-
-async function viewUnits(el) {
-  const units = await T('app_get_units');
-  el.innerHTML = `<h1>مدیریت واحدها</h1><p class="sub">حساب‌های کاربری ساکنین</p>
-  <div class="grid g3">${units.map(u => `<div class="card">
-    <div style="display:flex;justify-content:space-between"><h2 style="margin:0">واحد ${fa(u.unit_no)}</h2><button class="btn lt sm" data-u="${u.unit_no}">مدیریت</button></div>
-    <div style="margin-top:10px;font-size:13px">${u.accounts.map(a => `<div><b>${esc(a.full_name)}</b> (${esc(a.occupancy)})</div>`).join('')}</div>
-  </div>`).join('')}</div>`;
-  $$('[data-u]').forEach(b => b.addEventListener('click', () => unitModal(units.find(u => u.unit_no == b.dataset.u))));
-}
-function unitModal(u) {
-  const m = modal(`<h2>واحد ${fa(u.unit_no)}</h2>
-    <div style="margin-top:20px">${u.accounts.map(a => `<form class="acc grid g3" data-id="${a.id}" style="background:#f8fafc;padding:16px;border-radius:12px;margin-bottom:12px">
-      <label class="f">نام<input name="full_name" value="${esc(a.full_name)}"></label>
-      <label class="f">موبایل<input name="phone" value="${esc(a.phone)}"></label>
-      <label class="f">سکونت<select name="occupancy">${OCC.map(o => `<option ${a.occupancy === o ? 'selected' : ''}>${o}</option>`).join('')}</select></label>
-      <label class="f">نام کاربری<input name="username" value="${esc(a.username)}"></label>
-      <label class="f">رمز جدید<input name="pass"></label>
-      <button class="btn sm" style="align-self:end">ذخیره</button>
-    </form>`).join('')}</div>`);
-  $$('form.acc', m).forEach(f => f.addEventListener('submit', async e => {
-    e.preventDefault();
-    try {
-      await T('app_admin_save_account', { p_id: f.dataset.id, p_unit_no: u.unit_no, p_username: f.elements.username.value, p_full_name: f.elements.full_name.value, p_phone: f.elements.phone.value, p_occupancy: f.elements.occupancy.value, p_is_primary: true, p_is_active: true, p_new_password: f.elements.pass.value, p_start_ym: 140406 });
-      toast('ذخیره شد'); go('units');
-    } catch(err) { toast(err.message, true); }
-  }));
-}
-
-async function viewRates(el) {
-  el.innerHTML = `<h1>نرخ‌ها و تنظیمات</h1><p class="sub">برای اعمال تغییرات به دیتابیس مراجعه کنید.</p>`;
-}
-
-async function viewProfile(el) {
-  el.innerHTML = `<h1>پروفایل</h1><p class="sub">ویرایش اطلاعات شما</p>
-  <form id="pf" class="card grid g2" style="max-width:600px">
-    <label class="f">نام<input id="p-n" value="${esc(S.me.full_name||'')}"></label>
-    <label class="f">موبایل<input id="p-ph" value="${esc(S.me.phone||'')}"></label>
-    <button class="btn sf" style="grid-column:1/-1">ذخیره</button>
-  </form>`;
-  $('#pf').addEventListener('submit', async e => {
-    e.preventDefault();
-    try { await T('app_update_profile', { p_full_name: $('#p-n').value, p_phone: $('#p-ph').value, p_email: S.me.email, p_username: S.me.username }); toast('ذخیره شد'); renderShell(); } catch(err) { toast(err.message, true); }
-  });
-}
-
-S.token ? renderShell() : renderLogin();
-</script>
-</body>
-</html>
+  const cls = r => r.remaining <=
