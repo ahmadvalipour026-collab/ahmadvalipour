@@ -97,6 +97,13 @@ tr:hover td{background:#f8fafc}
 .modal{background:var(--card);border-radius:20px;width:100%;max-width:720px;padding:30px;box-shadow:0 25px 50px -12px rgba(0, 0, 0, 0.25);max-height:90vh;overflow-y:auto;position:relative}
 .modal .x{position:absolute;top:20px;left:20px;background:var(--bg);border:0;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted)}
 .modal .x:hover{background:var(--line)}
+
+/* استایل آکاردئون برای نرخ‌ها */
+.accordion-item { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 12px; overflow: hidden; background: var(--card); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+.accordion-header { padding: 16px 20px; background: #f8fafc; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 15px; transition: background 0.2s; }
+.accordion-header:hover { background: #f1f5f9; }
+.accordion-body { display: none; padding: 20px; border-top: 1px dashed var(--line); background: var(--card); }
+.accordion-body.open { display: block; }
 </style>
 </head>
 <body>
@@ -681,9 +688,6 @@ async function viewActivity(el) {
   </tbody></table></div>`;
 }
 
-// =====================================================================
-//  تراکنش‌ها، گزارش‌ها، مدیریت واحدها و تنظیمات
-// =====================================================================
 async function viewTx(el) {
   const admin = S.me.is_admin;
   const f = S.txFilter || (S.txFilter = { y: S.y, m: '', unit: '', type: '' });
@@ -834,37 +838,93 @@ function unitModal(u) {
   });
 }
 
+// =====================================================================
+//  نرخ‌ها و تنظیمات (آکاردئونی)
+// =====================================================================
 async function viewRates(el) {
   const [rates, st] = await Promise.all([T('app_get_rates'), T('app_get_settings')]);
-  const payerChecks = (idPrefix, arrVal) => {
-    const selected = arrVal || OCC;
-    return `<div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">${OCC.map(o => `<label style="font-size:11px; display:flex; align-items:center; gap:2px; cursor:pointer;"><input type="checkbox" value="${o}" class="${idPrefix}" ${selected.includes(o) ? 'checked' : ''}> ${o.replace('مالک ساکن', 'ساکن')}</label>`).join('')}</div>`;
+  
+  const getPayers = (arr) => {
+    if (!arr) return 'همه';
+    if (arr.length === 0) return 'هیچ‌کس';
+    return arr.map(o => o.replace('مالک ساکن', 'ساکن')).join('، ');
   };
+
   el.innerHTML = `<h1>نرخ‌ها و تنظیمات</h1>
   <div class="grid g2">
-    <div class="tbl-wrap"><table style="min-width:600px;"><thead><tr><th>ماه</th><th>شارژ</th><th>چه کسی می‌دهد؟</th><th>بازسازی</th><th>چه کسی می‌دهد؟</th><th>پارکینگ</th><th>چه کسی می‌دهد؟</th><th></th></tr></thead><tbody>
-        ${rates.map(r => `<tr><td>${MONTHS[r.month - 1]} ${fa(r.year)}</td><td><div class="num">${fmt(r.charge)}</div></td><td>${payerChecks('ex_ch_'+r.ym, r.payer_charge)}</td><td><div class="num">${fmt(r.repair)}</div></td><td>${payerChecks('ex_rp_'+r.ym, r.payer_repair)}</td><td><div class="num">${fmt(r.parking)}</div></td><td>${payerChecks('ex_pk_'+r.ym, r.payer_parking)}</td><td><div style="display:flex;gap:6px;flex-wrap:nowrap"><button class="btn lt sm" data-er="${r.year}-${r.month}">ویرایش</button><button class="btn rd sm" data-dr="${r.year}-${r.month}">حذف</button></div></td></tr>`).join('')}
-    </tbody></table></div>
+    <div>
+      <h2 style="margin-bottom:16px">لیست نرخ‌های ثبت شده</h2>
+      <div>
+        ${rates.map(r => `
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">
+              <span>📅 ${MONTHS[r.month - 1]} ${fa(r.year)}</span>
+              <span class="chip ex" style="font-size:11px">مشاهده جزئیات ▼</span>
+            </div>
+            <div class="accordion-body">
+              <table style="width:100%; margin-bottom:16px;">
+                <tr>
+                  <td style="padding:6px 0; border:0"><b>شارژ:</b> ${money(r.charge)}</td>
+                  <td style="padding:6px 0; border:0; color:var(--muted); font-size:12px">پرداخت‌کننده: ${getPayers(r.payer_charge)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; border:0"><b>بازسازی:</b> ${money(r.repair)}</td>
+                  <td style="padding:6px 0; border:0; color:var(--muted); font-size:12px">پرداخت‌کننده: ${getPayers(r.payer_repair)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; border:0"><b>پارکینگ:</b> ${money(r.parking)}</td>
+                  <td style="padding:6px 0; border:0; color:var(--muted); font-size:12px">پرداخت‌کننده: ${getPayers(r.payer_parking)}</td>
+                </tr>
+              </table>
+              <div style="display:flex; gap:8px">
+                <button class="btn lt sm" data-er="${r.year}-${r.month}">ویرایش این ماه</button>
+                <button class="btn rd sm" data-dr="${r.year}-${r.month}">حذف</button>
+              </div>
+            </div>
+          </div>
+        `).join('') || '<p class="sub">هیچ نرخی ثبت نشده است.</p>'}
+      </div>
+    </div>
+
     <div class="grid" style="align-content:start">
       <form id="rf" class="card grid g3">
-        <h2 style="grid-column:1/-1;margin:0">افزودن / ویرایش نرخ</h2>
+        <h2 style="grid-column:1/-1;margin:0">ثبت / ویرایش نرخ</h2>
         <label class="f">سال<select id="r-y">${yearOptions(TODAY.y)}</select></label><label class="f">ماه<select id="r-m">${monthOptions(TODAY.m)}</select></label>
-        <label class="f">شارژ<input id="r-c" inputmode="numeric"></label><div style="grid-column:1/-1; font-size:12px; color:var(--muted); margin-top:-8px; display:flex; align-items:center; gap:8px;">چه کسی می‌دهد؟ ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-pch" checked> ${o.replace('مالک ساکن', 'ساکن')}</label>`).join('')}</div>
-        <label class="f">بازسازی<input id="r-r" inputmode="numeric"></label><div style="grid-column:1/-1; font-size:12px; color:var(--muted); margin-top:-8px; display:flex; align-items:center; gap:8px;">چه کسی می‌دهد؟ ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-prp" checked> ${o.replace('مالک ساکن', 'ساکن')}</label>`).join('')}</div>
-        <label class="f">پارکینگ<input id="r-p" inputmode="numeric"></label><div style="grid-column:1/-1; font-size:12px; color:var(--muted); margin-top:-8px; display:flex; align-items:center; gap:8px;">چه کسی می‌دهد؟ ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-ppk" checked> ${o.replace('مالک ساکن', 'ساکن')}</label>`).join('')}</div>
-        <label class="f" style="grid-column:1/-1">آب / گاز</label><div style="grid-column:1/-1; display:flex; align-items:center; gap:8px;">${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-pu" checked> ${o.replace('مالک ساکن', 'ساکن')}</label>`).join('')}</div>
-        <div style="grid-column:1/-1"><button class="btn sf">ذخیره نرخ</button></div>
+        
+        <label class="f">شارژ<input id="r-c" inputmode="numeric"></label>
+        <div style="grid-column:1/-1; font-size:12px; color:var(--muted); margin-top:-8px; display:flex; align-items:center; gap:8px;">
+          چه کسی می‌دهد؟ ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-pch" checked> ${o.replace('مالک ساکن', 'ساکن')}</label>`).join('')}
+        </div>
+        
+        <label class="f">بازسازی<input id="r-r" inputmode="numeric"></label>
+        <div style="grid-column:1/-1; font-size:12px; color:var(--muted); margin-top:-8px; display:flex; align-items:center; gap:8px;">
+          چه کسی می‌دهد؟ ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-prp" checked> ${o.replace('مالک ساکن', 'ساکن')}</label>`).join('')}
+        </div>
+        
+        <label class="f">پارکینگ<input id="r-p" inputmode="numeric"></label>
+        <div style="grid-column:1/-1; font-size:12px; color:var(--muted); margin-top:-8px; display:flex; align-items:center; gap:8px;">
+          چه کسی می‌دهد؟ ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-ppk" checked> ${o.replace('مالک ساکن', 'ساکن')}</label>`).join('')}
+        </div>
+        
+        <label class="f" style="grid-column:1/-1">آب / گاز</label>
+        <div style="grid-column:1/-1; display:flex; align-items:center; gap:8px;">
+          ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-pu" checked> ${o.replace('مالک ساکن', 'ساکن')}</label>`).join('')}
+        </div>
+        <div style="grid-column:1/-1"><button class="btn sf" type="submit">ذخیره نرخ</button></div>
       </form>
+      
       <form id="sf" class="card grid g3">
         <h2 style="grid-column:1/-1;margin:0">تنظیمات کلی</h2>
         <label class="f" style="grid-column:1/-1">نام ساختمان<input id="s-n" value="${esc(st.building_name || '')}"></label>
-        <label class="f">موجودی اولیه<input id="s-o" inputmode="numeric" value="${fmt(st.opening_balance)}"></label>
+        <label class="f">موجودی اولیه صندوق<input id="s-o" inputmode="numeric" value="${fmt(st.opening_balance)}"></label>
         <label class="f">شروع محاسبه<input id="s-s" dir="ltr" value="${String(st.start_ym).slice(0, 4)}/${String(st.start_ym).slice(4)}"></label>
-        <div style="align-self:end"><button class="btn">ذخیره</button></div>
+        <div style="align-self:end"><button class="btn" type="submit">ذخیره تنظیمات</button></div>
       </form>
     </div>
   </div>`;
+
   $$('#r-c,#r-r,#r-p,#s-o').forEach(i => i.addEventListener('input', e => { const n = toNum(e.target.value); e.target.value = n ? fmt(n) : ''; }));
+  
   $$('[data-er]').forEach(b => b.addEventListener('click', () => {
     const [y, mo] = b.dataset.er.split('-').map(Number); const r = rates.find(x => x.year === y && x.month === mo);
     $('#r-y').value = y; $('#r-m').value = mo; $('#r-c').value = fmt(r.charge); $('#r-r').value = fmt(r.repair); $('#r-p').value = fmt(r.parking);
@@ -872,20 +932,29 @@ async function viewRates(el) {
     $$('.r-prp').forEach(cb => cb.checked = (r.payer_repair || OCC).includes(cb.value));
     $$('.r-ppk').forEach(cb => cb.checked = (r.payer_parking || OCC).includes(cb.value));
     $$('.r-pu').forEach(cb => cb.checked = (r.payer_water || OCC).includes(cb.value));
+    $('#rf').scrollIntoView({ behavior: 'smooth' });
   }));
+  
   $$('[data-dr]').forEach(b => b.addEventListener('click', async () => {
     if (!confirm('حذف شود؟')) return;
     const [y, mo] = b.dataset.dr.split('-').map(Number);
     try { await T('app_admin_delete_rate', { p_year: y, p_month: mo }); go('rates'); } catch (e) { toast(e.message, true); }
   }));
+  
   $('#rf').addEventListener('submit', async e => {
     e.preventDefault();
     const getChecked = cls => $$('.'+cls).filter(x => x.checked).map(x => x.value);
     try { 
-      await T('app_admin_save_rate', { p_year: +$('#r-y').value, p_month: +$('#r-m').value, p_charge: toNum($('#r-c').value), p_repair: toNum($('#r-r').value), p_parking: toNum($('#r-p').value), p_payer_charge: getChecked('r-pch'), p_payer_repair: getChecked('r-prp'), p_payer_parking: getChecked('r-ppk'), p_payer_water: getChecked('r-pu'), p_payer_gas: getChecked('r-pu') });
+      await T('app_admin_save_rate', { 
+        p_year: +$('#r-y').value, p_month: +$('#r-m').value, 
+        p_charge: toNum($('#r-c').value), p_repair: toNum($('#r-r').value), p_parking: toNum($('#r-p').value), 
+        p_payer_charge: getChecked('r-pch'), p_payer_repair: getChecked('r-prp'), p_payer_parking: getChecked('r-ppk'), 
+        p_payer_water: getChecked('r-pu'), p_payer_gas: getChecked('r-pu') 
+      });
       toast('ذخیره شد'); go('rates'); 
     } catch (err) { toast(err.message, true); }
   });
+  
   $('#sf').addEventListener('submit', async e => {
     e.preventDefault();
     const s = toNum($('#s-s').value.replace('/', ''));
