@@ -16,7 +16,7 @@
   --r: 16px; --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
 }
 *{box-sizing:border-box}
-/* جلوگیری از کشیده شدن صفحه به بیرون */
+/* جلوگیری از کشیده شدن صفحه به بیرون در موبایل */
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Vazirmatn,sans-serif;font-size:14px;line-height:1.7; overflow-x: hidden; width: 100%;}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--accent);text-decoration:none}
@@ -318,7 +318,6 @@ async function renderShell() {
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div class="brand"><span></span>${esc(S.building)}</div>
           
-          <!-- منوی کشویی یکپارچه برای همه -->
           <div class="menu-dropdown">
             <button class="menu-btn" id="main-menu-btn">
               ☰ منو ${currentTab ? `(${currentTab[1]})` : ''} ▼
@@ -388,7 +387,7 @@ function billCard(r, rep) {
   return `<div class="card" style="padding:0;overflow:hidden">
     <div style="background:var(--primary);color:#fff;padding:24px;display:flex;justify-content:space-between;align-items:flex-end">
       <div><div style="color:#94a3b8;font-size:13px">صورتحساب ${rep.month_name} ${fa(rep.year)} · واحد ${fa(r.unit_no)}</div>
-      <div style="font-size:18px;font-weight:700;margin-top:4px">${esc(r.full_name || '')}</div></div>
+      <div style="font-size:18px;font-weight:700;margin-top:4px">${esc(r.full_name || '')} <span class="chip ex" style="color:#fff;border:1px solid #fff">${esc(r.occupancy)}</span></div></div>
       <div style="text-align:left"><small style="color:#94a3b8">مانده قابل پرداخت (تومان)</small><div style="font-size:36px;font-weight:900;line-height:1.2">${fmt(r.remaining)}</div></div>
     </div>
     <div style="padding:10px 24px">
@@ -405,7 +404,6 @@ function billCard(r, rep) {
     </div></div>`;
 }
 
-async function viewDash(el) {
 async function viewDash(el) {
   const rep = await T('app_report', { p_year: S.y, p_month: S.m });
   const missing = rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">مبالغ شارژ/بازسازی برای این ماه‌ها تعریف نشده: ${rep.missing_rates.map(fa).join('، ')}</div>` : '';
@@ -483,7 +481,7 @@ async function viewDash(el) {
         <h2>نقشه ساختمان</h2>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px">
           ${floors.map(fl => fl.map(r => `
-            <button class="btn" style="background:var(--${cls(r) === 'ok' ? 'success' : cls(r) === 'no' ? 'danger' : 'warning'});padding:16px;flex-direction:column;align-items:flex-start;height:auto" data-u="${r.unit_no}">
+            <button class="btn win" style="background:var(--${cls(r) === 'ok' ? 'success' : cls(r) === 'no' ? 'danger' : 'warning'});padding:16px;flex-direction:column;align-items:flex-start;height:auto" data-u="${r.unit_no}">
               <span style="font-size:16px;font-weight:900">واحد ${fa(r.unit_no)}</span>
               <span style="font-size:12px;opacity:0.9;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.display_name)}</span>
               <span style="font-size:14px;font-weight:700;margin-top:8px">${r.remaining <= 0 ? 'تسویه' : fmt(r.remaining)}</span>
