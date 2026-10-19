@@ -406,6 +406,7 @@ function billCard(r, rep) {
 }
 
 async function viewDash(el) {
+async function viewDash(el) {
   const rep = await T('app_report', { p_year: S.y, p_month: S.m });
   const missing = rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">مبالغ شارژ/بازسازی برای این ماه‌ها تعریف نشده: ${rep.missing_rates.map(fa).join('، ')}</div>` : '';
   
@@ -431,10 +432,38 @@ async function viewDash(el) {
     return;
   }
 
+  // ================= بخش مدیر =================
   const fund = await T('app_fund_summary', { p_year: S.y, p_month: S.m });
-  const rows = rep.rows;
+  const rows = rep.rows; // این آرایه شامل تمام حساب‌هاست (ممکنه برای یک واحد چند حساب باشه)
+  
+  // گروه‌بندی اطلاعات بر اساس شماره واحد برای نمایش در نقشه
+  const unitMap = {};
+  rows.forEach(r => {
+    if (!unitMap[r.unit_no]) unitMap[r.unit_no] = { unit_no: r.unit_no, remaining: 0, current_due: 0, accounts: [], display_name: '' };
+    unitMap[r.unit_no].remaining += r.remaining;
+    unitMap[r.unit_no].current_due += r.current_due;
+    unitMap[r.unit_no].accounts.push(r);
+    if (!unitMap[r.unit_no].display_name && r.full_name) {
+      unitMap[r.unit_no].display_name = r.full_name;
+    }
+  });
+  
+  // ساخت آرایه نهایی برای ۱۰ واحد (حتی اگر حسابی نداشته باشند)
+  const mapUnits = [];
+  for (let i = 1; i <= 10; i++) {
+    if (unitMap[i]) {
+      mapUnits.push(unitMap[i]);
+    } else {
+      mapUnits.push({ unit_no: i, remaining: 0, current_due: 0, accounts: [], display_name: '-' });
+    }
+  }
+  
+  // چینش واحدها در طبقات (از بالا به پایین)
+  const floors = [];
+  for (let f = 9; f >= 0; f -= 2) floors.push([mapUnits[f-1], mapUnits[f]]);
+  
   const cls = r => r.remaining <= 0 ? 'ok' : r.remaining > r.current_due ? 'no' : 'pd'; 
-  const totalDebt = rows.reduce((s, r) => s + Math.max(0, r.remaining), 0);
+  const totalDebt = mapUnits.reduce((s, r) => s + Math.max(0, r.remaining), 0);
 
   el.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:24px">
@@ -453,11 +482,13 @@ async function viewDash(el) {
       <div class="card">
         <h2>نقشه ساختمان</h2>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px">
-          ${rows.map(r => `<button class="btn" style="background:var(--${cls(r) === 'ok' ? 'success' : cls(r) === 'no' ? 'danger' : 'warning'});padding:16px;flex-direction:column;align-items:flex-start;height:auto" data-u="${r.unit_no}">
-            <span style="font-size:16px;font-weight:900">واحد ${fa(r.unit_no)}</span>
-            <span style="font-size:12px;opacity:0.9">${esc(r.full_name || '')}</span>
-            <span style="font-size:14px;font-weight:700;margin-top:8px">${r.remaining <= 0 ? 'تسویه' : fmt(r.remaining)}</span>
-          </button>`).join('')}
+          ${floors.map(fl => fl.map(r => `
+            <button class="btn" style="background:var(--${cls(r) === 'ok' ? 'success' : cls(r) === 'no' ? 'danger' : 'warning'});padding:16px;flex-direction:column;align-items:flex-start;height:auto" data-u="${r.unit_no}">
+              <span style="font-size:16px;font-weight:900">واحد ${fa(r.unit_no)}</span>
+              <span style="font-size:12px;opacity:0.9;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.display_name)}</span>
+              <span style="font-size:14px;font-weight:700;margin-top:8px">${r.remaining <= 0 ? 'تسویه' : fmt(r.remaining)}</span>
+            </button>
+          `).join('')).join('')}
         </div>
       </div>
       <div class="grid" style="align-content:start">
@@ -474,10 +505,31 @@ async function viewDash(el) {
     </div>`;
     
   bindPeriod(() => go('dash'));
-  $$('[data-u]').forEach(b => b.addEventListener('click', () => {
-    const r = rows.find(x => x.unit_no == b.dataset.u);
-    const m = modal(`${billCard(r, rep)}<div style="margin-top:20px;display:flex;gap:10px">${smsBtn(r.phone, reminderText(r, rep), 'ارسال یادآوری')}<button class="btn lt sm" id="m-tx">تراکنش‌های این واحد</button></div>`);
-    $('#m-tx', m).addEventListener('click', () => { m.remove(); S.txFilter = { unit: r.unit_no }; go('tx'); });
+  
+  // نمایش جزئیات هنگام کلیک روی پنجره واحد
+  $$('.win').forEach(b => b.addEventListener('click', () => {
+    const uData = mapUnits.find(x => x.unit_no == b.dataset.u);
+    
+    // ساخت کارت صورتحساب برای همه افراد آن واحد
+    const cardsHtml = uData.accounts.length 
+        ? uData.accounts.map(r => billCard(r, rep)).join('<hr style="border:0;border-top:1px dashed var(--line);margin:20px 0">')
+        : '<p class="sub" style="text-align:center;padding:20px">حسابی برای این واحد ثبت نشده است.</p>';
+        
+    // ساخت دکمه‌های پیامک برای همه افراد
+    const smsHtml = uData.accounts.map(r => r.phone ? smsBtn(r.phone, reminderText(r, rep), `پیامک به ${esc(r.full_name || r.occupancy)}`) : '').join('');
+    
+    const m = modal(`
+      <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <h2 style="margin:0">صورتحساب واحد ${fa(uData.unit_no)}</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">${smsHtml}</div>
+      </div>
+      ${cardsHtml}
+      <div style="margin-top:20px;display:flex;gap:10px">
+        <button class="btn lt sm" id="m-tx">تراکنش‌های این واحد</button>
+      </div>
+    `);
+    
+    $('#m-tx', m).addEventListener('click', () => { m.remove(); S.txFilter = { unit: uData.unit_no }; go('tx'); });
   }));
 }
 
