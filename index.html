@@ -1709,52 +1709,86 @@ async function viewProfile(el) {
 window.addEventListener('online', () => toast('اتصال اینترنت برقرار شد'));
 window.addEventListener('offline', () => toast('اتصال اینترنت قطع شد', true));
 /* =========================================================
-   مدیریت دکمه‌ی Back (خروج فقط با دو بار زدن پشت سر هم)
+   مدیریت دکمه Back
+   خروج فقط با دو بار زدن پشت سر هم
    ========================================================= */
+
 let backPressCount = 0;
 let backPressTimer = null;
 
-// ۱. تزریق اولیه تاریخچه (با هش # که مرورگر رو گول بزنه)
+// ایجاد یک History Entry اولیه
 if (!window.location.hash) {
+  history.replaceState({ page: 'app' }, '', '#app');
   history.pushState({ page: 'app' }, '', '#app');
 }
 
-window.addEventListener('popstate', (e) => {
-  // اگر توی صفحه‌ای غیر از داشبورد بودیم
-  if (S.view !== 'dash' && S.me) {
+window.addEventListener('popstate', () => {
+
+  // اگر داخل یکی از صفحات برنامه هستیم،
+  // Back اول فقط به داشبورد برمی‌گردد
+  if (S.me && S.view !== 'dash') {
+    backPressCount = 0;
+    clearTimeout(backPressTimer);
+
     go('dash', true);
-    history.pushState({ page: 'app' }, '', '#app'); 
+
+    // جلوگیری از خروج واقعی از برنامه
+    history.pushState({ page: 'app' }, '', '#app');
     return;
   }
-  
-  // اگر توی داشبورد بودیم
-  if (S.view === 'dash' && S.me) {
+
+  // اگر روی داشبورد هستیم
+  if (S.me && S.view === 'dash') {
+
     backPressCount++;
-    
+
+    // -----------------------------
+    // بار اول
+    // -----------------------------
     if (backPressCount === 1) {
+
       toast('برای خروج، دوباره دکمه بازگشت را بزنید', true);
-      
-      // 🔒 تزریق مجدد با هش، تا مرورگر برنامه رو نبنده
-      history.pushState({ page: 'app' }, '', '#app'); 
-      
+
+      // جلوگیری از خروج
+      history.pushState({ page: 'app' }, '', '#app');
+
       clearTimeout(backPressTimer);
-      backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
-      
-    } else {
-      // بار دوم: اجازه خروج بده
+
+      // فقط ۲ ثانیه فرصت برای بار دوم
+      backPressTimer = setTimeout(() => {
+        backPressCount = 0;
+      }, 2000);
+
+      return;
+    }
+
+    // -----------------------------
+    // بار دوم
+    // -----------------------------
+    if (backPressCount >= 2) {
+
       clearTimeout(backPressTimer);
-      sessionStorage.clear(); 
-      // حذف هش و عقب رفتن برای بستن برنامه
-      history.go(-2); 
+      backPressCount = 0;
+
+      // خروج از حساب
+      sessionStorage.clear();
+
+      // اجازه خروج واقعی از صفحه
+      history.back();
     }
   }
 });
 
-// صفر کردن شمارنده وقتی کاربر میره تب دیگه
+// وقتی برنامه به پس‌زمینه می‌رود شمارنده صفر شود
 document.addEventListener('visibilitychange', () => {
+
   if (document.visibilityState === 'hidden') {
     backPressCount = 0;
-    clearTimeout(backPressTimer);
+
+    if (backPressTimer) {
+      clearTimeout(backPressTimer);
+      backPressTimer = null;
+    }
   }
 });
 if (S.token) renderShell(); else renderLogin();
