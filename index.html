@@ -1171,15 +1171,18 @@ async function viewReport(el) {
   const rep = await T('app_report', { p_year: S.y, p_month: S.m });
   const ok = v => v ? '<span class="chip ok">OK</span>' : '<span class="chip no">نشده</span>';
   const cell = (amt, v) => `<td><div>${fmt(amt)}</div>${ok(v)}</td>`;
+  
   el.innerHTML = `
     <div style="display:flex;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap">
       <div><h1>گزارش ${rep.month_name} ${fa(rep.year)}</h1></div>
-      <div>${periodPicker()}<button class="btn sf no-print" id="bale-btn">ارسال به بله 📤</button>
-<button class="btn lt no-print" id="pr-btn">چاپ</button></div>
+      <div>${periodPicker()}
+        <button class="btn sf no-print" id="bale-btn">ارسال به بله 📤</button>
+        <button class="btn lt no-print" id="pr-btn">چاپ</button>
+      </div>
     </div>
     ${rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">نرخ ماه‌های ${rep.missing_rates.map(fa).join('، ')} تعریف نشده.</div>` : ''}
     <div class="tbl-wrap"><table><thead><tr>
-      <th>واحد</th><th>ساکن</th><th>سکونت</th><th>نفرات</th><th>شارژ</th><th>آب</th><th>گاز</th><th>بازسازی</th><th>پارکینگ</th><th>بدهی قبلی</th><th>جمع</th><th>پرداختی</th><th>مانده</th>${S.me.is_admin ? '<th class="no-print"></th>' : ''}
+      <th>واحد</th><th>ساکن</th><th>سکونت</th><th>نفرات</th><th>شارژ</th><th>آب</th><th>گاز</th><th>بازسازی</th><th>پارکینگ</th><th>بدهی قبلی</th><th>جمع</th><th>پرداختی</th><th>مانده</th>${S.me.is_admin ? '<th class="no-bale"></th>' : ''}
     </tr></thead><tbody>
       ${rep.rows.map(r => `<tr>
         <td><b>واحد ${fa(r.unit_no)}</b></td>
@@ -1195,11 +1198,14 @@ async function viewReport(el) {
         <td><b>${money(r.total_payable)}</b></td>
         <td>${money(r.paid_this_month)}</td>
         <td><b>${money(r.remaining)}</b></td>
-        ${S.me.is_admin ? `<td class="no-print">${r.remaining > 0 ? smsBtn(r.phone, reminderText(r, rep), 'یادآوری') : ''}</td>` : ''}
+        ${S.me.is_admin ? `<td class="no-bale">${r.remaining > 0 ? smsBtn(r.phone, reminderText(r, rep), 'یادآوری') : ''}</td>` : ''}
       </tr>`).join('')}
     </tbody></table></div>`;
+
   bindPeriod(() => go('report'));
+  
   $('#pr-btn')?.addEventListener('click', () => window.print());
+  
   $('#bale-btn')?.addEventListener('click', async () => {
     const btn = $('#bale-btn');
     const oldText = btn.textContent;
@@ -1213,7 +1219,6 @@ async function viewReport(el) {
       const originalMaxHeight = tableElement.style.maxHeight;
       const originalWidth = tableElement.style.width;
 
-      // 👇 اینجا عرض و کیفیت رو تنظیم کردیم
       tableElement.style.overflow = 'visible';
       tableElement.style.maxHeight = 'none';
       tableElement.style.width = '1400px';
@@ -1223,8 +1228,29 @@ async function viewReport(el) {
         backgroundColor: '#ffffff',
         windowWidth: 1400,
         width: 1400,
+        // حالا کلاس درست (no-bale) رو نادیده می‌گیره
         ignoreElements: (element) => element.classList.contains('no-bale')
       });
+      
+      tableElement.style.overflow = originalOverflow;
+      tableElement.style.maxHeight = originalMaxHeight;
+      tableElement.style.width = originalWidth;
+
+      const base64Image = canvas.toDataURL('image/jpeg', 0.95);
+
+      btn.textContent = 'در حال ارسال به بله...';
+      
+      await notifyBale(`📊 گزارش ماهانه ${rep.month_name} ${fa(rep.year)}\n${S.building}`, base64Image);
+      
+      toast('گزارش با موفقیت به گروه بله ارسال شد');
+    } catch (e) {
+      showErr(e);
+    } finally {
+      btn.textContent = oldText;
+      btn.disabled = false;
+    }
+  });
+}
       
       tableElement.style.overflow = originalOverflow;
       tableElement.style.maxHeight = originalMaxHeight;
@@ -1251,7 +1277,7 @@ async function viewReport(el) {
       tableElement.style.maxHeight = originalMaxHeight;
       tableElement.style.width = originalWidth;
 
-      const base64Image = canvas.toDataURL('image/jpeg', 0.85);
+      const base64Image = canvas.toDataURL('image/jpeg', 0.95);
 
       btn.textContent = 'در حال ارسال به بله...';
       
