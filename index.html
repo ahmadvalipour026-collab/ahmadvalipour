@@ -186,7 +186,7 @@ async function notifyBale(msg) {
    3. State
    ========================================================= */
 const S = {
-  token: sessionStorage.getItem('bm_token'), // 👈 استفاده از sessionStorage
+  token: sessionStorage.getItem('bm_token'),
   me: JSON.parse(sessionStorage.getItem('bm_me') || 'null'),
   view: 'dash', y: TODAY.y, m: TODAY.m,
   building: 'مجتمع نگین ۲',
@@ -194,7 +194,6 @@ const S = {
   renderId: 0,
 };
 
-// پاک کردن توکن‌های قدیمی از حافظه مرورگر
 localStorage.removeItem('bm_token');
 
 /* =========================================================
@@ -322,7 +321,6 @@ async function compressImage(file) {
 
         ctx.drawImage(img, 0, 0, w, h);
 
-        // JPEG فشرده برای کاهش حجم ذخیره‌سازی/انتقال
         resolve(canvas.toDataURL('image/jpeg', 0.62));
       };
 
@@ -380,8 +378,8 @@ async function renderLogin() {
       if (!r.ok) { $('#lg-err').textContent = r.error; return; }
       S.token = r.token; 
       S.me = r.account;
-      sessionStorage.setItem('bm_token', S.token);     // 👈 تغییر کرد
-      sessionStorage.setItem('bm_me', JSON.stringify(S.me)); // 👈 تغییر کرد
+      sessionStorage.setItem('bm_token', S.token);
+      sessionStorage.setItem('bm_me', JSON.stringify(S.me));
       renderShell();
     } catch (err) { showErr(err); }
     finally { btn.disabled = false; btn.textContent = old; }
@@ -414,8 +412,6 @@ async function renderLogin() {
 
 async function logout(silent = false) {
   const token = S.token;
-
-  // ابتدا State محلی را invalidate می‌کنیم تا درخواست‌های قبلی نتوانند UI را برگردانند.
   S.renderId++;
   S.token = null;
   S.me = null;
@@ -424,12 +420,9 @@ async function logout(silent = false) {
   if (token && !silent) {
     try {
       await api('app_logout', { p_token: token });
-    } catch {
-      // خروج محلی باید حتی در صورت قطع شبکه انجام شود.
-    }
+    } catch {}
   }
 
-  // فقط داده‌های مربوط به همین برنامه پاک شوند؛ sessionStorage سایر برنامه‌ها دست‌نخورده بماند.
   sessionStorage.removeItem('bm_token');
   sessionStorage.removeItem('bm_me');
 
@@ -460,11 +453,7 @@ async function renderShell() {
   $('#app').innerHTML = `<div class="loading-screen"><div class="spinner"></div><p class="sub">در حال اتصال به سرور...</p></div>`;
   try {
     const account = await T('app_me');
-
-    // جلوگیری از race condition:
-    // اگر در این فاصله render دیگری شروع شده باشد، نتیجه قدیمی نباید UI را بازنویسی کند.
     if (renderId !== S.renderId) return;
-
     S.me = account;
     sessionStorage.setItem('bm_me', JSON.stringify(S.me));
   } catch (e) {
@@ -505,76 +494,6 @@ async function renderShell() {
   go(S.view);
 }
 
-function go(v, isBackNavigation = false) {
-  const views = {
-    dash: viewDash,
-    announcements: viewAnnouncements,
-    requests: viewRequests,
-    tx: viewTx,
-    pay: viewPay,
-    report: viewReport,
-    units: viewUnits,
-    rates: viewRates,
-    activity: viewActivity,
-    profile: viewProfile,
-  };
-
-  // مسیر نامعتبر را هرگز وارد State نکن
-  if (!views[v]) v = 'dash';
-
-  S.view = v;
-
-  const el = $('#view');
-  if (!el) return;
-
-  el.innerHTML = `<p class="sub">در حال بارگذاری...</p>`;
-  renderShellHeaderState();
-
-  const currentRenderId = ++S.renderId;
-
-  Promise.resolve(views[v](el))
-    .catch(e => {
-      // نتیجه/خطای یک view قدیمی نباید view فعلی را خراب کند.
-      if (currentRenderId !== S.renderId) return;
-
-      if (e.message === 'AUTH_ERROR') {
-        logout(true);
-        return;
-      }
-
-      if (e.message === 'NETWORK_ERROR') {
-        el.innerHTML = `<div class="card" style="text-align:center;padding:60px 20px">
-          <div style="font-size:48px;margin-bottom:16px">📡</div>
-          <h2>اتصال به سرور برقرار نیست</h2>
-          <p class="sub">لطفاً اینترنت خود را بررسی کنید</p>
-          <button class="btn sf" data-retry>تلاش مجدد</button>
-        </div>`;
-        $('[data-retry]', el)?.addEventListener('click', () => go(v));
-        return;
-      }
-
-      showErr(e);
-      el.innerHTML = `<div class="card" style="color:var(--danger)">خطا: ${esc(e.message)}</div>`;
-    });
-
-  /*
-   * History policy:
-   * - داشبورد صفحه ریشه منطقی برنامه است.
-   * - برای viewهای داخلی یک history entry ساخته می‌شود.
-   * - popstate فقط مسئول برگشت به داشبورد/خروج است.
-   */
-  if (!isBackNavigation && S.me) {
-    const currentState = history.state;
-
-    if (v !== 'dash' && currentState?.view !== v) {
-      history.pushState(
-        { app: true, view: v },
-        '',
-        `#${encodeURIComponent(v)}`
-      );
-    }
-  }
-}
 function renderShellHeaderState() {
   const menuItems = getMenuItems();
   const current = menuItems.find(t => t[0] === S.view);
@@ -597,8 +516,7 @@ function showConnectionError() {
   $('#retry').addEventListener('click', renderShell);
   $('#lo2').addEventListener('click', () => logout());
 }
-
-/* =========================================================
+   /* =========================================================
    12. Dashboard
    ========================================================= */
 const mustChangeBanner = () => S.me?.must_change_password
@@ -606,7 +524,6 @@ const mustChangeBanner = () => S.me?.must_change_password
   : '';
 
 function billCard(r, rep) {
-  // تبدیل مقادیر به عدد برای جلوگیری از خطا
   const w = Number(r.water) || 0;
   const rep_amt = Number(r.repair) || 0;
   const park = Number(r.parking) || 0;
@@ -657,6 +574,7 @@ function billCard(r, rep) {
     </div>
   </div>`;
 }
+
 function reminderText(r, rep) {
   return `${S.building} - واحد ${r.unit_no}\nصورتحساب ${rep.month_name} ${rep.year}:\n` +
     `شارژ ${fmt(r.charge)} | آب ${fmt(r.water)} | گاز ${fmt(r.gas)} | بازسازی ${fmt(r.repair)}` +
@@ -844,7 +762,6 @@ async function viewAnnouncements(el) {
     </div>`;
 
   if (S.me.is_admin) {
-    // ثبت اعلان جدید یا ذخیره ویرایش
     $('#af')?.addEventListener('submit', async e => {
       e.preventDefault();
       try {
@@ -854,12 +771,10 @@ async function viewAnnouncements(el) {
         const type = $('#a-type').value;
         
         if (id) {
-          // حالت ویرایش
           await T('app_admin_update_announcement', { p_id: +id, p_title: title, p_content: content, p_type: type });
           notifyBale(`✏️ اعلان ویرایش شد:\n\n🔹 ${title}\n\n${content}`);
           toast('ویرایش شد');
         } else {
-          // حالت ثبت جدید
           await T('app_admin_save_announcement', { p_title: title, p_content: content, p_type: type });
           notifyBale(`📢 اعلان جدید در ساختمان:\n\n🔹 ${title}\n\n${content}`);
           toast('ثبت شد');
@@ -868,7 +783,6 @@ async function viewAnnouncements(el) {
       } catch (err) { showErr(err); }
     });
 
-    // دکمه انصراف از ویرایش
     $('#af-cancel')?.addEventListener('click', () => {
       $('#a-id').value = '';
       $('#a-title').value = '';
@@ -878,7 +792,6 @@ async function viewAnnouncements(el) {
       $('#af-cancel').classList.add('hidden');
     });
 
-    // کلیک روی دکمه‌های ویرایش، آرشیو و حذف
     $$('[data-edit]').forEach(b => b.addEventListener('click', () => {
       $('#a-id').value = b.dataset.edit;
       $('#a-title').value = b.dataset.title;
@@ -944,7 +857,6 @@ async function viewRequests(el) {
         const desc = $('#rq-desc').value;
         await T('app_submit_request', { p_type: type, p_description: desc });
         
-        // ارسال به بله
         notifyBale(`🔔 درخواست جدید از واحد ${S.me.unit_no}:\n\n🔹 نوع: ${type}\n📝 توضیحات: ${desc}`);
         
         toast('ثبت شد'); go('requests');
@@ -1000,7 +912,6 @@ function payModal(r) {
         p_receipt_image: base64Image,
       });
       
-      // ارسال به بله
       notifyBale(`💸 پرداخت جدید ثبت شد (منتظر تایید):\n\n👤 واحد ${S.me.unit_no} - ${S.me.full_name}\n💰 بابت: ${CATS[category] || category}\n📅 ماه: ${MONTHS[S.m-1]} ${S.y}\n🔢 مبلغ: ${fmt(amount)} تومان`);
       
       m.remove(); toast('پرداخت ثبت شد و منتظر تایید است'); go(S.view);
@@ -1059,7 +970,6 @@ function approveModal(p) {
     try {
       await T('app_admin_review_payment', { p_id: p.id, p_approve: true, p_amount: toNum($('#ap-a', m).value), p_admin_note: $('#ap-n', m).value });
       
-      // ارسال به بله
       notifyBale(`✅ پرداخت تایید شد:\n\n👤 واحد ${p.unit_no} - ${p.full_name}\n💰 مبلغ: ${fmt(p.amount)} تومان\n📅 بابت: ${CATS[p.category] || p.category} - ${MONTHS[p.month-1]} ${p.year}`);
       
       m.remove(); toast('تایید شد'); go('pay');
@@ -1185,7 +1095,6 @@ function txModal(t, units) {
         p_force: false,
       });
       
-      // ارسال به بله
       notifyBale(`📝 تراکنش جدید ثبت شد:\n\n🔹 نوع: ${txType}\n🏢 واحد: ${unitNo ? 'واحد ' + unitNo : 'ساختمان'}\n💰 مبلغ: ${fmt(amount)} تومان\n📄 شرح: ${desc || '—'}`);
       
       m.remove(); toast('ثبت شد'); go('tx');
@@ -1207,8 +1116,7 @@ function exportCsv(rows) {
   a.download = 'Transactions.csv';
   a.click();
 }
-
-/* =========================================================
+   /* =========================================================
    17. Report
    ========================================================= */
 async function viewReport(el) {
@@ -1812,7 +1720,6 @@ async function viewRates(el) {
         p_payer_gas: getChecked('r-pu'),
       });
       
-      // ارسال به بله
       notifyBale(`📊 نرخ‌های ماه ${MONTHS[m-1]} ${y} ثبت/ویرایش شد:\n\n🔹 شارژ: ${fmt(charge)} تومان\n🔹 بازسازی: ${fmt(repair)} تومان\n🔹 پارکینگ: ${fmt(parking)} تومان`);
       
       toast('ذخیره شد و به بله ارسال گردید'); 
@@ -1833,7 +1740,6 @@ async function viewRates(el) {
         p_start_ym: s,
       });
       
-      // ارسال به بله
       notifyBale(`⚙️ تنظیمات کلی ساختمان تغییر کرد:\n\n🏢 نام: ${name}\n💰 موجودی اولیه: ${bal} تومان`);
       
       toast('ذخیره شد و به بله ارسال گردید'); 
@@ -1910,202 +1816,91 @@ async function viewProfile(el) {
    ========================================================= */
 window.addEventListener('online', () => toast('اتصال اینترنت برقرار شد'));
 window.addEventListener('offline', () => toast('اتصال اینترنت قطع شد', true));
-/* =========================================================
-   22. Back Navigation — Double Back to Exit
-   ---------------------------------------------------------
-   سیاست:
-   1) داخل هر صفحه غیر از داشبورد:
-      Back => داشبورد
-   2) روی داشبورد:
-      Back اول => پیام «دوباره بزنید»
-      Back دوم حداکثر تا 2 ثانیه => خروج از صفحه/برنامه
-   3) Back اول هرگز نباید اجازه عبور به History قبلی مرورگر را بدهد.
-   ========================================================= */
 
 const BACK_EXIT_WINDOW_MS = 2000;
-
 let backPressCount = 0;
 let backPressTimer = null;
 let appHistoryReady = false;
 
 function resetBackPress() {
   backPressCount = 0;
-
   if (backPressTimer) {
     clearTimeout(backPressTimer);
     backPressTimer = null;
   }
 }
 
-/*
- * History Guard
- *
- * همیشه یک Entry محافظ جلوی Entry فعلی برنامه نگه می‌داریم.
- * بنابراین Back اول فقط popstate ایجاد می‌کند و به سایت/صفحه
- * قبلی مرورگر عبور نمی‌کند.
- */
 function ensureAppHistory() {
   const current = history.state;
-
   if (!current?.app) {
-    history.replaceState(
-      { app: true, view: S.view || 'dash', root: true },
-      '',
-      '#app'
-    );
-
-    history.pushState(
-      { app: true, view: S.view || 'dash', guard: true },
-      '',
-      '#app'
-    );
+    history.replaceState({ app: true, view: S.view || 'dash', root: true }, '', '#app');
+    history.pushState({ app: true, view: S.view || 'dash', guard: true }, '', '#app');
   } else if (!current.guard) {
-    history.pushState(
-      {
-        ...current,
-        app: true,
-        view: S.view || current.view || 'dash',
-        guard: true
-      },
-      '',
-      '#app'
-    );
+    history.pushState({ ...current, app: true, view: S.view || current.view || 'dash', guard: true }, '', '#app');
   }
-
   appHistoryReady = true;
 }
 
 function rearmHistoryGuard() {
-  history.pushState(
-    {
-      app: true,
-      view: S.view || 'dash',
-      guard: true
-    },
-    '',
-    '#app'
-  );
+  history.pushState({ app: true, view: S.view || 'dash', guard: true }, '', '#app');
 }
 
 function handleBackNavigation() {
-  /*
-   * مهم:
-   * این شرط نباید بر اساس S.me باشد.
-   * اگر S.me هنوز به‌صورت async آماده نشده باشد، Back اول
-   * نباید باعث خروج مستقیم مرورگر شود.
-   */
   if (!appHistoryReady) {
     ensureAppHistory();
     return;
   }
 
-  /*
-   * اگر صفحه‌ای داخلی باز است، Back فقط به داشبورد می‌رود.
-   * در این حالت اصلاً وارد منطق Double Back نمی‌شویم.
-   */
   if (S.me && S.view !== 'dash') {
     resetBackPress();
-
     go('dash', true);
-
-    /*
-     * Entry فعلی را به Guard داشبورد تبدیل می‌کنیم.
-     * این کار جلوی زنجیره شدن History صفحات داخلی را می‌گیرد.
-     */
-    history.replaceState(
-      {
-        app: true,
-        view: 'dash',
-        guard: true
-      },
-      '',
-      '#app'
-    );
-
+    history.replaceState({ app: true, view: 'dash', guard: true }, '', '#app');
     return;
   }
 
-  /*
-   * اگر هنوز کاربر لاگین را کامل نکرده، فقط Guard را دوباره فعال کن.
-   * Back اول نباید باعث خروج ناخواسته از صفحه برنامه شود.
-   */
   if (!S.me) {
     resetBackPress();
     rearmHistoryGuard();
     return;
   }
 
-  /*
-   * Dashboard — Back اول
-   */
   if (backPressCount === 0) {
     backPressCount = 1;
-
     toast('برای خروج، دوباره دکمه بازگشت را بزنید', true);
-
     clearTimeout(backPressTimer);
-
     backPressTimer = setTimeout(() => {
       backPressCount = 0;
       backPressTimer = null;
     }, BACK_EXIT_WINDOW_MS);
-
-    /*
-     * بعد از popstate دوباره یک Guard می‌سازیم.
-     * بنابراین Back اول هیچ‌وقت به صفحه قبلی مرورگر نمی‌رسد.
-     */
     rearmHistoryGuard();
-
     return;
   }
 
-  /*
-   * Dashboard — Back دوم در بازه 2 ثانیه
-   */
   resetBackPress();
-
-  /*
-   * اینجا عمداً logout نمی‌کنیم و sessionStorage را پاک نمی‌کنیم.
-   * خروج فقط از History برنامه است.
-   *
-   * چون Back اول یک Guard جدید ساخته، Back دوم اکنون از
-   * مرز برنامه عبور می‌کند.
-   */
   history.back();
 }
 
 window.addEventListener('popstate', handleBackNavigation);
-
-/*
- * راه‌اندازی History Guard فقط یک بار.
- * اگر hash قبلی مربوط به برنامه باشد، همان ساختار حفظ می‌شود.
- */
 ensureAppHistory();
 
-/*
- * وقتی برنامه به پس‌زمینه می‌رود، شمارنده Double Back منقضی شود.
- * این کار مانع می‌شود Back اول قبل از خروج و Back دوم بعد از
- * برگشت از یک برنامه دیگر به‌عنوان یک جفت محسوب شوند.
- */
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     resetBackPress();
   }
 });
 
-// بستن منوی اصلی با کلیک بیرون از آن — فقط یک listener سراسری
 document.addEventListener('click', e => {
   if (!e.target.closest('.menu-dropdown')) {
     $('#main-menu')?.classList.remove('show');
   }
 });
 
-// وقتی برنامه به پس‌زمینه می‌رود، Double Back از حالت نیمه‌کاره خارج شود.
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     resetBackPress();
   }
 });
+
 if (S.token) renderShell(); else renderLogin();
 </script>
 </body>
