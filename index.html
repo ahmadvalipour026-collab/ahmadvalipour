@@ -1163,7 +1163,6 @@ function exportCsv(rows) {
   a.download = 'Transactions.csv';
   a.click();
 }
-
 /* =========================================================
    17. Report
    ========================================================= */
@@ -1249,48 +1248,7 @@ async function viewReport(el) {
       btn.disabled = false;
     }
   });
-}      
-      tableElement.style.overflow = originalOverflow;
-      tableElement.style.maxHeight = originalMaxHeight;
-      tableElement.style.width = originalWidth;
-
-      // 👇 اینجا کیفیت عکس رو 0.95 گذاشتیم
-      const base64Image = canvas.toDataURL('image/jpeg', 0.95);
-
-      btn.textContent = 'در حال ارسال به بله...';
-      
-      await notifyBale(`📊 گزارش ماهانه ${rep.month_name} ${fa(rep.year)}\n${S.building}`, base64Image);
-      
-      toast('گزارش با موفقیت به گروه بله ارسال شد');
-    } catch (e) {
-      showErr(e);
-    } finally {
-      btn.textContent = oldText;
-      btn.disabled = false;
-    }
-  });
-      
-      // برگرداندن استایل‌ها به حالت اول (تا توی موبایل خودت خراب نشه)
-      tableElement.style.overflow = originalOverflow;
-      tableElement.style.maxHeight = originalMaxHeight;
-      tableElement.style.width = originalWidth;
-
-      const base64Image = canvas.toDataURL('image/jpeg', 0.95);
-
-      btn.textContent = 'در حال ارسال به بله...';
-      
-      await notifyBale(`📊 گزارش ماهانه ${rep.month_name} ${fa(rep.year)}\n${S.building}`, base64Image);
-      
-      toast('گزارش با موفقیت به گروه بله ارسال شد');
-    } catch (e) {
-      showErr(e);
-    } finally {
-      btn.textContent = oldText;
-      btn.disabled = false;
-    }
-  });
 }
-
 /* =========================================================
    18. Units (admin) — با آرشیو و تغییر وضعیت
    ========================================================= */
