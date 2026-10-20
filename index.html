@@ -494,4 +494,818 @@ function billCard(r, rep) {
   const line = (label, amt, ok) => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)">
       <span>${label}</span>
-      <span
+      <span>${(amt === 0 || ok) ? '<span class="chip ok">پرداخت شده</span>' : '<span class="chip no">پرداخت نشده</span>'}</span>
+    </div>`;
+  return `<div class="card" style="padding:0;overflow:hidden">
+    <div style="background:var(--primary);color:#fff;padding:24px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="color:#94a3b8;font-size:13px">صورتحساب ${fa(rep.year)} · ${esc(r.full_name || '')} <span class="chip ex" style="color:#fff;border:1px solid #fff">${esc(r.occupancy)}</span></div>
+      </div>
+      <div style="text-align:left">
+        <small style="color:#94a3b8">مانده قابل پرداخت (تومان)</small>
+        <div style="font-size:36px;font-weight:900;line-height:1.2">${fmt(r.remaining)}</div>
+      </div>
+    </div>
+    <div style="padding:10px 24px">
+      ${line('سهم قبض آب', r.water, r.ok_water)}
+      ${line('بازسازی', r.repair, r.ok_repair)}
+      ${r.parking > 0 ? line('اجاره پارکینگ', r.parking, r.ok_parking) : ''}
+    </div>
+    <div style="background:#f8fafc;padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px;border-top:1px solid var(--line)">
+      <div><small style="color:var(--muted);display:block">بدهی قبلی</small><b>${money(r.prev_debt)}</b></div>
+      <div><small style="color:var(--muted);display:block">پرداختی این ماه</small><b>${money(r.paid_this_month)}</b></div>
+    </div>
+  </div>`;
+}
+
+function reminderText(r, rep) {
+  return `${S.building} - واحد ${r.unit_no}\nصورتحساب ${rep.month_name} ${rep.year}:\n` +
+    `شارژ ${fmt(r.charge)} | آب ${fmt(r.water)} | گاز ${fmt(r.gas)} | بازسازی ${fmt(r.repair)}` +
+    (r.parking ? ` | پارکینگ ${fmt(r.parking)}` : '') +
+    `\nبدهی قبلی: ${fmt(r.prev_debt)}\nمانده قابل پرداخت: ${fmt(r.remaining)} تومان`;
+}
+
+function reqTable(list, admin) {
+  if (!list || !list.length) return `<p class="sub">موردی نیست</p>`;
+  const st = s => s === 'approved' ? '<span class="chip ok">تایید شد</span>'
+    : s === 'rejected' ? '<span class="chip no">رد شد</span>'
+    : '<span class="chip pd">منتظر تایید</span>';
+  return `<div class="tbl-wrap" style="border:0"><table><thead><tr>
+    ${admin ? '<th>واحد</th>' : ''}<th>ماه</th><th>مبلغ</th><th>وضعیت</th>${admin ? '<th></th>' : ''}
+  </tr></thead><tbody>
+    ${list.map(p => `<tr>
+      ${admin ? `<td><b>واحد ${fa(p.unit_no)}</b><br><span style="font-size:12px;color:var(--muted)">${esc(p.full_name || '')}</span></td>` : ''}
+      <td>${MONTHS[p.month - 1]} ${fa(p.year)}</td>
+      <td>${money(p.amount)}</td>
+      <td>${st(p.status)}</td>
+      <td>${admin && p.status === 'pending' ? `<button class="btn sm" data-ap="${p.id}">بررسی</button>` : ''}</td>
+    </tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+async function viewDash(el) {
+  const rep = await T('app_report', { p_year: S.y, p_month: S.m });
+  const missing = rep.missing_rates?.length
+    ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">مبالغ شارژ/بازسازی برای این ماه‌ها تعریف نشده: ${rep.missing_rates.map(fa).join('، ')}</div>`
+    : '';
+
+  if (!S.me.is_admin) {
+    const r = rep.rows[0];
+    const reqs = await T('app_get_payment_requests');
+    el.innerHTML = `${mustChangeBanner()}
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:24px">
+        <div><h1>سلام واحد ${fa(S.me.unit_no)}</h1><p class="sub" style="margin:0">صورتحساب ${rep.month_name} ${fa(rep.year)}</p></div>
+        ${periodPicker()}
+      </div>
+      ${missing}
+      ${r ? billCard(r, rep) : '<p class="sub">صورتحسابی ثبت نشده.</p>'}
+      <h2 style="margin-top:32px">سابقه پرداخت‌ها</h2>
+      ${reqTable(reqs.slice(0, 8), false)}`;
+    bindPeriod(() => go('dash'));
+    $('#go-profile')?.addEventListener('click', e => { e.preventDefault(); go('profile'); });
+    return;
+  }
+
+  const fund = await T('app_fund_summary', { p_year: S.y, p_month: S.m });
+  const rows = rep.rows || [];
+
+  const unitMap = {};
+  rows.forEach(r => {
+    if (!unitMap[r.unit_no]) unitMap[r.unit_no] = { unit_no: r.unit_no, remaining: 0, current_due: 0, accounts: [], display_name: '' };
+    unitMap[r.unit_no].remaining += r.remaining;
+    unitMap[r.unit_no].current_due += r.current_due;
+    unitMap[r.unit_no].accounts.push(r);
+    if (!unitMap[r.unit_no].display_name && r.full_name) unitMap[r.unit_no].display_name = r.full_name;
+  });
+
+  const mapUnits = [];
+  for (let i = 1; i <= 10; i++) {
+    mapUnits.push(unitMap[i] || { unit_no: i, remaining: 0, current_due: 0, accounts: [], display_name: '-' });
+  }
+
+  const floors = [];
+  for (let u = 9; u >= 1; u -= 2) {
+    floors.push([mapUnits.find(x => x.unit_no === u), mapUnits.find(x => x.unit_no === u + 1)]);
+  }
+
+  const totalDebt = mapUnits.reduce((s, r) => s + Math.max(0, r.remaining), 0);
+
+  const winBg = r => r.remaining <= 0 ? '#d1fae5' : r.remaining > r.current_due ? '#fee2e2' : '#fef3c7';
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:24px">
+      <div><h1>داشبورد مدیریت</h1><p class="sub" style="margin:0">خلاصه وضعیت صندوق در ${rep.month_name} ${fa(rep.year)}</p></div>
+      ${periodPicker()}
+    </div>
+    ${missing}
+    ${mustChangeBanner()}
+    <div class="grid g3" style="margin-bottom:24px">
+      <div class="card" style="background:var(--accent);color:#fff">
+        <small style="opacity:.8">موجودی فعلی صندوق</small>
+        <div style="font-size:32px;font-weight:900">${fmt(fund.balance)}</div>
+      </div>
+      <div class="card"><small style="color:var(--muted)">درآمد این ماه</small><div style="font-size:24px;font-weight:900;color:var(--success)">${money(fund.month_income ?? fund.month_expense)}</div></div>
+      <div class="card"><small style="color:var(--muted)">مطالبات معوق</small><div style="font-size:24px;font-weight:900;color:var(--warning)">${money(totalDebt)}</div></div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h2>نقشه ساختمان</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px">
+          ${floors.map(fl => fl.map(r => r ? `
+            <button class="win" data-u="${r.unit_no}" style="background:${winBg(r)}">
+              <span style="font-size:14px;font-weight:700;color:var(--muted)">واحد ${fa(r.unit_no)}</span>
+              <span style="font-size:16px;font-weight:900">${esc(r.display_name)}</span>
+              <span style="font-size:14px;font-weight:700;margin-top:8px">${r.remaining <= 0 ? 'تسویه' : fmt(r.remaining) + ' تومان'}</span>
+            </button>` : '').join('')).join('')}
+        </div>
+      </div>
+      <div class="grid" style="align-content:start">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+            <h2 style="margin:0">پرداخت‌های منتظر تایید</h2>
+            <button class="btn lt sm" id="go-pay">مشاهده</button>
+          </div>
+          <div style="font-size:36px;font-weight:900;color:var(--warning)">${fa(fund.pending_payments)}</div>
+        </div>
+        <div class="card">
+          <h2>قبض‌های این ماه</h2>
+          <div style="font-size:13px;color:var(--muted);line-height:2">
+            قبض آب: ${fmt(rep.water_total)} تومان<br>
+            قبض گاز: ${fmt(rep.gas_total)} تومان
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  bindPeriod(() => go('dash'));
+  $('#go-pay')?.addEventListener('click', () => go('pay'));
+  $('#go-profile')?.addEventListener('click', e => { e.preventDefault(); go('profile'); });
+
+  $$('.win', el).forEach(b => b.addEventListener('click', () => {
+    const uData = mapUnits.find(x => x.unit_no == b.dataset.u);
+    if (!uData) return;
+    const cardsHtml = uData.accounts.length
+      ? uData.accounts.map(r => billCard(r, rep)).join('<hr style="border:0;border-top:1px dashed var(--line);margin:20px 0">')
+      : '<p class="sub" style="text-align:center;padding:20px">حسابی برای این واحد ثبت نشده است.</p>';
+    const smsHtml = uData.accounts.map(r => r.phone ? smsBtn(r.phone, reminderText(r, rep), `پیامک به ${r.full_name || r.occupancy}`) : '').join('');
+    const m = modal(`
+      <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <h2 style="margin:0">صورتحساب واحد ${fa(uData.unit_no)}</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">${smsHtml}</div>
+      </div>
+      ${cardsHtml}
+      <div style="margin-top:20px"><button class="btn lt sm" id="m-tx">تراکنش‌های این واحد</button></div>`);
+    $('#m-tx', m)?.addEventListener('click', () => {
+      m.remove();
+      S.txFilter = { y: S.y, m: '', unit: String(uData.unit_no), type: '' };
+      go('tx');
+    });
+  }));
+}
+
+/* ============================================================
+   ANNOUNCEMENTS
+   ============================================================ */
+async function viewAnnouncements(el) {
+  const list = await T('app_get_announcements');
+  const adminForm = S.me.is_admin ? `
+    <form id="af" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)">
+      <h2 style="grid-column:1/-1;margin:0">ارسال اعلان جدید</h2>
+      <label class="f">عنوان<input id="a-title" required></label>
+      <label class="f">نوع<select id="a-type"><option value="general">اطلاعیه عمومی</option><option value="meeting">دعوت به جلسه</option></select></label>
+      <label class="f" style="grid-column:1/-1">متن کامل<textarea id="a-content" rows="3" required></textarea></label>
+      <div style="grid-column:1/-1"><button class="btn">ثبت اعلان</button></div>
+    </form>` : '';
+  el.innerHTML = `<h1>اعلانات ساختمان</h1><p class="sub">اطلاعیه‌ها و دعوت‌نامه‌ها</p>${adminForm}
+    <div class="grid g2">
+      ${list.map(a => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+            <h2 style="margin:0">${esc(a.title)}</h2>
+            <span class="chip ${a.type === 'meeting' ? 'pd' : 'ex'}">${a.type === 'meeting' ? 'جلسه' : 'اطلاعیه'}</span>
+          </div>
+          <p style="white-space:pre-wrap;margin:0 0 16px">${esc(a.content)}</p>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <span style="font-size:12px;color:var(--muted)">${new Date(a.created_at).toLocaleDateString('fa-IR')}</span>
+            ${S.me.is_admin ? `<button class="btn rd sm" data-del="${a.id}">حذف</button>` : ''}
+          </div>
+        </div>`).join('') || '<div class="card sub">هیچ اعلانی وجود ندارد.</div>'}
+    </div>`;
+
+  if (S.me.is_admin) {
+    $('#af')?.addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        await T('app_admin_save_announcement', {
+          p_title: $('#a-title').value,
+          p_content: $('#a-content').value,
+          p_type: $('#a-type').value,
+        });
+        toast('ثبت شد'); go('announcements');
+      } catch (err) { showErr(err); }
+    });
+    $$('[data-del]').forEach(b => b.addEventListener('click', async () => {
+      if (!confirm('حذف شود؟')) return;
+      try { await T('app_admin_delete_announcement', { p_id: +b.dataset.del }); toast('حذف شد'); go('announcements'); }
+      catch (e) { showErr(e); }
+    }));
+  }
+}
+
+/* ============================================================
+   REQUESTS
+   ============================================================ */
+async function viewRequests(el) {
+  const list = await T('app_get_requests');
+  const admin = S.me.is_admin;
+  const residentForm = !admin ? `
+    <form id="rf2" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)">
+      <h2 style="grid-column:1/-1;margin:0">ثبت درخواست جدید</h2>
+      <label class="f">موضوع<select id="rq-type"><option>درخواست تعمیرات</option><option>انتقاد و پیشنهاد</option></select></label>
+      <label class="f" style="grid-column:1/-1">توضیحات<textarea id="rq-desc" rows="3" required></textarea></label>
+      <div style="grid-column:1/-1"><button class="btn">ارسال به مدیر</button></div>
+    </form>` : '';
+
+  el.innerHTML = `<h1>${admin ? 'درخواست‌ها' : 'ارتباط با مدیر'}</h1>
+    <p class="sub">${admin ? 'درخواست‌های ساکنین' : 'ثبت درخواست تعمیرات، انتقادات'}</p>
+    ${residentForm}
+    <div class="grid g2">
+      ${list.map(r => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+            <h2 style="margin:0">${esc(r.type)}</h2>
+            <span class="chip ${r.status === 'done' ? 'ok' : 'pd'}">${r.status === 'done' ? 'بررسی شد' : 'در حال بررسی'}</span>
+          </div>
+          <p class="sub" style="font-size:12px;margin:0 0 8px">${esc(r.full_name || '')} ${r.unit_no ? '· واحد ' + fa(r.unit_no) : ''}</p>
+          <p style="white-space:pre-wrap;margin:0 0 16px">${esc(r.description)}</p>
+          ${admin && r.status !== 'done' ? `<button class="btn lt sm" data-ok="${r.id}">علامت‌گذاری به عنوان بررسی شده</button>` : ''}
+        </div>`).join('') || '<div class="card sub">موردی وجود ندارد.</div>'}
+    </div>`;
+
+  if (!admin) {
+    $('#rf2')?.addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        await T('app_submit_request', { p_type: $('#rq-type').value, p_description: $('#rq-desc').value });
+        toast('ثبت شد'); go('requests');
+      } catch (err) { showErr(err); }
+    });
+  } else {
+    $$('[data-ok]').forEach(b => b.addEventListener('click', async () => {
+      try { await T('app_admin_update_request', { p_id: +b.dataset.ok, p_status: 'done' }); toast('تغییر کرد'); go('requests'); }
+      catch (e) { showErr(e); }
+    }));
+  }
+}
+
+/* ============================================================
+   PAYMENT
+   ============================================================ */
+function payModal(r) {
+  const m = modal(`
+    <h2>ثبت پرداخت</h2>
+    <p class="sub">اطمینان حاصل کنید تصویر فیش یا رسید واضح باشد.</p>
+    <form id="pf" class="grid g2">
+      <label class="f">بابت<select id="pf-c">
+        ${Object.entries(CATS).sort(([a],[b]) => (a==='bill'?-1:b==='bill'?1:0))
+          .map(([k,v]) => `<option value="${k}">${esc(v)}</option>`).join('')}
+      </select></label>
+      <label class="f">مبلغ (تومان)<input id="pf-a" inputmode="numeric" required value="${r && r.remaining > 0 ? fmt(r.remaining) : ''}"></label>
+      <label class="f">ماه<select id="pf-m">${monthOptions(S.m)}</select></label>
+      <label class="f">سال<select id="pf-y">${yearOptions(S.y)}</select></label>
+      <label class="f">تاریخ واریز<input id="pf-d" dir="ltr" value="${TODAY.y}/${String(TODAY.m).padStart(2,'0')}/${String(TODAY.d).padStart(2,'0')}"></label>
+      <label class="f">کد پیگیری<input id="pf-r" dir="ltr"></label>
+      <label class="f" style="grid-column:1/-1">بارگذاری تصویر فیش (اختیاری)<input id="pf-img" type="file" accept="image/*"></label>
+      <label class="f" style="grid-column:1/-1">توضیحات<input id="pf-n"></label>
+      <button class="btn sf" style="grid-column:1/-1">ارسال برای تایید</button>
+    </form>`);
+
+  attachNumericInputIn(m, '#pf-a');
+  $('#pf', m).addEventListener('submit', async e => {
+    e.preventDefault();
+    const fileInput = $('#pf-img', m);
+    let base64Image = null;
+    if (fileInput.files.length > 0) base64Image = await compressImage(fileInput.files[0]);
+    try {
+      await T('app_submit_payment', {
+        p_year: +$('#pf-y', m).value,
+        p_month: +$('#pf-m', m).value,
+        p_category: $('#pf-c', m).value,
+        p_amount: toNum($('#pf-a', m).value),
+        p_ref_code: $('#pf-r', m).value,
+        p_note: $('#pf-n', m).value,
+        p_pay_date: $('#pf-d', m).value,
+        p_receipt_image: base64Image,
+      });
+      m.remove(); toast('پرداخت ثبت شد و منتظر تایید است'); go(S.view);
+    } catch (err) { showErr(err); }
+  });
+}
+
+async function viewPay(el) {
+  const admin = S.me.is_admin;
+  const list = await T('app_get_payment_requests');
+  const pending = list.filter(p => p.status === 'pending');
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap">
+      <div><h1>${admin ? 'بررسی پرداخت‌ها' : 'پرداخت بدهی'}</h1>
+        <p class="sub" style="margin:0">${admin ? 'پرداخت‌های منتظر تایید شما' : 'پرداخت خود را ثبت کنید.'}</p></div>
+      <button class="btn sf" id="np">ثبت پرداخت جدید</button>
+    </div>
+    ${admin ? `
+      <h2>منتظر تایید (${fa(pending.length)})</h2>
+      ${reqTable(pending, true)}
+      <h2 style="margin-top:28px">سابقه</h2>
+      ${reqTable(list.filter(p => p.status !== 'pending'), true)}
+    ` : reqTable(list, false)}`;
+
+  $('#np').addEventListener('click', async () => {
+    let r = null;
+    if (!admin) { const rep = await T('app_report', { p_year: S.y, p_month: S.m }); r = rep.rows[0]; }
+    payModal(r);
+  });
+  $$('[data-ap]').forEach(b => b.addEventListener('click', () => approveModal(list.find(p => p.id == b.dataset.ap))));
+}
+
+function approveModal(p) {
+  const m = modal(`
+    <h2>تایید پرداخت واحد ${fa(p.unit_no)}</h2>
+    <p class="sub">${esc(p.full_name || '')} · بابت ${esc(CATS[p.category] || p.category)} · ${MONTHS[p.month-1]} ${fa(p.year)}</p>
+    ${p.receipt_image
+      ? `<div style="margin-bottom:16px;text-align:center"><img src="${p.receipt_image}" style="max-width:100%;max-height:300px;border-radius:12px;border:1px solid var(--line)"></div>`
+      : `<div class="card" style="background:#f8fafc;margin-bottom:16px;text-align:center;color:var(--muted)">تصویری بارگذاری نشده است</div>`}
+    <div class="grid g2">
+      <label class="f">مبلغ تاییدی (تومان)<input id="ap-a" value="${fmt(p.amount)}" inputmode="numeric"></label>
+      <label class="f">یادداشت<input id="ap-n"></label>
+    </div>
+    <div style="margin-top:20px;display:flex;gap:10px">
+      <button class="btn" id="ap-go" style="flex:1">تایید و ثبت</button>
+      <button class="btn rd" id="ap-rj">رد کردن</button>
+    </div>`);
+  attachNumericInputIn(m, '#ap-a');
+  $('#ap-rj', m).addEventListener('click', async () => {
+    const note = prompt('دلیل رد:') ?? null;
+    if (note === null) return;
+    try { await T('app_admin_review_payment', { p_id: p.id, p_approve: false, p_admin_note: note }); m.remove(); toast('رد شد'); go('pay'); }
+    catch (e) { showErr(e); }
+  });
+  $('#ap-go', m).addEventListener('click', async () => {
+    try {
+      await T('app_admin_review_payment', { p_id: p.id, p_approve: true, p_amount: toNum($('#ap-a', m).value), p_admin_note: $('#ap-n', m).value });
+      m.remove(); toast('تایید شد'); go('pay');
+    } catch (e) { showErr(e); }
+  });
+}
+
+/* ============================================================
+   TRANSACTIONS
+   ============================================================ */
+async function viewTx(el) {
+  const admin = S.me.is_admin;
+  if (!S.txFilter) S.txFilter = { y: String(S.y), m: '', unit: '', type: '' };
+  const f = S.txFilter;
+
+  const unitParam = admin && f.unit !== '' ? +f.unit : null;
+  const list = await T('app_get_transactions', {
+    p_year: f.y ? +f.y : null,
+    p_month: f.m ? +f.m : null,
+    p_unit: unitParam,
+  });
+
+  const rows = list.filter(t => !f.type || t.tx_type === f.type);
+  const inc = rows.filter(t => t.tx_type === 'درآمد').reduce((s, t) => s + t.amount, 0);
+  const exp = rows.filter(t => t.tx_type === 'هزینه').reduce((s, t) => s + t.amount, 0);
+  const units = admin ? await T('app_get_units') : [];
+  const phoneOf = u => {
+    const un = units.find(x => x.unit_no === u);
+    const a = un?.accounts.find(a => a.is_primary && a.is_active) || un?.accounts[0];
+    return a?.phone;
+  };
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap">
+      <div><h1>تراکنش‌ها</h1><p class="sub" style="margin:0">درآمد ${fmt(inc)} · هزینه ${fmt(exp)} · ${fa(rows.length)} ردیف</p></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        ${admin ? '<button class="btn sf" id="tx-new">ثبت تراکنش</button>' : ''}
+        <button class="btn lt" id="tx-csv">خروجی اکسل</button>
+      </div>
+    </div>
+    <div class="card no-print" style="margin-bottom:16px;padding:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <label class="f" style="width:110px">سال<select id="f-y"><option value="">همه</option>${yearOptions(f.y)}</select></label>
+      <label class="f" style="width:130px">ماه<select id="f-m">${monthOptions(f.m, true)}</select></label>
+      ${admin ? `<label class="f" style="width:130px">واحد<select id="f-u">${unitOptions(f.unit, true, true)}</select></label>` : ''}
+      <label class="f" style="width:110px">نوع<select id="f-t"><option value="">همه</option><option value="درآمد" ${f.type === 'درآمد' ? 'selected' : ''}>درآمد</option><option value="هزینه" ${f.type === 'هزینه' ? 'selected' : ''}>هزینه</option></select></label>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>تاریخ</th><th>واحد</th><th>نوع</th><th>محل</th><th>شرح</th><th>مبلغ</th><th>سکونت</th>${admin ? '<th></th>' : ''}
+    </tr></thead><tbody>
+      ${rows.map(t => `<tr>
+        <td class="num">${fa(t.tx_date)}</td>
+        <td>${t.unit_no ? 'واحد ' + fa(t.unit_no) : '<b>ساختمان</b>'}</td>
+        <td>${t.tx_type === 'درآمد' ? '<span class="chip ok">درآمد</span>' : '<span class="chip no">هزینه</span>'}${t.source === 'payment' ? ' <span class="chip pd">پرداخت</span>' : ''}</td>
+        <td>${esc(t.location || '—')}</td>
+        <td>${esc(t.description || '—')}</td>
+        <td>${money(t.amount)}</td>
+        <td class="muted">${esc(t.occupancy || '—')}</td>
+        ${admin ? `<td><div style="display:flex;gap:6px;flex-wrap:nowrap">
+          ${t.unit_no ? smsBtn(phoneOf(t.unit_no), `${S.building} - واحد ${t.unit_no}\n${t.tx_type === 'درآمد' ? 'دریافت' : 'ثبت'} ${fmt(t.amount)} تومان بابت ${t.description} ثبت شد.`) : ''}
+          <button class="btn rd sm" data-dl="${t.id}">حذف</button>
+        </div></td>` : ''}
+      </tr>`).join('') || `<tr><td colspan="${admin?8:7}" class="muted" style="text-align:center">تراکنشی نیست</td></tr>`}
+    </tbody></table></div>`;
+
+  const upd = debounce(() => {
+    f.y = $('#f-y')?.value ?? '';
+    f.m = $('#f-m')?.value ?? '';
+    f.unit = $('#f-u')?.value ?? '';
+    f.type = $('#f-t')?.value ?? '';
+    go('tx');
+  }, 300);
+  ['#f-y', '#f-m', '#f-u', '#f-t'].forEach(s => $(s)?.addEventListener('change', upd));
+
+  $('#tx-csv')?.addEventListener('click', () => exportCsv(rows));
+  if (!admin) return;
+  $('#tx-new')?.addEventListener('click', () => txModal(null, units));
+  $$('[data-dl]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('حذف شود؟')) return;
+    try { await T('app_admin_delete_transaction', { p_id: +b.dataset.dl }); toast('حذف شد'); go('tx'); }
+    catch (e) { showErr(e); }
+  }));
+}
+
+function txModal(t, units) {
+  const isNew = !t;
+  t = t || { year: TODAY.y, month: TODAY.m, day: TODAY.d, unit_no: null, tx_type: 'درآمد', category: 'charge', location: '', description: '', amount: '', occupancy: '' };
+  const m = modal(`
+    <h2>${isNew ? 'ثبت تراکنش جدید' : 'ویرایش تراکنش'}</h2>
+    <form id="tf" class="grid g3">
+      <label class="f">نوع<select id="t-type"><option value="درآمد" ${t.tx_type === 'درآمد' ? 'selected' : ''}>درآمد</option><option value="هزینه" ${t.tx_type === 'هزینه' ? 'selected' : ''}>هزینه</option></select></label>
+      <label class="f">واحد<select id="t-unit">${unitOptions(t.unit_no ?? 0, true)}</select></label>
+      <label class="f">دسته<select id="t-cat">${Object.entries(CATS).filter(([k]) => k !== 'bill').map(([k,v]) => `<option value="${k}" ${t.category === k ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></label>
+      <label class="f">سکونت<select id="t-occ">${OCC.map(o => `<option ${t.occupancy === o ? 'selected' : ''}>${o}</option>`).join('')}</select></label>
+      <label class="f">سال<select id="t-y">${yearOptions(t.year)}</select></label>
+      <label class="f">ماه<select id="t-m">${monthOptions(t.month)}</select></label>
+      <label class="f">روز<input id="t-d" type="number" min="1" max="31" value="${t.day || 1}"></label>
+      <label class="f">محل<input id="t-loc" value="${esc(t.location || '')}"></label>
+      <label class="f">شرح<input id="t-desc" value="${esc(t.description || '')}"></label>
+      <label class="f" style="grid-column:1/-1">مبلغ (تومان)<input id="t-amt" inputmode="numeric" required value="${t.amount ? fmt(t.amount) : ''}"></label>
+      <div style="grid-column:1/-1"><button class="btn sf" type="submit">${isNew ? 'ثبت' : 'ذخیره'}</button></div>
+    </form>`);
+  attachNumericInputIn(m, '#t-amt');
+  $('#tf', m).addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      await T('app_admin_save_transaction', {
+        p_id: isNew ? null : t.id,
+        p_year: +$('#t-y', m).value,
+        p_month: +$('#t-m', m).value,
+        p_day: +$('#t-d', m).value || 1,
+        p_unit_no: +$('#t-unit', m).value || null,
+        p_tx_type: $('#t-type', m).value,
+        p_category: $('#t-cat', m).value,
+        p_location: $('#t-loc', m).value,
+        p_description: $('#t-desc', m).value,
+        p_amount: toNum($('#t-amt', m).value),
+        p_occupancy: $('#t-occ', m).value,
+        p_force: false,
+      });
+      m.remove(); toast('ثبت شد'); go('tx');
+    } catch (e) { showErr(e); }
+  });
+}
+
+function exportCsv(rows) {
+  const sep = ';';
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const head = ['تاریخ', 'سال', 'ماه', 'واحد', 'نوع', 'محل', 'شرح', 'مبلغ', 'نوع سکونت'];
+  const lines = [head.map(q).join(sep)].concat(rows.slice().reverse().map(t => [
+    t.tx_date, t.year, t.month_name, t.unit_no ? 'واحد ' + t.unit_no : 'ساختمان',
+    t.tx_type, t.location, t.description, t.amount, t.occupancy,
+  ].map(q).join(sep)));
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Transactions.csv';
+  a.click();
+}
+
+/* ============================================================
+   REPORT
+   ============================================================ */
+async function viewReport(el) {
+  const rep = await T('app_report', { p_year: S.y, p_month: S.m });
+  const ok = v => v ? '<span class="chip ok">OK</span>' : '<span class="chip no">نشده</span>';
+  const cell = (amt, v) => `<td><div>${fmt(amt)}</div>${ok(v)}</td>`;
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap">
+      <div><h1>گزارش ${rep.month_name} ${fa(rep.year)}</h1></div>
+      <div>${periodPicker()}<button class="btn lt no-print" id="pr-btn">چاپ</button></div>
+    </div>
+    ${rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">نرخ ماه‌های ${rep.missing_rates.map(fa).join('، ')} تعریف نشده.</div>` : ''}
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>واحد</th><th>ساکن</th><th>سکونت</th><th>نفرات</th><th>شارژ</th><th>آب</th><th>گاز</th><th>بازسازی</th><th>پارکینگ</th><th>بدهی قبلی</th><th>جمع</th><th>پرداختی</th><th>مانده</th>${S.me.is_admin ? '<th class="no-print"></th>' : ''}
+    </tr></thead><tbody>
+      ${rep.rows.map(r => `<tr>
+        <td><b>واحد ${fa(r.unit_no)}</b></td>
+        <td>${esc(r.full_name || '—')}</td>
+        <td><span class="chip ex">${esc(r.occupancy)}</span></td>
+        <td>${fa(r.persons)}</td>
+        ${cell(r.charge, r.ok_charge)}
+        ${cell(r.water, r.ok_water)}
+        ${cell(r.gas, r.ok_gas)}
+        ${cell(r.repair, r.ok_repair)}
+        ${r.parking ? cell(r.parking, r.ok_parking) : '<td class="muted">—</td>'}
+        <td>${money(r.prev_debt)}</td>
+        <td><b>${money(r.total_payable)}</b></td>
+        <td>${money(r.paid_this_month)}</td>
+        <td><b>${money(r.remaining)}</b></td>
+        ${S.me.is_admin ? `<td class="no-print">${r.remaining > 0 ? smsBtn(r.phone, reminderText(r, rep), 'یادآوری') : ''}</td>` : ''}
+      </tr>`).join('')}
+    </tbody></table></div>`;
+  bindPeriod(() => go('report'));
+  $('#pr-btn')?.addEventListener('click', () => window.print());
+}
+
+/* ============================================================
+   UNITS
+   ============================================================ */
+async function viewUnits(el) {
+  const units = await T('app_get_units');
+  el.innerHTML = `<h1>واحدها</h1><p class="sub">حساب‌های کاربری ساکنین</p>
+    <div class="grid g3">
+      ${units.map(u => {
+        const owners = u.accounts.filter(a => a.occupancy !== 'مستأجر');
+        const tenants = u.accounts.filter(a => a.occupancy === 'مستأجر');
+        return `<div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <h2 style="margin:0">واحد ${fa(u.unit_no)}</h2>
+            <button class="btn lt sm" data-u="${u.unit_no}">مدیریت</button>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+            <span class="chip ex">${esc(u.occupancy || '')}</span>
+            <span class="chip ex">${fa(u.persons || 0)} نفر</span>
+            ${u.has_parking ? '<span class="chip pd">پارکینگ</span>' : ''}
+          </div>
+          ${owners.length ? `<div style="font-size:13px;margin-top:6px"><b>مالک:</b> ${owners.map(a => esc(a.full_name)).join(' و ')}</div>` : ''}
+          ${tenants.length ? `<div style="font-size:13px;margin-top:4px;color:var(--accent)"><b>مستأجر:</b> ${tenants.map(a => esc(a.full_name)).join(' و ')}</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  $$('[data-u]').forEach(b => b.addEventListener('click', () => {
+    const u = units.find(x => x.unit_no == b.dataset.u);
+    if (u) unitModal(u);
+  }));
+}
+
+function unitModal(u) {
+  const m = modal(`
+    <h2>واحد ${fa(u.unit_no)}</h2>
+    <div style="margin-top:20px">
+      ${u.accounts.map(a => `
+        <form class="acc grid g3" data-id="${a.id}" style="background:#f8fafc;padding:16px;border-radius:12px;margin-bottom:12px">
+          <label class="f">نام<input name="full_name" value="${esc(a.full_name || '')}"></label>
+          <label class="f">موبایل<input name="phone" dir="ltr" value="${esc(a.phone || '')}"></label>
+          <label class="f">سکونت<select name="occupancy">${OCC.map(o => `<option ${a.occupancy === o ? 'selected' : ''}>${o}</option>`).join('')}</select></label>
+          <label class="f">نام کاربری<input name="username" dir="ltr" value="${esc(a.username || '')}"></label>
+          <label class="f">رمز جدید<input name="pass" type="text" placeholder="بدون تغییر"></label>
+          <div style="align-self:end;display:flex;gap:8px">
+            <button class="btn sm">ذخیره</button>
+            <button type="button" class="btn lt sm" data-reset="${a.id}">ریست رمز</button>
+          </div>
+        </form>`).join('') || '<p class="sub">حسابی برای این واحد ثبت نشده.</p>'}
+    </div>`);
+
+  $$('form.acc', m).forEach(f => {
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        await T('app_admin_save_account', {
+          p_id: f.dataset.id,
+          p_unit_no: u.unit_no,
+          p_username: f.elements.username.value,
+          p_full_name: f.elements.full_name.value,
+          p_phone: f.elements.phone.value,
+          p_occupancy: f.elements.occupancy.value,
+          p_is_primary: true,
+          p_is_active: true,
+          p_new_password: f.elements.pass.value || null,
+          p_start_ym: 140406,
+        });
+        toast('ذخیره شد'); go('units');
+      } catch (err) { showErr(err); }
+    });
+    $('[data-reset]', f)?.addEventListener('click', async () => {
+      if (!confirm('آیا از بازگرداندن رمز عبور این کاربر مطمئن هستید؟')) return;
+      try {
+        const newPass = await T('app_admin_reset_password', { p_id: f.dataset.id });
+        alert('رمز عبور جدید: ' + newPass + '\n\nلطفاً به ساکن اطلاع دهید.');
+        toast('رمز عبور بازنشانی شد');
+      } catch (err) { showErr(err); }
+    });
+  });
+}
+
+/* ============================================================
+   RATES & SETTINGS
+   ============================================================ */
+async function viewRates(el) {
+  const [rates, st] = await Promise.all([T('app_get_rates'), T('app_get_settings')]);
+  const getPayers = arr => !arr ? 'همه' : arr.length === 0 ? 'هیچ‌کس' : arr.map(o => o.replace('مالک ساکن', 'ساکن')).join('، ');
+
+  el.innerHTML = `<h1>نرخ‌ها و تنظیمات</h1>
+    <div class="grid g2">
+      <div>
+        <h2 style="margin-bottom:16px">لیست نرخ‌های ثبت شده</h2>
+        <div id="rates-accordion">
+          ${rates.map(r => `
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <span>📅 ${MONTHS[r.month - 1]} ${fa(r.year)}</span>
+                <span class="chip ex" style="font-size:11px">مشاهده ▼</span>
+              </div>
+              <div class="accordion-body">
+                <table style="margin-bottom:16px"><tbody>
+                  <tr><td style="border:0"><b>شارژ:</b> ${money(r.charge)}<br><small style="color:var(--muted)">${getPayers(r.payer_charge)}</small></td>
+                      <td style="border:0"><b>بازسازی:</b> ${money(r.repair)}<br><small style="color:var(--muted)">${getPayers(r.payer_repair)}</small></td>
+                      <td style="border:0"><b>پارکینگ:</b> ${money(r.parking)}<br><small style="color:var(--muted)">${getPayers(r.payer_parking)}</small></td></tr>
+                </tbody></table>
+                <div style="display:flex;gap:8px">
+                  <button class="btn lt sm" data-er="${r.year}-${r.month}">ویرایش</button>
+                  <button class="btn rd sm" data-dr="${r.year}-${r.month}">حذف</button>
+                </div>
+              </div>
+            </div>`).join('') || '<p class="sub">هیچ نرخی ثبت نشده است.</p>'}
+        </div>
+      </div>
+
+      <div class="grid" style="align-content:start">
+        <form id="rf" class="card grid g3">
+          <h2 style="grid-column:1/-1;margin:0">ثبت / ویرایش نرخ</h2>
+          <label class="f">سال<select id="r-y">${yearOptions(TODAY.y)}</select></label>
+          <label class="f">ماه<select id="r-m">${monthOptions(TODAY.m)}</select></label>
+          <label class="f">شارژ<input id="r-c" inputmode="numeric"></label>
+          <div style="grid-column:1/-1;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            پرداخت‌کننده شارژ: ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-pch" checked> ${o.replace('مالک ساکن','ساکن')}</label>`).join('')}
+          </div>
+          <label class="f">بازسازی<input id="r-r" inputmode="numeric"></label>
+          <div style="grid-column:1/-1;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            پرداخت‌کننده بازسازی: ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-prp" checked> ${o.replace('مالک ساکن','ساکن')}</label>`).join('')}
+          </div>
+          <label class="f">پارکینگ<input id="r-p" inputmode="numeric"></label>
+          <div style="grid-column:1/-1;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            پرداخت‌کننده پارکینگ: ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-ppk" checked> ${o.replace('مالک ساکن','ساکن')}</label>`).join('')}
+          </div>
+          <label class="f" style="grid-column:1/-1">پرداخت‌کننده آب/گاز</label>
+          <div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-pu" checked> ${o.replace('مالک ساکن','ساکن')}</label>`).join('')}
+          </div>
+          <div style="grid-column:1/-1"><button class="btn sf" type="submit">ذخیره نرخ</button></div>
+        </form>
+
+        <form id="sf" class="card grid g3">
+          <h2 style="grid-column:1/-1;margin:0">تنظیمات کلی</h2>
+          <label class="f" style="grid-column:1/-1">نام ساختمان<input id="s-n" value="${esc(st.building_name || '')}"></label>
+          <label class="f">موجودی اولیه صندوق<input id="s-o" inputmode="numeric" value="${fmt(st.opening_balance)}"></label>
+          <label class="f">شروع محاسبه<input id="s-s" dir="ltr" value="${String(st.start_ym || '').slice(0,4)}/${String(st.start_ym || '').slice(4)}"></label>
+          <div style="align-self:end"><button class="btn" type="submit">ذخیره تنظیمات</button></div>
+        </form>
+      </div>
+    </div>`;
+
+  $('#rates-accordion')?.addEventListener('click', e => {
+    if (e.target.closest('.accordion-header')) e.target.closest('.accordion-header')?.nextElementSibling?.classList.toggle('open');
+  });
+
+  attachNumericInput('#r-c', '#r-r', '#r-p', '#s-o');
+
+  $$('[data-er]').forEach(b => b.addEventListener('click', () => {
+    const [y, mo] = b.dataset.er.split('-').map(Number);
+    const r = rates.find(x => x.year === y && x.month === mo);
+    if (!r) return;
+    $('#r-y').value = y;
+    $('#r-m').value = mo;
+    $('#r-c').value = fmt(r.charge);
+    $('#r-r').value = fmt(r.repair);
+    $('#r-p').value = fmt(r.parking);
+    $$('.r-pch').forEach(cb => cb.checked = (r.payer_charge || OCC).includes(cb.value));
+    $$('.r-prp').forEach(cb => cb.checked = (r.payer_repair || OCC).includes(cb.value));
+    $$('.r-ppk').forEach(cb => cb.checked = (r.payer_parking || OCC).includes(cb.value));
+    $$('.r-pu').forEach(cb => cb.checked = (r.payer_water || OCC).includes(cb.value));
+    $('#rf')?.scrollIntoView({ behavior: 'smooth' });
+  }));
+
+  $$('[data-dr]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('حذف شود؟')) return;
+    const [y, mo] = b.dataset.dr.split('-').map(Number);
+    try { await T('app_admin_delete_rate', { p_year: y, p_month: mo }); go('rates'); }
+    catch (e) { showErr(e); }
+  }));
+
+  $('#rf')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const getChecked = cls => $$('.' + cls).filter(x => x.checked).map(x => x.value);
+    try {
+      await T('app_admin_save_rate', {
+        p_year: +$('#r-y').value,
+        p_month: +$('#r-m').value,
+        p_charge: toNum($('#r-c').value),
+        p_repair: toNum($('#r-r').value),
+        p_parking: toNum($('#r-p').value),
+        p_payer_charge: getChecked('r-pch'),
+        p_payer_repair: getChecked('r-prp'),
+        p_payer_parking: getChecked('r-ppk'),
+        p_payer_water: getChecked('r-pu'),
+        p_payer_gas: getChecked('r-pu'),
+      });
+      toast('ذخیره شد'); go('rates');
+    } catch (err) { showErr(err); }
+  });
+
+  $('#sf')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const s = toNum($('#s-s').value.replace('/', ''));
+    try {
+      await T('app_admin_save_settings', {
+        p_building_name: $('#s-n').value,
+        p_opening_balance: toNum($('#s-o').value),
+        p_start_ym: s,
+      });
+      toast('ذخیره شد'); renderShell();
+    } catch (err) { showErr(err); }
+  });
+}
+
+/* ============================================================
+   ACTIVITY
+   ============================================================ */
+async function viewActivity(el) {
+  const logs = await T('app_admin_get_activity_logs');
+  const today = new Date().toDateString();
+  const todayLogins = logs.filter(l => l.action === 'ورود' && new Date(l.created_at).toDateString() === today).length;
+  el.innerHTML = `<h1>گزارش فعالیت‌ها</h1><p class="sub">آخرین رویدادهای ثبت شده</p>
+    <div class="grid g3" style="margin-bottom:20px">
+      <div class="card" style="background:var(--accent);color:#fff"><small>ورودهای امروز</small><div style="font-size:28px;font-weight:900">${fa(todayLogins)} نفر</div></div>
+      <div class="card"><small>کل فعالیت‌ها</small><div style="font-size:28px;font-weight:900">${fa(logs.length)} مورد</div></div>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>کاربر</th><th>واحد</th><th>نوع فعالیت</th><th>جزئیات</th><th>زمان</th>
+    </tr></thead><tbody>
+      ${logs.map(l => `<tr>
+        <td><b>${esc(l.full_name || 'ناشناس')}</b></td>
+        <td>${l.unit_no ? 'واحد ' + fa(l.unit_no) : '—'}</td>
+        <td><span class="chip ${l.action.includes('ورود') ? 'ok' : 'ex'}">${esc(l.action)}</span></td>
+        <td>${esc(l.details || '—')}</td>
+        <td dir="ltr" style="text-align:right;font-size:12px">${new Date(l.created_at).toLocaleString('fa-IR')}</td>
+      </tr>`).join('') || '<tr><td colspan="5" style="text-align:center">موردی نیست</td></tr>'}
+    </tbody></table></div>`;
+}
+
+/* ============================================================
+   PROFILE
+   ============================================================ */
+async function viewProfile(el) {
+  const a = S.me;
+  el.innerHTML = `${mustChangeBanner()}
+    <h1>پروفایل</h1>
+    <p class="sub">واحد ${fa(a.unit_no)} · ${esc(a.occupancy || '')}</p>
+    <form id="pf2" class="card grid g2" style="max-width:760px">
+      <label class="f">نام<input id="p-n" value="${esc(a.full_name || '')}"></label>
+      <label class="f">شماره موبایل<input id="p-ph" dir="ltr" value="${esc(a.phone || '')}"></label>
+      <label class="f" style="grid-column:1/-1">ایمیل<input id="p-e" dir="ltr" type="email" value="${esc(a.email || '')}"></label>
+      <h2 style="grid-column:1/-1;margin:12px 0 0">نام کاربری و رمز</h2>
+      <label class="f">نام کاربری<input id="p-u" dir="ltr" value="${esc(a.username || '')}"></label>
+      <label class="f">رمز فعلی<input id="p-c" dir="ltr" type="password"></label>
+      <label class="f">رمز جدید<input id="p-np" dir="ltr" type="password"></label>
+      <label class="f">تکرار رمز<input id="p-np2" dir="ltr" type="password"></label>
+      <div style="grid-column:1/-1"><button class="btn sf">ذخیره</button></div>
+    </form>`;
+  $('#go-profile')?.addEventListener('click', e => e.preventDefault());
+  $('#pf2').addEventListener('submit', async e => {
+    e.preventDefault();
+    if ($('#p-np').value !== $('#p-np2').value) { toast('تکرار رمز یکسان نیست', true); return; }
+    try {
+      S.me = await T('app_update_profile', {
+        p_full_name: $('#p-n').value,
+        p_phone: $('#p-ph').value,
+        p_email: $('#p-e').value,
+        p_username: $('#p-u').value,
+        p_current_password: $('#p-c').value || null,
+        p_new_password: $('#p-np').value || null,
+      });
+      localStorage.setItem('bm_me', JSON.stringify(S.me));
+      toast('ذخیره شد'); renderShell();
+    } catch (err) { showErr(err); }
+  });
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+window.addEventListener('online', () => toast('اتصال اینترنت برقرار شد'));
+window.addEventListener('offline', () => toast('اتصال اینترنت قطع شد', true));
+
+if (S.token) renderShell(); else renderLogin();
+</script>
+</body>
+</html>
