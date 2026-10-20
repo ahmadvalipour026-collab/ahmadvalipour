@@ -174,8 +174,8 @@ const attachNumericInput = (...sels) => attachNumericInputIn(document, ...sels);
    3. State
    ========================================================= */
 const S = {
-  token: null,
-  me: null,
+  token: sessionStorage.getItem('bm_token'), // 👈 استفاده از sessionStorage
+  me: JSON.parse(sessionStorage.getItem('bm_me') || 'null'),
   view: 'dash', y: TODAY.y, m: TODAY.m,
   building: 'مجتمع نگین ۲',
   txFilter: null,
@@ -336,9 +336,10 @@ async function renderLogin() {
     try {
       const r = await api('app_login', { p_login: $('#lg-user').value.trim(), p_password: $('#lg-pass').value });
       if (!r.ok) { $('#lg-err').textContent = r.error; return; }
-      S.token = r.token; S.me = r.account;
-      localStorage.setItem('bm_token', S.token);
-      localStorage.setItem('bm_me', JSON.stringify(S.me));
+      S.token = r.token; 
+      S.me = r.account;
+      sessionStorage.setItem('bm_token', S.token);     // 👈 تغییر کرد
+      sessionStorage.setItem('bm_me', JSON.stringify(S.me)); // 👈 تغییر کرد
       renderShell();
     } catch (err) { showErr(err); }
     finally { btn.disabled = false; btn.textContent = old; }
