@@ -807,14 +807,20 @@ async function viewDash(el) {
    ========================================================= */
 async function viewAnnouncements(el) {
   const list = await T('app_get_announcements');
+  
   const adminForm = S.me.is_admin ? `
     <form id="af" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)">
-      <h2 style="grid-column:1/-1;margin:0">ارسال اعلان جدید</h2>
+      <h2 style="grid-column:1/-1;margin:0" id="af-title">ارسال اعلان جدید</h2>
+      <input type="hidden" id="a-id">
       <label class="f">عنوان<input id="a-title" required></label>
       <label class="f">نوع<select id="a-type"><option value="general">اطلاعیه عمومی</option><option value="meeting">دعوت به جلسه</option></select></label>
       <label class="f" style="grid-column:1/-1">متن کامل<textarea id="a-content" rows="3" required></textarea></label>
-      <div style="grid-column:1/-1"><button class="btn">ثبت اعلان</button></div>
+      <div style="grid-column:1/-1; display:flex; gap:10px;">
+        <button class="btn" type="submit" id="af-btn">ثبت اعلان</button>
+        <button class="btn lt hidden" type="button" id="af-cancel">انصراف از ویرایش</button>
+      </div>
     </form>` : '';
+
   el.innerHTML = `<h1>اعلانات ساختمان</h1><p class="sub">اطلاعیه‌ها و دعوت‌نامه‌ها</p>${adminForm}
     <div class="grid g2">
       ${list.map(a => `
@@ -826,32 +832,74 @@ async function viewAnnouncements(el) {
           <p style="white-space:pre-wrap;margin:0 0 16px">${esc(a.content)}</p>
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
             <span style="font-size:12px;color:var(--muted)">${new Date(a.created_at).toLocaleDateString('fa-IR')}</span>
-            ${S.me.is_admin ? `<button class="btn rd sm" data-del="${a.id}">حذف</button>` : ''}
+            ${S.me.is_admin ? `
+              <div style="display:flex; gap:6px;">
+                <button class="btn lt sm" data-edit="${a.id}" data-title="${esc(a.title)}" data-content="${esc(a.content)}" data-type="${a.type}">✏️ ویرایش</button>
+                <button class="btn lt sm" data-archive="${a.id}">📦 آرشیو</button>
+                <button class="btn rd sm" data-del="${a.id}">🗑️ حذف</button>
+              </div>
+            ` : ''}
           </div>
         </div>`).join('') || '<div class="card sub">هیچ اعلانی وجود ندارد.</div>'}
     </div>`;
 
   if (S.me.is_admin) {
+    // ثبت اعلان جدید یا ذخیره ویرایش
     $('#af')?.addEventListener('submit', async e => {
       e.preventDefault();
       try {
+        const id = $('#a-id').value;
         const title = $('#a-title').value;
         const content = $('#a-content').value;
         const type = $('#a-type').value;
-        await T('app_admin_save_announcement', {
-          p_title: title,
-          p_content: content,
-          p_type: type,
-        });
         
-        // ارسال به بله
-        notifyBale(`📢 اعلان جدید در ساختمان:\n\n🔹 ${title}\n\n${content}`);
-        
-        toast('ثبت شد'); go('announcements');
+        if (id) {
+          // حالت ویرایش
+          await T('app_admin_update_announcement', { p_id: +id, p_title: title, p_content: content, p_type: type });
+          notifyBale(`✏️ اعلان ویرایش شد:\n\n🔹 ${title}\n\n${content}`);
+          toast('ویرایش شد');
+        } else {
+          // حالت ثبت جدید
+          await T('app_admin_save_announcement', { p_title: title, p_content: content, p_type: type });
+          notifyBale(`📢 اعلان جدید در ساختمان:\n\n🔹 ${title}\n\n${content}`);
+          toast('ثبت شد');
+        }
+        go('announcements');
       } catch (err) { showErr(err); }
     });
+
+    // دکمه انصراف از ویرایش
+    $('#af-cancel')?.addEventListener('click', () => {
+      $('#a-id').value = '';
+      $('#a-title').value = '';
+      $('#a-content').value = '';
+      $('#af-title').textContent = 'ارسال اعلان جدید';
+      $('#af-btn').textContent = 'ثبت اعلان';
+      $('#af-cancel').classList.add('hidden');
+    });
+
+    // کلیک روی دکمه‌های ویرایش، آرشیو و حذف
+    $$('[data-edit]').forEach(b => b.addEventListener('click', () => {
+      $('#a-id').value = b.dataset.edit;
+      $('#a-title').value = b.dataset.title;
+      $('#a-content').value = b.dataset.content;
+      $('#a-type').value = b.dataset.type;
+      $('#af-title').textContent = 'ویرایش اعلان';
+      $('#af-btn').textContent = 'ذخیره تغییرات';
+      $('#af-cancel').classList.remove('hidden');
+      $('#af').scrollIntoView({ behavior: 'smooth' });
+    }));
+
+    $$('[data-archive]').forEach(b => b.addEventListener('click', async () => {
+      if (!confirm('این اعلان آرشیو شود؟ (از دید ساکنین پنهان می‌شود اما در سیستم می‌ماند)')) return;
+      try {
+        await T('app_admin_archive_announcement', { p_id: +b.dataset.archive });
+        toast('آرشیو شد'); go('announcements');
+      } catch (e) { showErr(e); }
+    }));
+
     $$('[data-del]').forEach(b => b.addEventListener('click', async () => {
-      if (!confirm('حذف شود؟')) return;
+      if (!confirm('⚠️ این اعلان برای همیشه حذف شود؟')) return;
       try { await T('app_admin_delete_announcement', { p_id: +b.dataset.del }); toast('حذف شد'); go('announcements'); }
       catch (e) { showErr(e); }
     }));
@@ -1751,7 +1799,6 @@ async function viewRates(el) {
       const repair = toNum($('#r-r').value);
       const parking = toNum($('#r-p').value);
 
-      // ۱. ذخیره در دیتابیس
       await T('app_admin_save_rate', {
         p_year: y,
         p_month: m,
@@ -1765,14 +1812,14 @@ async function viewRates(el) {
         p_payer_gas: getChecked('r-pu'),
       });
       
-      // ۲. ارسال به بله
+      // ارسال به بله
       notifyBale(`📊 نرخ‌های ماه ${MONTHS[m-1]} ${y} ثبت/ویرایش شد:\n\n🔹 شارژ: ${fmt(charge)} تومان\n🔹 بازسازی: ${fmt(repair)} تومان\n🔹 پارکینگ: ${fmt(parking)} تومان`);
       
-      // ۳. پیام موفقیت و رفرش
       toast('ذخیره شد و به بله ارسال گردید'); 
       go('rates');
     } catch (err) { showErr(err); }
   });
+
   $('#sf')?.addEventListener('submit', async e => {
     e.preventDefault();
     const s = toNum($('#s-s').value.replace('/', ''));
@@ -1786,12 +1833,14 @@ async function viewRates(el) {
         p_start_ym: s,
       });
       
-      // 👇 این خط اضافه شد
-      notifyBale(`⚙️ تنظیمات کلی ساختمان تغییر کرد:\n\n🏢 نام: ${name}\n💰 موجودی اولیه: ${fmt(bal)} تومان`);
+      // ارسال به بله
+      notifyBale(`⚙️ تنظیمات کلی ساختمان تغییر کرد:\n\n🏢 نام: ${name}\n💰 موجودی اولیه: ${bal} تومان`);
       
-      toast('ذخیره شد'); renderShell();
+      toast('ذخیره شد و به بله ارسال گردید'); 
+      renderShell();
     } catch (err) { showErr(err); }
   });
+}
 
 /* =========================================================
    20. Activity
