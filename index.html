@@ -1744,40 +1744,6 @@ window.addEventListener('popstate', (e) => {
     }
   }
 });
-   /* =========================================================
-   مدیریت دکمه‌ی Back مرورگر و گوشی (خروج با دو بار زدن)
-   ========================================================= */
-let backPressCount = 0;
-let backPressTimer = null;
-
-window.addEventListener('popstate', (e) => {
-  // ۱. اگر کاربر در صفحه‌ای غیر از داشبورد است، فقط به داشبورد برگردد
-  if (S.view !== 'dash' && S.me) {
-    go('dash', true);
-    history.pushState({ view: 'dash' }, '', ''); // تاریخچه رو دوباره ست می‌کنیم
-    return;
-  } 
-  
-  // ۲. اگر کاربر در داشبورد است (صفحه آخر)
-  if (S.view === 'dash' && S.me) {
-    backPressCount++;
-    
-    if (backPressCount === 1) {
-      toast('برای خروج، دوباره دکمه بازگشت را بزنید', true);
-      
-      // 🔒 تزریق مجدد تاریخچه تا کاربر از برنامه خارج نشود
-      history.pushState({ view: 'dash' }, '', ''); 
-      
-      // شمارنده رو بعد از ۲.۵ ثانیه صفر می‌کنیم
-      clearTimeout(backPressTimer);
-      backPressTimer = setTimeout(() => { backPressCount = 0; }, 2500);
-    } else {
-      // بار دوم که زد، اجازه بده از مرورگر خارج بشه (توکن هم پاک میشه)
-      sessionStorage.clear();
-      history.back();
-    }
-  }
-});
 if (S.token) renderShell(); else renderLogin();
 </script>
 </body>
