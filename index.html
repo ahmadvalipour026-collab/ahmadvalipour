@@ -1179,48 +1179,229 @@ async function viewReport(el) {
     </div>
     ${rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">نرخ ماه‌های ${rep.missing_rates.map(fa).join('، ')} تعریف نشده.</div>` : ''}
     
-    <div class="tbl-wrap" style="border-radius: 8px; overflow-x: auto; border: 1px solid #333; padding: 0; background: #fff;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 20px; font-weight: bold; text-align: center; direction: rtl; border: 2px solid #000;">
-        <thead>
-          <tr>
-            <th colspan="7" style="background-color: #7A9CBE; color: white; padding: 10px; font-size: 22px; font-weight: bold; border: 1px solid #333; text-align: center;">
-              گزارش ${rep.month_name} ماه - ${fa(rep.year)}/${String(rep.month).padStart(2, '0')}
-            </th>
-          </tr>
-          <tr>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000; font-size: 18px;">واحد</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000; font-size: 18px;">شارژ</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000; font-size: 18px;">قبض آب</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000; font-size: 18px;">قبض گاز</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000; font-size: 18px;">بازسازی</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000; font-size: 18px;">بدهی قبلی</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; color: #000000; font-size: 18px;">جمع مبلغ<br>قابل پرداخت</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rep.rows.map(r => {
-            let rowBg = '#ffffff';
-            if (r.remaining <= 0) rowBg = '#00B050'; // سبز
-            else if (r.prev_debt > 0) rowBg = '#FFC000'; // زرد
+    <div class="tbl-wrap" style="
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1px solid #333;
+  padding: 0;
+  background: #fff;
+">
+  <table style="
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    direction: rtl;
+    border: 2px solid #000;
+  ">
+    
+    <colgroup>
+      <!-- واحد -->
+      <col style="min-width: 105px;">
+      
+      <!-- شارژ -->
+      <col style="min-width: 145px;">
+      
+      <!-- آب -->
+      <col style="min-width: 145px;">
+      
+      <!-- گاز -->
+      <col style="min-width: 145px;">
+      
+      <!-- بازسازی -->
+      <col style="min-width: 155px;">
+      
+      <!-- بدهی قبلی -->
+      <col style="min-width: 165px;">
+      
+      <!-- جمع قابل پرداخت -->
+      <col style="min-width: 190px;">
+    </colgroup>
 
-            // 👇 فونت اعداد به 30 پیکسل تغییر کرد
-            return `<tr style="background-color: ${rowBg}; color: #000000; font-size: 30px;">
-              <td style="border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap;">
-                واحد ${fa(r.unit_no)}
-                <div style="font-size: 12px; font-weight: normal; color: #000; margin-top: 2px;">${esc(r.occupancy || '')}</div>
-              </td>
-              <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.charge)}</td>
-              <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.water)}</td>
-              <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.gas)}</td>
-              <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.repair)}</td>
-              <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.prev_debt)}</td>
-              <td style="border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap;">${fmt(r.remaining)}</td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>`;
+    <thead>
+      <tr>
+        <th colspan="7" style="
+          background-color: #7A9CBE;
+          color: white;
+          padding: 10px;
+          font-size: 22px;
+          font-weight: bold;
+          border: 1px solid #333;
+          text-align: center;
+          white-space: nowrap;
+        ">
+          گزارش ${rep.month_name} ماه - ${fa(rep.year)}/${String(rep.month).padStart(2, '0')}
+        </th>
+      </tr>
 
+      <tr>
+        <th style="
+          background-color:#D9E1F2;
+          border:1px solid #333;
+          padding:6px 8px;
+          font-weight:bold;
+          white-space:nowrap;
+          color:#000;
+          font-size:18px;
+        ">واحد</th>
+
+        <th style="
+          background-color:#D9E1F2;
+          border:1px solid #333;
+          padding:6px 8px;
+          font-weight:bold;
+          white-space:nowrap;
+          color:#000;
+          font-size:18px;
+        ">شارژ</th>
+
+        <th style="
+          background-color:#D9E1F2;
+          border:1px solid #333;
+          padding:6px 8px;
+          font-weight:bold;
+          white-space:nowrap;
+          color:#000;
+          font-size:18px;
+        ">قبض آب</th>
+
+        <th style="
+          background-color:#D9E1F2;
+          border:1px solid #333;
+          padding:6px 8px;
+          font-weight:bold;
+          white-space:nowrap;
+          color:#000;
+          font-size:18px;
+        ">قبض گاز</th>
+
+        <th style="
+          background-color:#D9E1F2;
+          border:1px solid #333;
+          padding:6px 8px;
+          font-weight:bold;
+          white-space:nowrap;
+          color:#000;
+          font-size:18px;
+        ">بازسازی</th>
+
+        <th style="
+          background-color:#D9E1F2;
+          border:1px solid #333;
+          padding:6px 8px;
+          font-weight:bold;
+          white-space:nowrap;
+          color:#000;
+          font-size:18px;
+        ">بدهی قبلی</th>
+
+        <th style="
+          background-color:#D9E1F2;
+          border:1px solid #333;
+          padding:6px 8px;
+          font-weight:bold;
+          color:#000;
+          font-size:18px;
+          white-space:nowrap;
+        ">
+          جمع مبلغ<br>قابل پرداخت
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      ${rep.rows.map(r => {
+        let rowBg = '#ffffff';
+
+        if (r.remaining <= 0) {
+          rowBg = '#00B050';
+        } else if (r.prev_debt > 0) {
+          rowBg = '#FFC000';
+        }
+
+        return `
+          <tr style="
+            background-color:${rowBg};
+            color:#000000;
+            font-size:30px;
+          ">
+
+            <td style="
+              border:1px solid #333;
+              padding:6px 10px;
+              font-weight:bold;
+              white-space:nowrap;
+              text-align:center;
+              vertical-align:middle;
+            ">
+              واحد ${fa(r.unit_no)}
+              <div style="
+                font-size:12px;
+                font-weight:normal;
+                color:#000;
+                margin-top:2px;
+              ">
+                ${esc(r.occupancy || '')}
+              </div>
+            </td>
+
+            <td style="
+              border:1px solid #333;
+              padding:6px 10px;
+              white-space:nowrap;
+              text-align:center;
+              vertical-align:middle;
+            ">${fmt(r.charge)}</td>
+
+            <td style="
+              border:1px solid #333;
+              padding:6px 10px;
+              white-space:nowrap;
+              text-align:center;
+              vertical-align:middle;
+            ">${fmt(r.water)}</td>
+
+            <td style="
+              border:1px solid #333;
+              padding:6px 10px;
+              white-space:nowrap;
+              text-align:center;
+              vertical-align:middle;
+            ">${fmt(r.gas)}</td>
+
+            <td style="
+              border:1px solid #333;
+              padding:6px 10px;
+              white-space:nowrap;
+              text-align:center;
+              vertical-align:middle;
+            ">${fmt(r.repair)}</td>
+
+            <td style="
+              border:1px solid #333;
+              padding:6px 10px;
+              white-space:nowrap;
+              text-align:center;
+              vertical-align:middle;
+            ">${fmt(r.prev_debt)}</td>
+
+            <td style="
+              border:1px solid #333;
+              padding:6px 10px;
+              font-weight:bold;
+              white-space:nowrap;
+              text-align:center;
+              vertical-align:middle;
+            ">${fmt(r.remaining)}</td>
+
+          </tr>
+        `;
+      }).join('')}
+    </tbody>
+  </table>
+</div>
   bindPeriod(() => go('report'));
   
   $('#pr-btn')?.addEventListener('click', () => {
