@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+/* ===== CSS — دقیقاً مثل نسخه‌ی قبلی ===== */
 :root{
 --primary:#0f172a;--primary-light:#334155;--accent:#6366f1;--accent-hover:#4f46e5;
 --saffron:#f59e0b;--success:#10b981;--warning:#f97316;--danger:#ef4444;
@@ -100,9 +101,9 @@ tr:hover td{background:#f8fafc}
 <div id="toast" class="toast"></div>
 
 <script>
-/* ============================================================
-   CONSTANTS
-   ============================================================ */
+/* =========================================================
+   1. ثابت‌ها
+   ========================================================= */
 const SUPABASE_URL = 'https://hpgvgoehkcpjmdbfmnse.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_BuJxTaMP2rYWTe5mh-N55Q_gSHE1O8g';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
@@ -111,9 +112,9 @@ const MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مر�
 const CATS = { charge:'شارژ ماهیانه', water:'قبض آب', gas:'قبض گاز', electric:'برق عمومی', repair:'بازسازی', parking:'اجاره پارکینگ', debt:'پرداخت بدهی معوق', other:'سایر', bill:'کل صورتحساب ماه' };
 const OCC = ['مالک ساکن','مالک','مستأجر'];
 
-/* ============================================================
-   HELPERS
-   ============================================================ */
+/* =========================================================
+   2. Helperها
+   ========================================================= */
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -158,6 +159,7 @@ function toast(msg, err = false) {
 }
 const showErr = e => toast(e?.message === 'NETWORK_ERROR' ? 'اتصال به سرور برقرار نیست' : (e?.message || 'خطا'), true);
 
+/* input عددی — جایگزین تکرار toNum در فرم‌ها */
 function attachNumericInputIn(root, ...selectors) {
   selectors.forEach(sel => {
     $$(sel, root).forEach(el => {
@@ -170,9 +172,9 @@ function attachNumericInputIn(root, ...selectors) {
 }
 const attachNumericInput = (...sels) => attachNumericInputIn(document, ...sels);
 
-/* ============================================================
-   STATE
-   ============================================================ */
+/* =========================================================
+   3. State
+   ========================================================= */
 const S = {
   token: localStorage.getItem('bm_token'),
   me: JSON.parse(localStorage.getItem('bm_me') || 'null'),
@@ -181,9 +183,9 @@ const S = {
   txFilter: null,
 };
 
-/* ============================================================
-   API
-   ============================================================ */
+/* =========================================================
+   4. API
+   ========================================================= */
 function isNetworkError(msg) {
   return !!msg && /failed to fetch|network|fetch|timeout|ECONN|ERR_NETWORK|ERR_INTERNET/i.test(String(msg));
 }
@@ -204,9 +206,9 @@ async function api(fn, args = {}) {
 }
 const T = (fn, args = {}) => api(fn, { p_token: S.token, ...args });
 
-/* ============================================================
-   OPTION BUILDERS
-   ============================================================ */
+/* =========================================================
+   5. Option builders
+   ========================================================= */
 const monthOptions = (sel, withAll = false) =>
   (withAll ? `<option value="">همه ماه‌ها</option>` : '') +
   MONTHS.map((n, i) => `<option value="${i+1}" ${+sel === i+1 ? 'selected' : ''}>${n}</option>`).join('');
@@ -219,9 +221,9 @@ const unitOptions = (sel, withBuilding = true, withAll = false) =>
   (withBuilding ? `<option value="0" ${+sel === 0 ? 'selected' : ''}>ساختمان</option>` : '') +
   Array.from({length:10}, (_,i) => `<option value="${i+1}" ${+sel === i+1 ? 'selected' : ''}>واحد ${fa(i+1)}</option>`).join('');
 
-/* ============================================================
-   BIND PERIOD (PATCH 3)
-   ============================================================ */
+/* =========================================================
+   6. bindPeriod — جلوگیری از listener انباشته
+   ========================================================= */
 let periodAbort = null;
 function bindPeriod(cb) {
   periodAbort?.abort();
@@ -231,15 +233,15 @@ function bindPeriod(cb) {
   $('#pk-y')?.addEventListener('change', e => { S.y = +e.target.value; cb(); }, opt);
 }
 function periodPicker() {
-  return `<div class="row no-print" style="display:flex;gap:10px;margin-bottom:20px">
+  return `<div style="display:flex;gap:10px;margin-bottom:20px">
     <select id="pk-m" style="width:120px">${monthOptions(S.m)}</select>
     <select id="pk-y" style="width:100px">${yearOptions(S.y)}</select>
   </div>`;
 }
 
-/* ============================================================
-   MODAL
-   ============================================================ */
+/* =========================================================
+   7. Modal
+   ========================================================= */
 function modal(html) {
   const bg = document.createElement('div');
   bg.className = 'modal-bg';
@@ -249,9 +251,9 @@ function modal(html) {
   return bg;
 }
 
-/* ============================================================
-   SMS (PATCH 1)
-   ============================================================ */
+/* =========================================================
+   8. SMS (sanitize)
+   ========================================================= */
 function smsLink(phone, text) {
   if (!phone) return '';
   const safe = String(phone).replace(/[^\d+\-]/g, '').trim();
@@ -264,9 +266,9 @@ function smsBtn(phone, text, label = 'پیامک') {
   return `<a class="btn lt sm" href="${smsLink(phone, text)}" style="padding:4px 8px;font-size:12px;">✉ ${esc(label)}</a>`;
 }
 
-/* ============================================================
-   IMAGE COMPRESS
-   ============================================================ */
+/* =========================================================
+   9. فشرده‌سازی عکس
+   ========================================================= */
 async function compressImage(file) {
   return new Promise(resolve => {
     const reader = new FileReader();
@@ -290,9 +292,9 @@ async function compressImage(file) {
   });
 }
 
-/* ============================================================
-   LOGIN
-   ============================================================ */
+/* =========================================================
+   10. Login
+   ========================================================= */
 async function renderLogin() {
   $('#app').innerHTML = `
   <div class="login">
@@ -373,9 +375,9 @@ async function logout(silent = false) {
   renderLogin();
 }
 
-/* ============================================================
-   SHELL
-   ============================================================ */
+/* =========================================================
+   11. Shell
+   ========================================================= */
 function getMenuItems() {
   const a = S.me?.is_admin;
   return [
@@ -483,9 +485,9 @@ function showConnectionError() {
   $('#lo2').addEventListener('click', () => logout());
 }
 
-/* ============================================================
-   DASHBOARD
-   ============================================================ */
+/* =========================================================
+   12. Dashboard
+   ========================================================= */
 const mustChangeBanner = () => S.me?.must_change_password
   ? `<div class="card" style="background:#fef3c7;color:#92400e;margin-bottom:20px">رمز عبور شما هنوز پیش‌فرض است. از بخش <a href="#" id="go-profile">پروفایل</a> آن را تغییر دهید.</div>`
   : '';
@@ -589,7 +591,6 @@ async function viewDash(el) {
   }
 
   const totalDebt = mapUnits.reduce((s, r) => s + Math.max(0, r.remaining), 0);
-
   const winBg = r => r.remaining <= 0 ? '#d1fae5' : r.remaining > r.current_due ? '#fee2e2' : '#fef3c7';
 
   el.innerHTML = `
@@ -664,9 +665,9 @@ async function viewDash(el) {
   }));
 }
 
-/* ============================================================
-   ANNOUNCEMENTS
-   ============================================================ */
+/* =========================================================
+   13. Announcements
+   ========================================================= */
 async function viewAnnouncements(el) {
   const list = await T('app_get_announcements');
   const adminForm = S.me.is_admin ? `
@@ -713,9 +714,9 @@ async function viewAnnouncements(el) {
   }
 }
 
-/* ============================================================
-   REQUESTS
-   ============================================================ */
+/* =========================================================
+   14. Requests
+   ========================================================= */
 async function viewRequests(el) {
   const list = await T('app_get_requests');
   const admin = S.me.is_admin;
@@ -759,9 +760,9 @@ async function viewRequests(el) {
   }
 }
 
-/* ============================================================
-   PAYMENT
-   ============================================================ */
+/* =========================================================
+   15. Payment
+   ========================================================= */
 function payModal(r) {
   const m = modal(`
     <h2>ثبت پرداخت</h2>
@@ -858,9 +859,9 @@ function approveModal(p) {
   });
 }
 
-/* ============================================================
-   TRANSACTIONS
-   ============================================================ */
+/* =========================================================
+   16. Transactions
+   ========================================================= */
 async function viewTx(el) {
   const admin = S.me.is_admin;
   if (!S.txFilter) S.txFilter = { y: String(S.y), m: '', unit: '', type: '' };
@@ -990,9 +991,9 @@ function exportCsv(rows) {
   a.click();
 }
 
-/* ============================================================
-   REPORT
-   ============================================================ */
+/* =========================================================
+   17. Report
+   ========================================================= */
 async function viewReport(el) {
   const rep = await T('app_report', { p_year: S.y, p_month: S.m });
   const ok = v => v ? '<span class="chip ok">OK</span>' : '<span class="chip no">نشده</span>';
@@ -1027,9 +1028,9 @@ async function viewReport(el) {
   $('#pr-btn')?.addEventListener('click', () => window.print());
 }
 
-/* ============================================================
-   UNITS
-   ============================================================ */
+/* =========================================================
+   18. Units
+   ========================================================= */
 async function viewUnits(el) {
   const units = await T('app_get_units');
   el.innerHTML = `<h1>واحدها</h1><p class="sub">حساب‌های کاربری ساکنین</p>
@@ -1106,9 +1107,9 @@ function unitModal(u) {
   });
 }
 
-/* ============================================================
-   RATES & SETTINGS
-   ============================================================ */
+/* =========================================================
+   19. Rates & Settings
+   ========================================================= */
 async function viewRates(el) {
   const [rates, st] = await Promise.all([T('app_get_rates'), T('app_get_settings')]);
   const getPayers = arr => !arr ? 'همه' : arr.length === 0 ? 'هیچ‌کس' : arr.map(o => o.replace('مالک ساکن', 'ساکن')).join('، ');
@@ -1236,9 +1237,9 @@ async function viewRates(el) {
   });
 }
 
-/* ============================================================
-   ACTIVITY
-   ============================================================ */
+/* =========================================================
+   20. Activity
+   ========================================================= */
 async function viewActivity(el) {
   const logs = await T('app_admin_get_activity_logs');
   const today = new Date().toDateString();
@@ -1261,9 +1262,9 @@ async function viewActivity(el) {
     </tbody></table></div>`;
 }
 
-/* ============================================================
-   PROFILE
-   ============================================================ */
+/* =========================================================
+   21. Profile
+   ========================================================= */
 async function viewProfile(el) {
   const a = S.me;
   el.innerHTML = `${mustChangeBanner()}
@@ -1299,9 +1300,9 @@ async function viewProfile(el) {
   });
 }
 
-/* ============================================================
-   BOOT
-   ============================================================ */
+/* =========================================================
+   22. Boot
+   ========================================================= */
 window.addEventListener('online', () => toast('اتصال اینترنت برقرار شد'));
 window.addEventListener('offline', () => toast('اتصال اینترنت قطع شد', true));
 
