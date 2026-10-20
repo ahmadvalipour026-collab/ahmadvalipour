@@ -174,9 +174,16 @@ const attachNumericInput = (...sels) => attachNumericInputIn(document, ...sels);
    3. State
    ========================================================= */
 const S = {
-  token: localStorage.getItem('bm_token'),
-  me: JSON.parse(localStorage.getItem('bm_me') || 'null'),
+  token: null, // 🔒 توکن رو نال می‌کنیم تا هر بار صفحه لود شد لاگین کنه
+  me: null,
   view: 'dash', y: TODAY.y, m: TODAY.m,
+  building: 'مجتمع نگین ۲',
+  txFilter: null,
+};
+
+// پاک کردن توکن‌های قدیمی از حافظه مرورگر
+localStorage.removeItem('bm_token');
+localStorage.removeItem('bm_me');  view: 'dash', y: TODAY.y, m: TODAY.m,
   building: 'مجتمع نگین ۲',
   txFilter: null,
 };
@@ -433,7 +440,7 @@ async function renderShell() {
   go(S.view);
 }
 
-function go(v) {
+function go(v, isBackNavigation = false) {
   S.view = v;
   const el = $('#view'); if (!el) return;
   el.innerHTML = `<p class="sub">در حال بارگذاری...</p>`;
@@ -443,6 +450,7 @@ function go(v) {
     rates: viewRates, activity: viewActivity, profile: viewProfile,
   };
   renderShellHeaderState();
+  
   (views[v] || viewDash)(el).catch(e => {
     if (e.message === 'AUTH_ERROR') { logout(true); return; }
     if (e.message === 'NETWORK_ERROR') {
@@ -458,8 +466,15 @@ function go(v) {
     showErr(e);
     el.innerHTML = `<div class="card" style="color:var(--danger)">خطا: ${esc(e.message)}</div>`;
   });
-}
 
+  // 📌 مدیریت تاریخچه‌ی مرورگر برای دکمه بک گوشی
+  if (!isBackNavigation) {
+    // اگه از داشبورد به صفحه دیگه‌ای میریم، یه قدم به تاریخچه اضافه می‌کنیم
+    if (v !== 'dash' && history.state?.view !== v) {
+      history.pushState({ view: v }, '', '');
+    }
+  }
+}
 function renderShellHeaderState() {
   const menuItems = getMenuItems();
   const current = menuItems.find(t => t[0] === S.view);
@@ -1696,7 +1711,36 @@ async function viewProfile(el) {
    ========================================================= */
 window.addEventListener('online', () => toast('اتصال اینترنت برقرار شد'));
 window.addEventListener('offline', () => toast('اتصال اینترنت قطع شد', true));
+/* =========================================================
+   مدیریت دکمه‌ی Back مرورگر و گوشی
+   ========================================================= */
+let backPressCount = 0;
+let backPressTimer = null;
 
+window.addEventListener('popstate', (e) => {
+  // اگه کاربر توی داشبورد نبود، برگرده به داشبورد
+  if (S.view !== 'dash') {
+    go('dash', true);
+  } 
+  // اگه توی داشبورد بود (یعنی صفحه آخر هست)
+  else {
+    // دوبار کلیک برای خروج
+    backPressCount++;
+    if (backPressCount === 1) {
+      toast('برای خروج، دوباره دکمه بازگشت را بزنید', true);
+      
+      // اضافه کردن یه قدم دیگه به تاریخچه که کاربر از برنامه خارج نشه
+      history.pushState({ view: 'dash' }, '', '');
+      
+      // بعد از ۲ ثانیه، شمارنده صفر می‌شه
+      clearTimeout(backPressTimer);
+      backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
+    } else {
+      // بار دوم که زد، اجازه بده از برنامه خارج بشه
+      history.back();
+    }
+  }
+});
 if (S.token) renderShell(); else renderLogin();
 </script>
 </body>
