@@ -1171,7 +1171,6 @@ async function viewReport(el) {
   const ok = v => v ? '<span class="chip ok">OK</span>' : '<span class="chip no">نشده</span>';
   const cell = (amt, v) => `<td><div>${fmt(amt)}</div>${ok(v)}</td>`;
   el.innerHTML = `
-  el.innerHTML = `
   <div style="display:flex;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap">
     <div><h1>گزارش ${rep.month_name} ${fa(rep.year)}</h1></div>
     <div>${periodPicker()}
