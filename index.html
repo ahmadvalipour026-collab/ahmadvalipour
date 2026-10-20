@@ -1800,110 +1800,187 @@ async function viewProfile(el) {
 window.addEventListener('online', () => toast('اتصال اینترنت برقرار شد'));
 window.addEventListener('offline', () => toast('اتصال اینترنت قطع شد', true));
 /* =========================================================
-   مدیریت Back
+   22. Back Navigation — Double Back to Exit
    ---------------------------------------------------------
    سیاست:
-   1) داخل هر صفحه‌ای غیر از داشبورد:
+   1) داخل هر صفحه غیر از داشبورد:
       Back => داشبورد
    2) روی داشبورد:
       Back اول => پیام «دوباره بزنید»
-      Back دوم در بازه 2 ثانیه => خروج از history برنامه
+      Back دوم حداکثر تا 2 ثانیه => خروج از صفحه/برنامه
+   3) Back اول هرگز نباید اجازه عبور به History قبلی مرورگر را بدهد.
    ========================================================= */
 
 const BACK_EXIT_WINDOW_MS = 2000;
 
 let backPressCount = 0;
 let backPressTimer = null;
+let appHistoryReady = false;
 
 function resetBackPress() {
   backPressCount = 0;
+
   if (backPressTimer) {
     clearTimeout(backPressTimer);
     backPressTimer = null;
   }
 }
 
-function armBackExitWindow() {
-  resetBackPress();
-  backPressCount = 1;
+/*
+ * History Guard
+ *
+ * همیشه یک Entry محافظ جلوی Entry فعلی برنامه نگه می‌داریم.
+ * بنابراین Back اول فقط popstate ایجاد می‌کند و به سایت/صفحه
+ * قبلی مرورگر عبور نمی‌کند.
+ */
+function ensureAppHistory() {
+  const current = history.state;
 
-  backPressTimer = setTimeout(() => {
-    backPressCount = 0;
-    backPressTimer = null;
-  }, BACK_EXIT_WINDOW_MS);
+  if (!current?.app) {
+    history.replaceState(
+      { app: true, view: S.view || 'dash', root: true },
+      '',
+      '#app'
+    );
+
+    history.pushState(
+      { app: true, view: S.view || 'dash', guard: true },
+      '',
+      '#app'
+    );
+  } else if (!current.guard) {
+    history.pushState(
+      {
+        ...current,
+        app: true,
+        view: S.view || current.view || 'dash',
+        guard: true
+      },
+      '',
+      '#app'
+    );
+  }
+
+  appHistoryReady = true;
 }
 
-function ensureAppHistory() {
-  const state = history.state;
-
-  if (!state?.app) {
-    // یک ورودی ریشه برای برنامه و یک guard برای جلوگیری از خروج ناخواسته
-    history.replaceState(
-      { app: true, view: 'dash', root: true },
-      '',
-      '#app'
-    );
-    history.pushState(
-      { app: true, view: 'dash', guard: true },
-      '',
-      '#app'
-    );
-    return;
-  }
-
-  // اگر state متعلق به برنامه است ولی guard ندارد، یک guard بساز.
-  if (state.view === 'dash' && !state.guard) {
-    history.pushState(
-      { app: true, view: 'dash', guard: true },
-      '',
-      '#app'
-    );
-  }
+function rearmHistoryGuard() {
+  history.pushState(
+    {
+      app: true,
+      view: S.view || 'dash',
+      guard: true
+    },
+    '',
+    '#app'
+  );
 }
 
 function handleBackNavigation() {
-  if (!S.me) return;
+  /*
+   * مهم:
+   * این شرط نباید بر اساس S.me باشد.
+   * اگر S.me هنوز به‌صورت async آماده نشده باشد، Back اول
+   * نباید باعث خروج مستقیم مرورگر شود.
+   */
+  if (!appHistoryReady) {
+    ensureAppHistory();
+    return;
+  }
 
-  // Back از هر صفحه داخلی: فقط به داشبورد برگرد.
-  if (S.view !== 'dash') {
+  /*
+   * اگر صفحه‌ای داخلی باز است، Back فقط به داشبورد می‌رود.
+   * در این حالت اصلاً وارد منطق Double Back نمی‌شویم.
+   */
+  if (S.me && S.view !== 'dash') {
     resetBackPress();
+
     go('dash', true);
 
-    // وضعیت فعلی را به ریشه منطقی برنامه تبدیل می‌کنیم.
+    /*
+     * Entry فعلی را به Guard داشبورد تبدیل می‌کنیم.
+     * این کار جلوی زنجیره شدن History صفحات داخلی را می‌گیرد.
+     */
     history.replaceState(
-      { app: true, view: 'dash', guard: true },
+      {
+        app: true,
+        view: 'dash',
+        guard: true
+      },
       '',
       '#app'
     );
+
     return;
   }
 
-  // داشبورد: Double Back to Exit
+  /*
+   * اگر هنوز کاربر لاگین را کامل نکرده، فقط Guard را دوباره فعال کن.
+   * Back اول نباید باعث خروج ناخواسته از صفحه برنامه شود.
+   */
+  if (!S.me) {
+    resetBackPress();
+    rearmHistoryGuard();
+    return;
+  }
+
+  /*
+   * Dashboard — Back اول
+   */
   if (backPressCount === 0) {
-    armBackExitWindow();
+    backPressCount = 1;
+
     toast('برای خروج، دوباره دکمه بازگشت را بزنید', true);
 
-    // یک guard جدید می‌سازیم تا Back دوم به بیرون از برنامه برسد.
-    history.pushState(
-      { app: true, view: 'dash', guard: true },
-      '',
-      '#app'
-    );
+    clearTimeout(backPressTimer);
+
+    backPressTimer = setTimeout(() => {
+      backPressCount = 0;
+      backPressTimer = null;
+    }, BACK_EXIT_WINDOW_MS);
+
+    /*
+     * بعد از popstate دوباره یک Guard می‌سازیم.
+     * بنابراین Back اول هیچ‌وقت به صفحه قبلی مرورگر نمی‌رسد.
+     */
+    rearmHistoryGuard();
+
     return;
   }
 
-  // Back دوم: اجازه عبور از ریشه برنامه را بده.
+  /*
+   * Dashboard — Back دوم در بازه 2 ثانیه
+   */
   resetBackPress();
 
-  // توجه: این «logout» نیست؛ فقط خروج از history برنامه است.
-  // sessionStorage عمداً پاک نمی‌شود تا Back با خروج از حساب اشتباه نشود.
+  /*
+   * اینجا عمداً logout نمی‌کنیم و sessionStorage را پاک نمی‌کنیم.
+   * خروج فقط از History برنامه است.
+   *
+   * چون Back اول یک Guard جدید ساخته، Back دوم اکنون از
+   * مرز برنامه عبور می‌کند.
+   */
   history.back();
 }
 
 window.addEventListener('popstate', handleBackNavigation);
 
-// راه‌اندازی تاریخچه فقط یک بار
+/*
+ * راه‌اندازی History Guard فقط یک بار.
+ * اگر hash قبلی مربوط به برنامه باشد، همان ساختار حفظ می‌شود.
+ */
 ensureAppHistory();
+
+/*
+ * وقتی برنامه به پس‌زمینه می‌رود، شمارنده Double Back منقضی شود.
+ * این کار مانع می‌شود Back اول قبل از خروج و Back دوم بعد از
+ * برگشت از یک برنامه دیگر به‌عنوان یک جفت محسوب شوند.
+ */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    resetBackPress();
+  }
+});
 
 // بستن منوی اصلی با کلیک بیرون از آن — فقط یک listener سراسری
 document.addEventListener('click', e => {
