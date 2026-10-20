@@ -1180,7 +1180,6 @@ async function viewReport(el) {
     ${rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">نرخ ماه‌های ${rep.missing_rates.map(fa).join('، ')} تعریف نشده.</div>` : ''}
     
     <div class="tbl-wrap" style="border-radius: 8px; overflow-x: auto; border: 1px solid #333; padding: 0; background: #fff;">
-      <!-- 👇 فونت ۲۰ شد و عرض جدول به max-content تغییر کرد -->
       <table style="width: max-content; min-width: 100%; border-collapse: collapse; font-size: 20px; font-weight: bold; text-align: center; direction: rtl; border: 2px solid #000;">
         <thead>
           <tr>
@@ -1192,11 +1191,7 @@ async function viewReport(el) {
             </th>
           </tr>
           <tr>
-            <!-- 👇 پدینگ‌ها کم شد (6px) تا ستون‌ها باریک‌تر بشن -->
-            <td style="border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap;">
-  واحد ${fa(r.unit_no)}
-  <div style="font-size: 8px; font-weight: normal; color: #000; margin-top: 2px;">${esc(r.occupancy || '')}</div>
-</td>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000;">واحد</th>
             <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000;">شارژ</th>
             <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000;">قبض آب</th>
             <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000;">قبض گاز</th>
@@ -1212,7 +1207,10 @@ async function viewReport(el) {
             else if (r.prev_debt > 0) rowBg = '#FFC000'; // زرد
 
             return `<tr style="background-color: ${rowBg}; color: #000000;">
-              <td style="border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap;">واحد ${fa(r.unit_no)}</td>
+              <td style="border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap;">
+                واحد ${fa(r.unit_no)}
+                <div style="font-size: 10px; font-weight: normal; color: #000; margin-top: 2px;">${esc(r.occupancy || '')}</div>
+              </td>
               <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.charge)}</td>
               <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.water)}</td>
               <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.gas)}</td>
@@ -1244,7 +1242,7 @@ async function viewReport(el) {
 
       tableElement.style.overflow = 'visible';
       tableElement.style.maxHeight = 'none';
-      tableElement.style.width = '1200px'; // عرض ثابت برای عکس‌گرفتن
+      tableElement.style.width = '1200px';
 
       const canvas = await html2canvas(tableElement, { 
         scale: 3, 
