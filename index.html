@@ -1714,14 +1714,16 @@ window.addEventListener('offline', () => toast('اتصال اینترنت قطع
 let backPressCount = 0;
 let backPressTimer = null;
 
-// اضافه کردن یک قدم به تاریخچه
-history.pushState({ page: 'app' }, '', '');
+// ۱. تزریق اولیه تاریخچه (با هش # که مرورگر رو گول بزنه)
+if (!window.location.hash) {
+  history.pushState({ page: 'app' }, '', '#app');
+}
 
 window.addEventListener('popstate', (e) => {
-  // اگر توی صفحه‌ای غیر از داشبورد بودیم، برگرد به داشبورد
+  // اگر توی صفحه‌ای غیر از داشبورد بودیم
   if (S.view !== 'dash' && S.me) {
     go('dash', true);
-    history.pushState({ page: 'app' }, '', ''); 
+    history.pushState({ page: 'app' }, '', '#app'); 
     return;
   }
   
@@ -1732,26 +1734,25 @@ window.addEventListener('popstate', (e) => {
     if (backPressCount === 1) {
       toast('برای خروج، دوباره دکمه بازگشت را بزنید', true);
       
-      // تزریق مجدد تاریخچه تا بسته نشه
-      history.pushState({ page: 'app' }, '', ''); 
+      // 🔒 تزریق مجدد با هش، تا مرورگر برنامه رو نبنده
+      history.pushState({ page: 'app' }, '', '#app'); 
       
-      // تایمر ۲ ثانیه‌ای
       clearTimeout(backPressTimer);
       backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
       
     } else {
-      // بار دوم که پشت سر هم زد
+      // بار دوم: اجازه خروج بده
       clearTimeout(backPressTimer);
       sessionStorage.clear(); 
-      history.go(-2); // خروج کامل از برنامه
+      // حذف هش و عقب رفتن برای بستن برنامه
+      history.go(-2); 
     }
   }
 });
 
-// 🔒 ترفند جدید: وقتی کاربر میره تب دیگه یا برنامه رو مینیمایز میکنه، شمارنده رو صفر کن
+// صفر کردن شمارنده وقتی کاربر میره تب دیگه
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
-    // کاربر از برنامه خارج شد (رفت تو تب دیگه)
     backPressCount = 0;
     clearTimeout(backPressTimer);
   }
