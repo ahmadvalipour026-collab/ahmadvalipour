@@ -1228,7 +1228,6 @@ async function viewReport(el) {
         backgroundColor: '#ffffff',
         windowWidth: 1400,
         width: 1400,
-        // حالا کلاس درست (no-bale) رو نادیده می‌گیره
         ignoreElements: (element) => element.classList.contains('no-bale')
       });
       
@@ -1250,8 +1249,7 @@ async function viewReport(el) {
       btn.disabled = false;
     }
   });
-}
-      
+}      
       tableElement.style.overflow = originalOverflow;
       tableElement.style.maxHeight = originalMaxHeight;
       tableElement.style.width = originalWidth;
