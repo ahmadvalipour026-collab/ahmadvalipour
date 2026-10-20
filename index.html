@@ -435,8 +435,6 @@ async function renderShell() {
   document.addEventListener('click', () => $('#main-menu')?.classList.remove('show'));
   $$('#main-menu button').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
   go(S.view);
-     // 👇 اضافه کردن یک قدم به تاریخچه مرورگر تا دکمه بک گوشی از برنامه خارج نشه
-  history.pushState({ view: 'dash' }, '', '');
 }
 
 function go(v, isBackNavigation = false) {
@@ -1711,36 +1709,38 @@ async function viewProfile(el) {
 window.addEventListener('online', () => toast('اتصال اینترنت برقرار شد'));
 window.addEventListener('offline', () => toast('اتصال اینترنت قطع شد', true));
 /* =========================================================
-   مدیریت دکمه‌ی Back مرورگر و گوشی (خروج با دو بار زدن)
+   مدیریت دکمه‌ی Back مرورگر و گوشی (روش ضد گلوله)
    ========================================================= */
 let backPressCount = 0;
 let backPressTimer = null;
 
+// ۱. وقتی برنامه لود می‌شه، یک تاریخچه جعلی اضافه می‌کنیم تا مرورگر فکر کنه ما یک صفحه عقب‌تریم
+history.pushState({ dummy: true }, '', '');
+
 window.addEventListener('popstate', (e) => {
-  // ۱. اگر کاربر در صفحه‌ای غیر از داشبورد است، فقط به داشبورد برگردد
+  // اگر کاربر توی صفحه‌ای غیر از داشبورد بود، فقط برگرده به داشبورد
   if (S.view !== 'dash' && S.me) {
     go('dash', true);
-    history.pushState({ view: 'dash' }, '', ''); // تاریخچه رو دوباره ست می‌کنیم
+    history.pushState({ dummy: true }, '', '');
     return;
   } 
   
-  // ۲. اگر کاربر در داشبورد است (صفحه آخر)
+  // اگر کاربر توی داشبورد بود
   if (S.view === 'dash' && S.me) {
     backPressCount++;
     
     if (backPressCount === 1) {
       toast('برای خروج، دوباره دکمه بازگشت را بزنید', true);
       
-      // 🔒 تزریق مجدد تاریخچه تا کاربر از برنامه خارج نشود
-      history.pushState({ view: 'dash' }, '', ''); 
+      // 🔒 تاریخچه رو دوباره تزریق می‌کنیم تا مرورگر از برنامه خارج نشه
+      history.pushState({ dummy: true }, '', ''); 
       
-      // شمارنده رو بعد از ۲.۵ ثانیه صفر می‌کنیم
       clearTimeout(backPressTimer);
       backPressTimer = setTimeout(() => { backPressCount = 0; }, 2500);
     } else {
-      // بار دوم که زد، اجازه بده از مرورگر خارج بشه (توکن هم پاک میشه)
+      // بار دوم: توکن رو پاک کن و به مرورگر اجازه بده خارج بشه
       sessionStorage.clear();
-      history.back();
+      history.back(); 
     }
   }
 });
