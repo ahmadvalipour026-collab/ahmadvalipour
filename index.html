@@ -1218,15 +1218,16 @@ async function viewReport(el) {
       const originalMaxHeight = tableElement.style.maxHeight;
       const originalWidth = tableElement.style.width;
 
+      // عرض رو کمتر میکنیم تا فشرده نشه و فونت‌ها درشت بمونن
       tableElement.style.overflow = 'visible';
       tableElement.style.maxHeight = 'none';
-      tableElement.style.width = '1400px';
+      tableElement.style.width = '1000px'; 
 
       const canvas = await html2canvas(tableElement, { 
-        scale: 3, 
+        scale: 2, // کیفیت ۲ برابر کافیه
         backgroundColor: '#ffffff',
-        windowWidth: 1400,
-        width: 1400,
+        windowWidth: 1000, // عرض ثابت ۱۰۰۰ پیکسل
+        width: 1000,
         ignoreElements: (element) => element.classList.contains('no-bale')
       });
       
@@ -1234,7 +1235,8 @@ async function viewReport(el) {
       tableElement.style.maxHeight = originalMaxHeight;
       tableElement.style.width = originalWidth;
 
-      const base64Image = canvas.toDataURL('image/jpeg', 0.95);
+      // کیفیت فشرده سازی رو 0.9 میذاریم تا هم حجمش کم باشه هم خوانا
+      const base64Image = canvas.toDataURL('image/jpeg', 0.9);
 
       btn.textContent = 'در حال ارسال به بله...';
       
