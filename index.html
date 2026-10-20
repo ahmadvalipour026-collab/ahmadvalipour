@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 :root{
 --primary:#0f172a;--primary-light:#334155;--accent:#6366f1;--accent-hover:#4f46e5;
@@ -173,9 +174,12 @@ const attachNumericInput = (...sels) => attachNumericInputIn(document, ...sels);
 /* =========================================================
    2.5 اتصال به پیام‌رسان بله (Bale)
    ========================================================= */
-async function notifyBale(msg) {
+async function notifyBale(msg, imageBase64 = null) {
   try {
-    await sb.functions.invoke('send-bale', { body: { text: msg } });
+    const payload = { text: msg };
+    if (imageBase64) payload.image = imageBase64;
+    
+    await sb.functions.invoke('send-bale', { body: payload });
     console.log('✅ Bale: پیام با موفقیت ارسال شد');
   } catch(e) {
     console.warn('❌ Bale: ارسال پیام ناموفق بود:', e);
@@ -1170,7 +1174,8 @@ async function viewReport(el) {
   el.innerHTML = `
     <div style="display:flex;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap">
       <div><h1>گزارش ${rep.month_name} ${fa(rep.year)}</h1></div>
-      <div>${periodPicker()}<button class="btn lt no-print" id="pr-btn">چاپ</button></div>
+      <div>${periodPicker()}<button class="btn sf no-print" id="bale-btn">ارسال به بله 📤</button>
+<button class="btn lt no-print" id="pr-btn">چاپ</button></div>
     </div>
     ${rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">نرخ ماه‌های ${rep.missing_rates.map(fa).join('، ')} تعریف نشده.</div>` : ''}
     <div class="tbl-wrap"><table><thead><tr>
@@ -1195,6 +1200,31 @@ async function viewReport(el) {
     </tbody></table></div>`;
   bindPeriod(() => go('report'));
   $('#pr-btn')?.addEventListener('click', () => window.print());
+     $('#bale-btn')?.addEventListener('click', async () => {
+    const btn = $('#bale-btn');
+    const oldText = btn.textContent;
+    btn.textContent = 'در حال ساخت عکس...';
+    btn.disabled = true;
+
+    try {
+      // گرفتن عکس از جدول گزارش
+      const tableElement = $('.tbl-wrap');
+      const canvas = await html2canvas(tableElement, { scale: 2, backgroundColor: '#ffffff' });
+      const base64Image = canvas.toDataURL('image/jpeg', 0.8);
+
+      btn.textContent = 'در حال ارسال به بله...';
+      
+      // ارسال به بله
+      await notifyBale(`📊 گزارش ماهانه ${rep.month_name} ${fa(rep.year)}\n${S.building}`, base64Image);
+      
+      toast('گزارش با موفقیت به گروه بله ارسال شد');
+    } catch (e) {
+      showErr(e);
+    } finally {
+      btn.textContent = oldText;
+      btn.disabled = false;
+    }
+  });
 }
 
 /* =========================================================
