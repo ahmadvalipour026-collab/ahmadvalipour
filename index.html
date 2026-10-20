@@ -174,7 +174,7 @@ const attachNumericInput = (...sels) => attachNumericInputIn(document, ...sels);
    3. State
    ========================================================= */
 const S = {
-  token: null, // 🔒 توکن رو نال می‌کنیم تا هر بار صفحه لود شد لاگین کنه
+  token: null,
   me: null,
   view: 'dash', y: TODAY.y, m: TODAY.m,
   building: 'مجتمع نگین ۲',
@@ -183,10 +183,6 @@ const S = {
 
 // پاک کردن توکن‌های قدیمی از حافظه مرورگر
 localStorage.removeItem('bm_token');
-localStorage.removeItem('bm_me');  view: 'dash', y: TODAY.y, m: TODAY.m,
-  building: 'مجتمع نگین ۲',
-  txFilter: null,
-};
 
 /* =========================================================
    4. API
