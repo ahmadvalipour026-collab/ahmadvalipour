@@ -491,7 +491,6 @@ const mustChangeBanner = () => S.me?.must_change_password
   : '';
 
 function billCard(r, rep) {
-  // این خطوط رو دقیقا کپی کن
   const w = Number(r.water) || 0;
   const rep_amt = Number(r.repair) || 0;
   const park = Number(r.parking) || 0;
@@ -513,7 +512,6 @@ function billCard(r, rep) {
         <div style="font-size:36px;font-weight:900;line-height:1.2">${fmt(rem)}</div>
       </div>
     </div>
-    
     <div style="padding:10px 24px">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)">
         <span>سهم قبض آب</span>
@@ -529,7 +527,6 @@ function billCard(r, rep) {
         <span>${r.ok_parking ? '<span class="chip ok">پرداخت شده</span>' : '<span class="chip no">پرداخت نشده</span>'}</span>
       </div>` : ''}
     </div>
-    
     <div style="background:#f8fafc;padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px;border-top:1px solid var(--line)">
       <div>
         <small style="color:var(--muted);display:block">بدهی قبلی</small>
@@ -542,6 +539,7 @@ function billCard(r, rep) {
     </div>
   </div>`;
 }
+
 function reminderText(r, rep) {
   return `${S.building} - واحد ${r.unit_no}\nصورتحساب ${rep.month_name} ${rep.year}:\n` +
     `شارژ ${fmt(r.charge)} | آب ${fmt(r.water)} | گاز ${fmt(r.gas)} | بازسازی ${fmt(r.repair)}` +
