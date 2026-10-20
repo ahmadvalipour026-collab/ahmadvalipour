@@ -16,11 +16,19 @@
   --r: 16px; --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
 }
 *{box-sizing:border-box}
-/* جلوگیری از کشیده شدن صفحه به بیرون در موبایل */
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Vazirmatn,sans-serif;font-size:14px;line-height:1.7; overflow-x: hidden; width: 100%;}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--accent);text-decoration:none}
 .hidden{display:none!important}
+
+/* اسپینر لودینگ */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 48px; height: 48px; border: 4px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+.loading-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; gap:20px; }
+
+/* صفحه عدم اتصال */
+.offline-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; gap:20px; padding:24px; text-align:center; }
+.offline-icon { font-size:72px; }
 
 header.top{background:rgba(255, 255, 255, 0.85);backdrop-filter:blur(12px);position:sticky;top:0;z-index:20;border-bottom:1px solid var(--line);box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02)}
 .top-in{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:12px 24px;flex-wrap:wrap;gap:16px}
@@ -32,7 +40,6 @@ header.top{background:rgba(255, 255, 255, 0.85);backdrop-filter:blur(12px);posit
 .btn-ghost{background:rgba(0,0,0,0.04);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .2s}
 .btn-ghost:hover{background:rgba(0,0,0,0.08)}
 
-/* منوی کشویی (Hamburger) */
 .menu-dropdown{position:relative;display:inline-block}
 .menu-btn{background:var(--primary);color:#fff;border:0;border-radius:10px;padding:8px 16px;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(15,23,42,0.2); font-size:13px;}
 .menu-btn:hover{background:var(--primary-light)}
@@ -94,7 +101,6 @@ tr:hover td{background:#f8fafc}
 .modal .x{position:absolute;top:20px;left:20px;background:var(--bg);border:0;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted)}
 .modal .x:hover{background:var(--line)}
 
-/* استایل آکاردئون برای نرخ‌ها */
 .accordion-item { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 12px; overflow: hidden; background: var(--card); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
 .accordion-header { padding: 16px 20px; background: #f8fafc; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 15px; transition: background 0.2s; }
 .accordion-header:hover { background: #f1f5f9; }
@@ -142,14 +148,33 @@ const S = {
   view: 'dash', y: TODAY.y, m: TODAY.m, building: 'مجتمع نگین ۲',
 };
 
+function isNetworkError(msg) {
+  if (!msg) return false;
+  return /failed to fetch|network|fetch|timeout|ECONN|ERR_NETWORK|ERR_INTERNET/i.test(String(msg));
+}
+
 async function api(fn, args = {}) {
-  const { data, error } = await sb.rpc(fn, args);
-  if (error) {
-    const msg = (error.message || '').replace(/^AUTH_REQUIRED:\s*/, '');
-    if ((error.message || '').startsWith('AUTH_REQUIRED')) { logout(true); }
-    throw new Error(msg || 'خطا در ارتباط با سرور');
+  try {
+    const { data, error } = await sb.rpc(fn, args);
+    if (error) {
+      const rawMsg = error.message || '';
+      if (rawMsg.startsWith('AUTH_REQUIRED')) {
+        logout(true);
+        throw new Error('__AUTH_ERROR__');
+      }
+      if (isNetworkError(rawMsg)) {
+        throw new Error('__NETWORK_ERROR__');
+      }
+      const msg = rawMsg.replace(/^AUTH_REQUIRED:\s*/, '');
+      throw new Error(msg || 'خطا در ارتباط با سرور');
+    }
+    return data;
+  } catch (e) {
+    if (isNetworkError(e.message)) {
+      throw new Error('__NETWORK_ERROR__');
+    }
+    throw e;
   }
-  return data;
 }
 const T = (fn, args = {}) => api(fn, { p_token: S.token, ...args });
 
@@ -216,6 +241,22 @@ async function compressImage(file) {
 }
 
 // =====================================================================
+//  صفحه عدم اتصال
+// =====================================================================
+function showConnectionError() {
+  $('#app').innerHTML = `
+    <div class="offline-screen">
+      <div class="offline-icon">📡</div>
+      <h1>اتصال به سرور برقرار نیست</h1>
+      <p class="sub" style="max-width:420px">لطفاً اتصال اینترنت خود را بررسی کنید و دوباره تلاش کنید. اطلاعات حساب شما حفظ شده است.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        <button class="btn sf" onclick="renderShell()" style="min-width:180px">تلاش مجدد</button>
+        <button class="btn lt" onclick="logout()" style="min-width:180px">خروج از حساب</button>
+      </div>
+    </div>`;
+}
+
+// =====================================================================
 //  ورود
 // =====================================================================
 async function renderLogin() {
@@ -231,7 +272,7 @@ async function renderLogin() {
           <form id="lg" class="grid" style="gap:16px">
             <label class="f">نام کاربری<input id="lg-user" autocomplete="username" dir="ltr" required></label>
             <label class="f">رمز عبور<input id="lg-pass" type="password" autocomplete="current-password" dir="ltr" required></label>
-            <button class="btn sf" type="submit">ورود به پنل</button>
+            <button class="btn sf" type="submit" id="lg-btn">ورود به پنل</button>
             <p id="lg-err" style="color:var(--danger);margin:0;min-height:24px"></p>
             <a href="#" id="forgot-pass" style="text-align:center; font-size:13px; color:var(--muted); display:block;">رمز عبور را فراموش کرده‌اید؟</a>
           </form>
@@ -245,10 +286,19 @@ async function renderLogin() {
       S.building = info.building_name;
       $('#login-title').textContent = S.building;
     }
-  } catch(e){}
+  } catch(e){
+    if (e.message === '__NETWORK_ERROR__') {
+      $('#lg-err').textContent = 'اتصال به سرور برقرار نیست. اتصال اینترنت را بررسی کنید.';
+    }
+  }
 
   $('#lg').addEventListener('submit', async e => {
     e.preventDefault();
+    const btn = $('#lg-btn');
+    const oldText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'در حال بررسی...';
+    $('#lg-err').textContent = '';
     try {
       const r = await api('app_login', { p_login: $('#lg-user').value.trim(), p_password: $('#lg-pass').value });
       if (!r.ok) { $('#lg-err').textContent = r.error; return; }
@@ -256,7 +306,16 @@ async function renderLogin() {
       localStorage.setItem('bm_token', S.token);
       localStorage.setItem('bm_me', JSON.stringify(S.me));
       renderShell();
-    } catch (err) { $('#lg-err').textContent = err.message; }
+    } catch (err) { 
+      if (err.message === '__NETWORK_ERROR__') {
+        $('#lg-err').textContent = 'اتصال به سرور برقرار نیست. اتصال اینترنت خود را بررسی کنید.';
+      } else {
+        $('#lg-err').textContent = err.message; 
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+    }
   });
 
   $('#forgot-pass').addEventListener('click', e => {
@@ -274,7 +333,7 @@ async function renderLogin() {
         const r = await api('app_reset_password', { p_username: $('#fp-user', m).value, p_phone: $('#fp-phone', m).value, p_new_password: $('#fp-pass', m).value });
         if (!r.ok) { toast(r.error, true); return; }
         m.remove(); toast('رمز عبور تغییر کرد. وارد شوید.');
-      } catch (err) { toast(err.message, true); }
+      } catch (err) { toast(err.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : err.message, true); }
     });
   });
 }
@@ -287,7 +346,7 @@ async function logout(silent = false) {
 }
 
 // =====================================================================
-//  قالب اصلی و منو کشویی
+//  قالب اصلی
 // =====================================================================
 function getMenuItems() {
   const a = S.me?.is_admin;
@@ -306,8 +365,27 @@ function getMenuItems() {
 }
 
 async function renderShell() {
-  try { S.me = await T('app_me'); localStorage.setItem('bm_me', JSON.stringify(S.me)); }
-  catch(e) { logout(true); return; }
+  // نمایش صفحه لودینگ
+  $('#app').innerHTML = `
+    <div class="loading-screen">
+      <div class="spinner"></div>
+      <p class="sub">در حال اتصال به سرور...</p>
+    </div>`;
+  
+  try { 
+    S.me = await T('app_me'); 
+    localStorage.setItem('bm_me', JSON.stringify(S.me)); 
+  }
+  catch(e) { 
+    if (S.token) { 
+      if (e.message === '__NETWORK_ERROR__') {
+        showConnectionError();
+      } else if (e.message !== '__AUTH_ERROR__') {
+        showConnectionError();
+      }
+    } 
+    return; 
+  }
 
   const menuItems = getMenuItems();
   const currentTab = menuItems.find(t => t[0] === S.view);
@@ -358,7 +436,18 @@ function go(v) {
     pay: viewPay, report: viewReport, units: viewUnits, rates: viewRates, activity: viewActivity, profile: viewProfile 
   };
   renderShellHeaderState();
-  (views[v] || viewDash)(el).catch(e => el.innerHTML = `<div class="card" style="color:var(--danger)">خطا: ${esc(e.message)}</div>`);
+  (views[v] || viewDash)(el).catch(e => {
+    if (e.message === '__NETWORK_ERROR__') {
+      el.innerHTML = `<div class="card" style="text-align:center;padding:60px 20px">
+        <div style="font-size:48px;margin-bottom:16px">📡</div>
+        <h2>اتصال به سرور برقرار نیست</h2>
+        <p class="sub">لطفاً اینترنت خود را بررسی کنید</p>
+        <button class="btn sf" onclick="go('${v}')">تلاش مجدد</button>
+      </div>`;
+    } else {
+      el.innerHTML = `<div class="card" style="color:var(--danger)">خطا: ${esc(e.message)}</div>`;
+    }
+  });
 }
 
 function renderShellHeaderState() {
@@ -430,11 +519,9 @@ async function viewDash(el) {
     return;
   }
 
-  // ================= بخش مدیر =================
   const fund = await T('app_fund_summary', { p_year: S.y, p_month: S.m });
-  const rows = rep.rows; // این آرایه شامل تمام حساب‌هاست (ممکنه برای یک واحد چند حساب باشه)
+  const rows = rep.rows;
   
-  // گروه‌بندی اطلاعات بر اساس شماره واحد برای نمایش در نقشه
   const unitMap = {};
   rows.forEach(r => {
     if (!unitMap[r.unit_no]) unitMap[r.unit_no] = { unit_no: r.unit_no, remaining: 0, current_due: 0, accounts: [], display_name: '' };
@@ -446,7 +533,6 @@ async function viewDash(el) {
     }
   });
   
-  // ساخت آرایه نهایی برای ۱۰ واحد (حتی اگر حسابی نداشته باشند)
   const mapUnits = [];
   for (let i = 1; i <= 10; i++) {
     if (unitMap[i]) {
@@ -456,7 +542,6 @@ async function viewDash(el) {
     }
   }
   
-  // چینش واحدها در طبقات (از بالا به پایین)
   const floors = [];
   for (let f = 9; f >= 0; f -= 2) floors.push([mapUnits[f-1], mapUnits[f]]);
   
@@ -504,16 +589,13 @@ async function viewDash(el) {
     
   bindPeriod(() => go('dash'));
   
-  // نمایش جزئیات هنگام کلیک روی پنجره واحد
   $$('.win').forEach(b => b.addEventListener('click', () => {
     const uData = mapUnits.find(x => x.unit_no == b.dataset.u);
     
-    // ساخت کارت صورتحساب برای همه افراد آن واحد
     const cardsHtml = uData.accounts.length 
         ? uData.accounts.map(r => billCard(r, rep)).join('<hr style="border:0;border-top:1px dashed var(--line);margin:20px 0">')
         : '<p class="sub" style="text-align:center;padding:20px">حسابی برای این واحد ثبت نشده است.</p>';
         
-    // ساخت دکمه‌های پیامک برای همه افراد
     const smsHtml = uData.accounts.map(r => r.phone ? smsBtn(r.phone, reminderText(r, rep), `پیامک به ${esc(r.full_name || r.occupancy)}`) : '').join('');
     
     const m = modal(`
@@ -580,7 +662,7 @@ function payModal(r) {
         p_pay_date: $('#pf-d', m).value, p_receipt_image: base64Image 
       });
       m.remove(); toast('پرداخت ثبت شد و منتظر تایید است'); go(S.view);
-    } catch (err) { toast(err.message, true); }
+    } catch (err) { toast(err.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : err.message, true); }
   });
 }
 
@@ -621,14 +703,14 @@ function approveModal(p) {
   $('#ap-rj', m).addEventListener('click', async () => {
     const note = prompt('دلیل رد:') ?? null;
     if (note === null) return;
-    try { await T('app_admin_review_payment', { p_id: p.id, p_approve: false, p_admin_note: note }); m.remove(); toast('رد شد'); go('pay'); } catch (e) { toast(e.message, true); }
+    try { await T('app_admin_review_payment', { p_id: p.id, p_approve: false, p_admin_note: note }); m.remove(); toast('رد شد'); go('pay'); } catch (e) { toast(e.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : e.message, true); }
   });
 
   $('#ap-go', m).addEventListener('click', async () => {
     try {
       await T('app_admin_review_payment', { p_id: p.id, p_approve: true, p_amount: toNum($('#ap-a', m).value), p_admin_note: $('#ap-n', m).value });
       m.remove(); toast('تایید شد'); go('pay');
-    } catch (e) { toast(e.message, true); }
+    } catch (e) { toast(e.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : e.message, true); }
   });
 }
 
@@ -660,11 +742,11 @@ async function viewAnnouncements(el) {
   if (S.me.is_admin) {
     $('#af').addEventListener('submit', async e => {
       e.preventDefault();
-      try { await T('app_admin_save_announcement', { p_title: $('#a-title').value, p_content: $('#a-content').value, p_type: $('#a-type').value }); toast('ثبت شد'); go('announcements'); } catch (err) { toast(err.message, true); }
+      try { await T('app_admin_save_announcement', { p_title: $('#a-title').value, p_content: $('#a-content').value, p_type: $('#a-type').value }); toast('ثبت شد'); go('announcements'); } catch (err) { toast(err.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : err.message, true); }
     });
     $$('[data-del]').forEach(b => b.addEventListener('click', async () => {
       if (!confirm('حذف شود؟')) return;
-      try { await T('app_admin_delete_announcement', { p_id: +b.dataset.del }); toast('حذف شد'); go('announcements'); } catch (e) { toast(e.message, true); }
+      try { await T('app_admin_delete_announcement', { p_id: +b.dataset.del }); toast('حذف شد'); go('announcements'); } catch (e) { toast(e.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : e.message, true); }
     }));
   }
 }
@@ -694,11 +776,11 @@ async function viewRequests(el) {
   if (!admin) {
     $('#rf2').addEventListener('submit', async e => {
       e.preventDefault();
-      try { await T('app_submit_request', { p_type: $('#rq-type').value, p_description: $('#rq-desc').value }); toast('ثبت شد'); go('requests'); } catch (err) { toast(err.message, true); }
+      try { await T('app_submit_request', { p_type: $('#rq-type').value, p_description: $('#rq-desc').value }); toast('ثبت شد'); go('requests'); } catch (err) { toast(err.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : err.message, true); }
     });
   } else {
     $$('[data-ok]').forEach(b => b.addEventListener('click', async () => {
-      try { await T('app_admin_update_request', { p_id: +b.dataset.ok, p_status: 'done' }); toast('تغییر کرد'); go('requests'); } catch (e) { toast(e.message, true); }
+      try { await T('app_admin_update_request', { p_id: +b.dataset.ok, p_status: 'done' }); toast('تغییر کرد'); go('requests'); } catch (e) { toast(e.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : e.message, true); }
     }));
   }
 }
@@ -755,7 +837,7 @@ async function viewTx(el) {
   $('#tx-new').addEventListener('click', () => txModal(null, units));
   $$('[data-dl]').forEach(b => b.addEventListener('click', async () => {
     if (!confirm('حذف شود؟')) return;
-    try { await T('app_admin_delete_transaction', { p_id: +b.dataset.dl }); toast('حذف شد'); go('tx'); } catch (e) { toast(e.message, true); }
+    try { await T('app_admin_delete_transaction', { p_id: +b.dataset.dl }); toast('حذف شد'); go('tx'); } catch (e) { toast(e.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : e.message, true); }
   }));
 }
 
@@ -783,7 +865,7 @@ function txModal(t, units) {
         p_unit_no: unit || null, p_tx_type: $('#t-type', m).value, p_category: $('#t-cat', m).value, p_location: $('#t-loc', m).value, p_description: $('#t-desc', m).value,
         p_amount: toNum($('#t-amt', m).value), p_occupancy: $('#t-occ', m).value, p_force: force });
       m.remove(); toast('ثبت شد'); go('tx');
-    } catch (e) { toast(e.message, true); }
+    } catch (e) { toast(e.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : e.message, true); }
   };
   $('#tf', m).addEventListener('submit', e => { e.preventDefault(); run(false); });
 }
@@ -854,7 +936,7 @@ function unitModal(u) {
       try {
         await T('app_admin_save_account', { p_id: f.dataset.id, p_unit_no: u.unit_no, p_username: f.elements.username.value, p_full_name: f.elements.full_name.value, p_phone: f.elements.phone.value, p_occupancy: f.elements.occupancy.value, p_is_primary: true, p_is_active: true, p_new_password: f.elements.pass.value || null, p_start_ym: 140406 });
         toast('ذخیره شد'); go('units');
-      } catch(err) { toast(err.message, true); }
+      } catch(err) { toast(err.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : err.message, true); }
     });
     const btnReset = $('[data-reset]', f);
     if (btnReset) {
@@ -864,7 +946,7 @@ function unitModal(u) {
           const newPass = await T('app_admin_reset_password', { p_id: btnReset.dataset.reset });
           alert('رمز عبور جدید این کاربر: ' + newPass + '\n\nلطفاً این رمز را به ساکن اطلاع دهید.');
           toast('رمز عبور بازنشانی شد');
-        } catch (err) { toast(err.message, true); }
+        } catch (err) { toast(err.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : err.message, true); }
       });
     }
   });
@@ -970,7 +1052,7 @@ async function viewRates(el) {
   $$('[data-dr]').forEach(b => b.addEventListener('click', async () => {
     if (!confirm('حذف شود؟')) return;
     const [y, mo] = b.dataset.dr.split('-').map(Number);
-    try { await T('app_admin_delete_rate', { p_year: y, p_month: mo }); go('rates'); } catch (e) { toast(e.message, true); }
+    try { await T('app_admin_delete_rate', { p_year: y, p_month: mo }); go('rates'); } catch (e) { toast(e.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : e.message, true); }
   }));
   
   $('#rf').addEventListener('submit', async e => {
@@ -984,13 +1066,13 @@ async function viewRates(el) {
         p_payer_water: getChecked('r-pu'), p_payer_gas: getChecked('r-pu') 
       });
       toast('ذخیره شد'); go('rates'); 
-    } catch (err) { toast(err.message, true); }
+    } catch (err) { toast(err.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : err.message, true); }
   });
   
   $('#sf').addEventListener('submit', async e => {
     e.preventDefault();
     const s = toNum($('#s-s').value.replace('/', ''));
-    try { await T('app_admin_save_settings', { p_building_name: $('#s-n').value, p_opening_balance: toNum($('#s-o').value), p_start_ym: s }); toast('ذخیره شد'); renderShell(); } catch (err) { toast(err.message, true); }
+    try { await T('app_admin_save_settings', { p_building_name: $('#s-n').value, p_opening_balance: toNum($('#s-o').value), p_start_ym: s }); toast('ذخیره شد'); renderShell(); } catch (err) { toast(err.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : err.message, true); }
   });
 }
 
@@ -1011,11 +1093,24 @@ async function viewProfile(el) {
     try {
       S.me = await T('app_update_profile', { p_full_name: $('#p-n').value, p_phone: $('#p-ph').value, p_email: $('#p-e').value, p_username: $('#p-u').value, p_current_password: $('#p-c').value || null, p_new_password: $('#p-np').value || null });
       localStorage.setItem('bm_me', JSON.stringify(S.me)); toast('ذخیره شد'); renderShell();
-    } catch (err) { toast(err.message, true); }
+    } catch (err) { toast(err.message === '__NETWORK_ERROR__' ? 'اتصال به سرور برقرار نیست' : err.message, true); }
   });
 }
 
-S.token ? renderShell() : renderLogin();
+// =====================================================================
+//  مانیتور کردن وضعیت اینترنت
+// =====================================================================
+window.addEventListener('online', () => toast('اتصال اینترنت برقرار شد'));
+window.addEventListener('offline', () => toast('اتصال اینترنت قطع شد', true));
+
+// =====================================================================
+//  شروع برنامه
+// =====================================================================
+if (S.token) {
+  renderShell();
+} else {
+  renderLogin();
+}
 </script>
 </body>
 </html>
