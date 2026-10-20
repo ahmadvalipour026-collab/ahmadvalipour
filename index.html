@@ -1171,6 +1171,7 @@ async function viewReport(el) {
   const ok = v => v ? '<span class="chip ok">OK</span>' : '<span class="chip no">نشده</span>';
   const cell = (amt, v) => `<td><div>${fmt(amt)}</div>${ok(v)}</td>`;
   el.innerHTML = `
+  el.innerHTML = `
   <div style="display:flex;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap">
     <div><h1>گزارش ${rep.month_name} ${fa(rep.year)}</h1></div>
     <div>${periodPicker()}
@@ -1180,46 +1181,45 @@ async function viewReport(el) {
   </div>
   ${rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">نرخ ماه‌های ${rep.missing_rates.map(fa).join('، ')} تعریف نشده.</div>` : ''}
   
-  <div class="tbl-wrap" style="border-radius: 8px; overflow: hidden; border: 1px solid #333; padding: 0;">
-    <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; direction: rtl; border: 2px solid #000;">
-      <!-- هدر جدول -->
+  <!-- 👇 دوباره اسکرول و محدودیت ارتفاع رو برگردوندیم -->
+  <div class="tbl-wrap" style="border-radius: 8px; overflow-x: auto; border: 1px solid #333; padding: 0; background: #fff;">
+    <table style="width: 100%; min-width: 800px; border-collapse: collapse; font-size: 13px; text-align: center; direction: rtl; border: 2px solid #000;">
       <thead>
         <tr>
-          <th colspan="3" style="background-color: #7A9CBE; color: white; padding: 8px; font-size: 18px; font-weight: bold; border: 1px solid #333; text-align: center;">
+          <th colspan="2" style="background-color: #7A9CBE; color: white; padding: 8px; font-size: 16px; font-weight: bold; border: 1px solid #333; text-align: center;">
             گزارش ${rep.month_name} ماه
           </th>
-          <th colspan="5" style="background-color: #7A9CBE; color: white; padding: 8px; font-size: 18px; font-weight: bold; border: 1px solid #333; text-align: center;">
+          <th colspan="4" style="background-color: #7A9CBE; color: white; padding: 8px; font-size: 16px; font-weight: bold; border: 1px solid #333; text-align: center;">
             ${fa(rep.year)}/${String(rep.month).padStart(2, '0')}
           </th>
         </tr>
         <tr>
-          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold;">واحد</th>
-          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold;">شارژ</th>
-          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold;">قبض آب</th>
-          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold;">قبض گاز</th>
-          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold;">بازسازی</th>
-          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold;">بدهی قبلی</th>
-          <th colspan="2" style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold;">جمع مبلغ قابل پرداخت</th>
+          <!-- 👇 ستون‌های اضافی حذف شدن و فقط همون ۷ ستون اصلی موندن -->
+          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; width: 100px;">واحد</th>
+          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; width: 100px;">شارژ</th>
+          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; width: 100px;">قبض آب</th>
+          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; width: 100px;">قبض گاز</th>
+          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; width: 100px;">بازسازی</th>
+          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; width: 100px;">بدهی قبلی</th>
+          <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; width: 120px;">جمع مبلغ قابل پرداخت</th>
         </tr>
       </thead>
       <tbody>
         ${rep.rows.map(r => {
-          // تعیین رنگ پس‌زمینه برای هر سطر
           let rowBg = '#ffffff';
           if (r.remaining <= 0) rowBg = '#00B050'; // سبز (تسویه)
           else if (r.prev_debt > 0) rowBg = '#FFC000'; // زرد (بدهی دارد)
           
-          // رنگ متن (اگر سبز بود، متن سفید میشه)
           const textColor = r.remaining <= 0 ? '#ffffff' : '#000000';
 
           return `<tr style="background-color: ${rowBg}; color: ${textColor};">
             <td style="border: 1px solid #333; padding: 6px; font-weight: bold;">واحد ${fa(r.unit_no)}</td>
-            <td style="border: 1px solid #333; padding: 6px; font-weight: bold;">${fmt(r.charge)}</td>
-            <td style="border: 1px solid #333; padding: 6px; font-weight: bold;">${fmt(r.water)}</td>
-            <td style="border: 1px solid #333; padding: 6px; font-weight: bold;">${fmt(r.gas)}</td>
-            <td style="border: 1px solid #333; padding: 6px; font-weight: bold;">${fmt(r.repair)}</td>
-            <td style="border: 1px solid #333; padding: 6px; font-weight: bold;">${fmt(r.prev_debt)}</td>
-            <td colspan="2" style="border: 1px solid #333; padding: 6px; font-weight: bold; font-size: 14px;">${fmt(r.remaining)}</td>
+            <td style="border: 1px solid #333; padding: 6px;">${fmt(r.charge)}</td>
+            <td style="border: 1px solid #333; padding: 6px;">${fmt(r.water)}</td>
+            <td style="border: 1px solid #333; padding: 6px;">${fmt(r.gas)}</td>
+            <td style="border: 1px solid #333; padding: 6px;">${fmt(r.repair)}</td>
+            <td style="border: 1px solid #333; padding: 6px;">${fmt(r.prev_debt)}</td>
+            <td style="border: 1px solid #333; padding: 6px; font-weight: bold; font-size: 14px;">${fmt(r.remaining)}</td>
           </tr>`;
         }).join('')}
       </tbody>
