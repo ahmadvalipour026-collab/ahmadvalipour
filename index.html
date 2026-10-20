@@ -1107,9 +1107,12 @@ function unitModal(u) {
     ${archivedAccounts.length ? `
       <details style="margin-top:20px">
         <summary style="cursor:pointer;color:var(--muted);font-size:13px;padding:8px 0">
-          📦 سابقه (${fa(archivedAccounts.length)} حساب آرشیو شده)
+          📦 سابقه (${fa(archivedAccounts.length)} حساب آرشیو شده — دائمی)
         </summary>
         <div style="margin-top:12px;opacity:.7">
+          <p style="font-size:11px;color:var(--muted);margin:0 0 8px;background:#fef3c7;padding:6px 10px;border-radius:6px">
+            ⚠️ این حساب‌ها غیرفعال دائمی هستند. تراکنش‌هایشان حفظ شده، ولی دسترسی ورود ندارند.
+          </p>
           ${archivedAccounts.map(a => `
             <div style="background:#f1f5f9;padding:12px;border-radius:8px;margin-bottom:8px;font-size:13px">
               <b>${esc(a.full_name || '—')}</b> · ${esc(a.occupancy)} · ${esc(a.phone || '—')}
@@ -1154,18 +1157,20 @@ function unitModal(u) {
       const name = f.dataset.name;
       const occ = f.dataset.occ;
       if (!confirm(
-        `⚠️ آرشیو حساب «${name}» (${occ})\n\n` +
+        `⚠️ آرشیو «${name}» (${occ})\n\n` +
         `✓ تراکنش‌های قبلی حفظ می‌شوند\n` +
         `✓ اطلاعات حساب در سیستم می‌ماند\n` +
         `✗ این کاربر دیگر نمی‌تواند وارد شود\n` +
         `✓ نام کاربری برای نفر جدید آزاد می‌شود\n\n` +
+        `⚠️ توجه: بعد از آرشیو، بازگردانی ممکن نیست.\n` +
+        `   اگر این نفر برگشت، باید حساب جدید بسازید.\n\n` +
         `آیا مطمئنید؟`
       )) return;
       
       try {
         const acc = activeAccounts.find(a => a.id == f.dataset.id);
         if (acc) await archiveAccount(acc);
-        toast('حساب آرشیو شد');
+        toast('حساب آرشیو شد (بازگردانی ممکن نیست)');
         go('units');
       } catch (err) { showErr(err); }
     });
@@ -1278,7 +1283,7 @@ function renderScenarioForm(scenario, m, u, activeAccounts) {
       <div class="card" style="background:#fef3c7;margin-bottom:16px;font-size:13px">
         <b>📋 خلاصه:</b>
         <ul style="margin:8px 0 0;padding-right:20px">
-          <li>حساب «${esc(tenant?.full_name || 'مستأجر')}» آرشیو می‌شود</li>
+          <li>حساب «${esc(tenant?.full_name || 'مستأجر')}» آرشیو می‌شود (دائمی)</li>
           <li>«${esc(owner?.full_name || 'مالک')}» به «مالک ساکن» تغییر می‌کند</li>
           <li>✅ همه تراکنش‌های قبلی حفظ می‌شوند</li>
         </ul>
@@ -1369,7 +1374,7 @@ function renderScenarioForm(scenario, m, u, activeAccounts) {
       <div class="card" style="background:#fef3c7;margin-bottom:16px;font-size:13px">
         <b>📋 خلاصه:</b>
         <ul style="margin:8px 0 0;padding-right:20px">
-          <li>مستأجر فعلی «${esc(tenant?.full_name || '—')}» آرشیو می‌شود</li>
+          <li>مستأجر فعلی «${esc(tenant?.full_name || '—')}» آرشیو می‌شود (دائمی)</li>
           <li>مستأجر جدید با یوزر/پس جدید اضافه می‌شود</li>
         </ul>
       </div>
@@ -1410,7 +1415,7 @@ function renderScenarioForm(scenario, m, u, activeAccounts) {
       <div class="card" style="background:#fee2e2;margin-bottom:16px;font-size:13px">
         <b>⚠️ هشدار:</b>
         <ul style="margin:8px 0 0;padding-right:20px">
-          <li>همه‌ی ${fa(activeAccounts.length)} حساب فعال آرشیو می‌شوند</li>
+          <li>همه‌ی ${fa(activeAccounts.length)} حساب فعال آرشیو می‌شوند (دائمی)</li>
           <li>✅ تراکنش‌های قبلی حفظ می‌شوند</li>
         </ul>
       </div>
@@ -1426,7 +1431,7 @@ function renderScenarioForm(scenario, m, u, activeAccounts) {
     
     $('#sc-f', container).addEventListener('submit', async e => {
       e.preventDefault();
-      if (!confirm('مطمئنید؟')) return;
+      if (!confirm('مطمئنید؟ همه حساب‌ها آرشیو می‌شوند (دائمی).')) return;
       try {
         for (const acc of activeAccounts) await archiveAccount(acc);
         await T('app_admin_save_account', {
@@ -1451,14 +1456,14 @@ function renderScenarioForm(scenario, m, u, activeAccounts) {
   else if (scenario === 'vacant') {
     container.innerHTML = `
       <div class="card" style="background:#fee2e2;margin-bottom:16px;font-size:13px">
-        <b>⚠️ همه‌ی حساب‌های این واحد آرشیو می‌شوند.</b>
+        <b>⚠️ همه‌ی حساب‌های این واحد آرشیو می‌شوند (دائمی).</b>
         <p style="margin:8px 0 0">تراکنش‌های قبلی حفظ می‌شوند.</p>
       </div>
       <button class="btn rd" id="apply-vacant">🗑️ تایید خالی شدن</button>
     `;
     
     $('#apply-vacant', container)?.addEventListener('click', async () => {
-      if (!confirm('مطمئنید؟')) return;
+      if (!confirm('مطمئنید؟ همه حساب‌های این واحد آرشیو می‌شوند (دائمی).')) return;
       try {
         for (const acc of activeAccounts) await archiveAccount(acc);
         m.remove();
