@@ -1751,6 +1751,7 @@ async function viewRates(el) {
       const repair = toNum($('#r-r').value);
       const parking = toNum($('#r-p').value);
 
+      // ۱. ذخیره در دیتابیس
       await T('app_admin_save_rate', {
         p_year: y,
         p_month: m,
@@ -1764,13 +1765,14 @@ async function viewRates(el) {
         p_payer_gas: getChecked('r-pu'),
       });
       
-      // 👇 این خط اضافه شد
+      // ۲. ارسال به بله
       notifyBale(`📊 نرخ‌های ماه ${MONTHS[m-1]} ${y} ثبت/ویرایش شد:\n\n🔹 شارژ: ${fmt(charge)} تومان\n🔹 بازسازی: ${fmt(repair)} تومان\n🔹 پارکینگ: ${fmt(parking)} تومان`);
       
-      toast('ذخیره شد'); go('rates');
+      // ۳. پیام موفقیت و رفرش
+      toast('ذخیره شد و به بله ارسال گردید'); 
+      go('rates');
     } catch (err) { showErr(err); }
   });
-
   $('#sf')?.addEventListener('submit', async e => {
     e.preventDefault();
     const s = toNum($('#s-s').value.replace('/', ''));
