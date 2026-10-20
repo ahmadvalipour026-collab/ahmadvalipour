@@ -1709,39 +1709,51 @@ async function viewProfile(el) {
 window.addEventListener('online', () => toast('اتصال اینترنت برقرار شد'));
 window.addEventListener('offline', () => toast('اتصال اینترنت قطع شد', true));
 /* =========================================================
-   مدیریت دکمه‌ی Back مرورگر و گوشی (روش ضد گلوله)
+   مدیریت دکمه‌ی Back (خروج فقط با دو بار زدن پشت سر هم)
    ========================================================= */
 let backPressCount = 0;
 let backPressTimer = null;
 
-// ۱. وقتی برنامه لود می‌شه، یک تاریخچه جعلی اضافه می‌کنیم تا مرورگر فکر کنه ما یک صفحه عقب‌تریم
-history.pushState({ dummy: true }, '', '');
+// اضافه کردن یک قدم به تاریخچه
+history.pushState({ page: 'app' }, '', '');
 
 window.addEventListener('popstate', (e) => {
-  // اگر کاربر توی صفحه‌ای غیر از داشبورد بود، فقط برگرده به داشبورد
+  // اگر توی صفحه‌ای غیر از داشبورد بودیم، برگرد به داشبورد
   if (S.view !== 'dash' && S.me) {
     go('dash', true);
-    history.pushState({ dummy: true }, '', '');
+    history.pushState({ page: 'app' }, '', ''); 
     return;
-  } 
+  }
   
-  // اگر کاربر توی داشبورد بود
+  // اگر توی داشبورد بودیم
   if (S.view === 'dash' && S.me) {
     backPressCount++;
     
     if (backPressCount === 1) {
       toast('برای خروج، دوباره دکمه بازگشت را بزنید', true);
       
-      // 🔒 تاریخچه رو دوباره تزریق می‌کنیم تا مرورگر از برنامه خارج نشه
-      history.pushState({ dummy: true }, '', ''); 
+      // تزریق مجدد تاریخچه تا بسته نشه
+      history.pushState({ page: 'app' }, '', ''); 
       
+      // تایمر ۲ ثانیه‌ای
       clearTimeout(backPressTimer);
-      backPressTimer = setTimeout(() => { backPressCount = 0; }, 2500);
+      backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
+      
     } else {
-      // بار دوم: توکن رو پاک کن و به مرورگر اجازه بده خارج بشه
-      sessionStorage.clear();
-      history.back(); 
+      // بار دوم که پشت سر هم زد
+      clearTimeout(backPressTimer);
+      sessionStorage.clear(); 
+      history.go(-2); // خروج کامل از برنامه
     }
+  }
+});
+
+// 🔒 ترفند جدید: وقتی کاربر میره تب دیگه یا برنامه رو مینیمایز میکنه، شمارنده رو صفر کن
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    // کاربر از برنامه خارج شد (رفت تو تب دیگه)
+    backPressCount = 0;
+    clearTimeout(backPressTimer);
   }
 });
 if (S.token) renderShell(); else renderLogin();
