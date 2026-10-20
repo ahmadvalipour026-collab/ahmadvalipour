@@ -1209,23 +1209,42 @@ async function viewReport(el) {
     try {
       const tableElement = $('.tbl-wrap');
       
-      // ذخیره استایل‌های قبلی
       const originalOverflow = tableElement.style.overflow;
       const originalMaxHeight = tableElement.style.maxHeight;
       const originalWidth = tableElement.style.width;
 
-      // 👇 جادو اینجاست: عرض جدول رو زورکی ۱۲۰۰ پیکسل می‌کنیم (مثل نمای دسکتاپ)
+      // 👇 اینجا عرض و کیفیت رو تنظیم کردیم
       tableElement.style.overflow = 'visible';
       tableElement.style.maxHeight = 'none';
-      tableElement.style.width = '1200px'; 
+      tableElement.style.width = '1400px';
 
       const canvas = await html2canvas(tableElement, { 
-        scale: 2, 
+        scale: 3, 
         backgroundColor: '#ffffff',
-        windowWidth: 1200, // به رندرکننده میگیم فکر کن صفحه ۱۲۰۰ پیکسله
-        width: 1200,
+        windowWidth: 1400,
+        width: 1400,
         ignoreElements: (element) => element.classList.contains('no-bale')
       });
+      
+      tableElement.style.overflow = originalOverflow;
+      tableElement.style.maxHeight = originalMaxHeight;
+      tableElement.style.width = originalWidth;
+
+      // 👇 اینجا کیفیت عکس رو 0.95 گذاشتیم
+      const base64Image = canvas.toDataURL('image/jpeg', 0.95);
+
+      btn.textContent = 'در حال ارسال به بله...';
+      
+      await notifyBale(`📊 گزارش ماهانه ${rep.month_name} ${fa(rep.year)}\n${S.building}`, base64Image);
+      
+      toast('گزارش با موفقیت به گروه بله ارسال شد');
+    } catch (e) {
+      showErr(e);
+    } finally {
+      btn.textContent = oldText;
+      btn.disabled = false;
+    }
+  });
       
       // برگرداندن استایل‌ها به حالت اول (تا توی موبایل خودت خراب نشه)
       tableElement.style.overflow = originalOverflow;
