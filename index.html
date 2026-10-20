@@ -373,7 +373,7 @@ async function renderLogin() {
 async function logout(silent = false) {
   if (S.token && !silent) { try { await api('app_logout', { p_token: S.token }); } catch {} }
   S.token = null; S.me = null;
-  localStorage.clear();
+  sessionStorage.clear(); // 👈 تغییر کرد
   renderLogin();
 }
 
@@ -435,6 +435,8 @@ async function renderShell() {
   document.addEventListener('click', () => $('#main-menu')?.classList.remove('show'));
   $$('#main-menu button').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
   go(S.view);
+     // 👇 اضافه کردن یک قدم به تاریخچه مرورگر تا دکمه بک گوشی از برنامه خارج نشه
+  history.pushState({ view: 'dash' }, '', '');
 }
 
 function go(v, isBackNavigation = false) {
@@ -1697,7 +1699,7 @@ async function viewProfile(el) {
         p_current_password: $('#p-c').value || null,
         p_new_password: $('#p-np').value || null,
       });
-      localStorage.setItem('bm_me', JSON.stringify(S.me));
+      sessionStorage.setItem('bm_me', JSON.stringify(S.me));
       toast('ذخیره شد'); renderShell();
     } catch (err) { showErr(err); }
   });
@@ -1734,6 +1736,40 @@ window.addEventListener('popstate', (e) => {
       backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
     } else {
       // بار دوم که زد، اجازه بده از برنامه خارج بشه
+      history.back();
+    }
+  }
+});
+   /* =========================================================
+   مدیریت دکمه‌ی Back مرورگر و گوشی (خروج با دو بار زدن)
+   ========================================================= */
+let backPressCount = 0;
+let backPressTimer = null;
+
+window.addEventListener('popstate', (e) => {
+  // ۱. اگر کاربر در صفحه‌ای غیر از داشبورد است، فقط به داشبورد برگردد
+  if (S.view !== 'dash' && S.me) {
+    go('dash', true);
+    history.pushState({ view: 'dash' }, '', ''); // تاریخچه رو دوباره ست می‌کنیم
+    return;
+  } 
+  
+  // ۲. اگر کاربر در داشبورد است (صفحه آخر)
+  if (S.view === 'dash' && S.me) {
+    backPressCount++;
+    
+    if (backPressCount === 1) {
+      toast('برای خروج، دوباره دکمه بازگشت را بزنید', true);
+      
+      // 🔒 تزریق مجدد تاریخچه تا کاربر از برنامه خارج نشود
+      history.pushState({ view: 'dash' }, '', ''); 
+      
+      // شمارنده رو بعد از ۲.۵ ثانیه صفر می‌کنیم
+      clearTimeout(backPressTimer);
+      backPressTimer = setTimeout(() => { backPressCount = 0; }, 2500);
+    } else {
+      // بار دوم که زد، اجازه بده از مرورگر خارج بشه (توکن هم پاک میشه)
+      sessionStorage.clear();
       history.back();
     }
   }
