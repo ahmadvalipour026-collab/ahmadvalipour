@@ -1745,18 +1745,28 @@ async function viewRates(el) {
     e.preventDefault();
     const getChecked = cls => $$('.' + cls).filter(x => x.checked).map(x => x.value);
     try {
+      const y = +$('#r-y').value;
+      const m = +$('#r-m').value;
+      const charge = toNum($('#r-c').value);
+      const repair = toNum($('#r-r').value);
+      const parking = toNum($('#r-p').value);
+
       await T('app_admin_save_rate', {
-        p_year: +$('#r-y').value,
-        p_month: +$('#r-m').value,
-        p_charge: toNum($('#r-c').value),
-        p_repair: toNum($('#r-r').value),
-        p_parking: toNum($('#r-p').value),
+        p_year: y,
+        p_month: m,
+        p_charge: charge,
+        p_repair: repair,
+        p_parking: parking,
         p_payer_charge: getChecked('r-pch'),
         p_payer_repair: getChecked('r-prp'),
         p_payer_parking: getChecked('r-ppk'),
         p_payer_water: getChecked('r-pu'),
         p_payer_gas: getChecked('r-pu'),
       });
+      
+      // 👇 این خط اضافه شد
+      notifyBale(`📊 نرخ‌های ماه ${MONTHS[m-1]} ${y} ثبت/ویرایش شد:\n\n🔹 شارژ: ${fmt(charge)} تومان\n🔹 بازسازی: ${fmt(repair)} تومان\n🔹 پارکینگ: ${fmt(parking)} تومان`);
+      
       toast('ذخیره شد'); go('rates');
     } catch (err) { showErr(err); }
   });
@@ -1765,15 +1775,21 @@ async function viewRates(el) {
     e.preventDefault();
     const s = toNum($('#s-s').value.replace('/', ''));
     try {
+      const name = $('#s-n').value;
+      const bal = toNum($('#s-o').value);
+
       await T('app_admin_save_settings', {
-        p_building_name: $('#s-n').value,
-        p_opening_balance: toNum($('#s-o').value),
+        p_building_name: name,
+        p_opening_balance: bal,
         p_start_ym: s,
       });
+      
+      // 👇 این خط اضافه شد
+      notifyBale(`⚙️ تنظیمات کلی ساختمان تغییر کرد:\n\n🏢 نام: ${name}\n💰 موجودی اولیه: ${fmt(bal)} تومان`);
+      
       toast('ذخیره شد'); renderShell();
     } catch (err) { showErr(err); }
   });
-}
 
 /* =========================================================
    20. Activity
