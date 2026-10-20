@@ -1163,7 +1163,7 @@ function exportCsv(rows) {
   a.download = 'Transactions.csv';
   a.click();
 }
-/* =========================================================
+   /* =========================================================
    17. Report
    ========================================================= */
 async function viewReport(el) {
@@ -1182,13 +1182,13 @@ async function viewReport(el) {
     <div class="tbl-wrap" style="border-radius: 8px; overflow-x: auto; border: 1px solid #333; padding: 0; background: #fff;">
       <table style="width: 100%; border-collapse: collapse; font-size: 20px; font-weight: bold; text-align: center; direction: rtl; border: 2px solid #000;">
         <thead>
-          <!-- 👇 سطر اول هدر ادغام شد (کل ۷ ستون) -->
+          <!-- سطر اول هدر (ادغام شده) -->
           <tr>
             <th colspan="7" style="background-color: #7A9CBE; color: white; padding: 10px; font-size: 22px; font-weight: bold; border: 1px solid #333; text-align: center;">
               گزارش ${rep.month_name} ماه - ${fa(rep.year)}/${String(rep.month).padStart(2, '0')}
             </th>
           </tr>
-          <!-- 👇 سطر دوم هدر (عنوان ستون‌ها) -->
+          <!-- سطر دوم هدر -->
           <tr>
             <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000;">واحد</th>
             <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000;">شارژ</th>
@@ -1205,7 +1205,8 @@ async function viewReport(el) {
             if (r.remaining <= 0) rowBg = '#00B050'; // سبز
             else if (r.prev_debt > 0) rowBg = '#FFC000'; // زرد
 
-            return `<tr style="background-color: ${rowBg}; color: #000000;">
+            // 👇 فونت تمام اعداد به 24 پیکسل تغییر کرد
+            return `<tr style="background-color: ${rowBg}; color: #000000; font-size: 24px;">
               <td style="border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap;">
                 واحد ${fa(r.unit_no)}
                 <div style="font-size: 10px; font-weight: normal; color: #000; margin-top: 2px;">${esc(r.occupancy || '')}</div>
@@ -1215,7 +1216,7 @@ async function viewReport(el) {
               <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.gas)}</td>
               <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.repair)}</td>
               <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.prev_debt)}</td>
-              <td style="border: 1px solid #333; padding: 6px; font-weight: bold; font-size: 21px; white-space: nowrap;">${fmt(r.remaining)}</td>
+              <td style="border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap;">${fmt(r.remaining)}</td>
             </tr>`;
           }).join('')}
         </tbody>
