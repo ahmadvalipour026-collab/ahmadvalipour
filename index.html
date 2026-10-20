@@ -1162,7 +1162,8 @@ function exportCsv(rows) {
   a.href = URL.createObjectURL(blob);
   a.download = 'Transactions.csv';
   a.click();
-}/* =========================================================
+}
+   /* =========================================================
    17. Report
    ========================================================= */
 async function viewReport(el) {
@@ -1178,9 +1179,9 @@ async function viewReport(el) {
     </div>
     ${rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">نرخ ماه‌های ${rep.missing_rates.map(fa).join('، ')} تعریف نشده.</div>` : ''}
     
-    <!-- 👇 اسکرول و استایل جدول (فونت ۱۸ شد) -->
     <div class="tbl-wrap" style="border-radius: 8px; overflow-x: auto; border: 1px solid #333; padding: 0; background: #fff;">
-      <table style="width: 100%; min-width: 850px; border-collapse: collapse; font-size: 18px; font-weight: bold; text-align: center; direction: rtl; border: 2px solid #000;">
+      <!-- 👇 width رو برداشتیم و white-space اضافه کردیم تا ستون‌ها اندازه متن بشن -->
+      <table style="width: max-content; min-width: 100%; border-collapse: collapse; font-size: 18px; font-weight: bold; text-align: center; direction: rtl; border: 2px solid #000;">
         <thead>
           <tr>
             <th colspan="2" style="background-color: #7A9CBE; color: white; padding: 10px; font-size: 20px; font-weight: bold; border: 1px solid #333; text-align: center;">
@@ -1191,30 +1192,29 @@ async function viewReport(el) {
             </th>
           </tr>
           <tr>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px; color: #000000;">واحد</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px; color: #000000;">شارژ</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px; color: #000000;">قبض آب</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px; color: #000000;">قبض گاز</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px; color: #000000;">بازسازی</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px; color: #000000;">بدهی قبلی</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 120px; color: #000000;">جمع مبلغ قابل پرداخت</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px 12px; font-weight: bold; white-space: nowrap; color: #000000;">واحد</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px 12px; font-weight: bold; white-space: nowrap; color: #000000;">شارژ</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px 12px; font-weight: bold; white-space: nowrap; color: #000000;">قبض آب</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px 12px; font-weight: bold; white-space: nowrap; color: #000000;">قبض گاز</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px 12px; font-weight: bold; white-space: nowrap; color: #000000;">بازسازی</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px 12px; font-weight: bold; white-space: nowrap; color: #000000;">بدهی قبلی</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px 12px; font-weight: bold; white-space: nowrap; color: #000000;">جمع مبلغ قابل پرداخت</th>
           </tr>
         </thead>
         <tbody>
           ${rep.rows.map(r => {
             let rowBg = '#ffffff';
-            if (r.remaining <= 0) rowBg = '#00B050'; // سبز (تسویه)
-            else if (r.prev_debt > 0) rowBg = '#FFC000'; // زرد (بدهی دارد)
+            if (r.remaining <= 0) rowBg = '#00B050'; // سبز
+            else if (r.prev_debt > 0) rowBg = '#FFC000'; // زرد
 
-            // 👇 همه متن‌ها مشکی میشن (حتی روی پس‌زمینه سبز)
             return `<tr style="background-color: ${rowBg}; color: #000000;">
-              <td style="border: 1px solid #333; padding: 8px; font-weight: bold;">واحد ${fa(r.unit_no)}</td>
-              <td style="border: 1px solid #333; padding: 8px;">${fmt(r.charge)}</td>
-              <td style="border: 1px solid #333; padding: 8px;">${fmt(r.water)}</td>
-              <td style="border: 1px solid #333; padding: 8px;">${fmt(r.gas)}</td>
-              <td style="border: 1px solid #333; padding: 8px;">${fmt(r.repair)}</td>
-              <td style="border: 1px solid #333; padding: 8px;">${fmt(r.prev_debt)}</td>
-              <td style="border: 1px solid #333; padding: 8px; font-weight: bold; font-size: 19px;">${fmt(r.remaining)}</td>
+              <td style="border: 1px solid #333; padding: 8px 12px; font-weight: bold; white-space: nowrap;">واحد ${fa(r.unit_no)}</td>
+              <td style="border: 1px solid #333; padding: 8px 12px; white-space: nowrap;">${fmt(r.charge)}</td>
+              <td style="border: 1px solid #333; padding: 8px 12px; white-space: nowrap;">${fmt(r.water)}</td>
+              <td style="border: 1px solid #333; padding: 8px 12px; white-space: nowrap;">${fmt(r.gas)}</td>
+              <td style="border: 1px solid #333; padding: 8px 12px; white-space: nowrap;">${fmt(r.repair)}</td>
+              <td style="border: 1px solid #333; padding: 8px 12px; white-space: nowrap;">${fmt(r.prev_debt)}</td>
+              <td style="border: 1px solid #333; padding: 8px 12px; font-weight: bold; font-size: 19px; white-space: nowrap;">${fmt(r.remaining)}</td>
             </tr>`;
           }).join('')}
         </tbody>
@@ -1223,10 +1223,8 @@ async function viewReport(el) {
 
   bindPeriod(() => go('report'));
   
-  // دکمه چاپ
   $('#pr-btn')?.addEventListener('click', () => window.print());
   
-  // دکمه ارسال به بله
   $('#bale-btn')?.addEventListener('click', async () => {
     const btn = $('#bale-btn');
     const oldText = btn.textContent;
@@ -1242,7 +1240,7 @@ async function viewReport(el) {
 
       tableElement.style.overflow = 'visible';
       tableElement.style.maxHeight = 'none';
-      tableElement.style.width = '1200px'; // عرض بیشتر برای فونت‌های درشت‌تر
+      tableElement.style.width = '1200px';
 
       const canvas = await html2canvas(tableElement, { 
         scale: 3, 
