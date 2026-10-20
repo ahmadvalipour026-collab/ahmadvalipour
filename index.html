@@ -1242,6 +1242,84 @@ async function viewReport(el) {
 
       tableElement.style.overflow = 'visible';
       tableElement.style.maxHeight = 'none';
+/* =========================================================
+   17. Report
+   ========================================================= */
+async function viewReport(el) {
+  const rep = await T('app_report', { p_year: S.y, p_month: S.m });
+  
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap">
+      <div><h1>گزارش ${rep.month_name} ${fa(rep.year)}</h1></div>
+      <div>${periodPicker()}
+        <button class="btn sf no-print" id="bale-btn">ارسال به بله 📤</button>
+        <button class="btn lt no-print" id="pr-btn">چاپ</button>
+      </div>
+    </div>
+    ${rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">نرخ ماه‌های ${rep.missing_rates.map(fa).join('، ')} تعریف نشده.</div>` : ''}
+    
+    <div class="tbl-wrap" style="border-radius: 8px; overflow-x: auto; border: 1px solid #333; padding: 0; background: #fff;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 20px; font-weight: bold; text-align: center; direction: rtl; border: 2px solid #000;">
+        <thead>
+          <!-- 👇 سطر اول هدر ادغام شد (کل ۷ ستون) -->
+          <tr>
+            <th colspan="7" style="background-color: #7A9CBE; color: white; padding: 10px; font-size: 22px; font-weight: bold; border: 1px solid #333; text-align: center;">
+              گزارش ${rep.month_name} ماه - ${fa(rep.year)}/${String(rep.month).padStart(2, '0')}
+            </th>
+          </tr>
+          <!-- 👇 سطر دوم هدر (عنوان ستون‌ها) -->
+          <tr>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000;">واحد</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000;">شارژ</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000;">قبض آب</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000;">قبض گاز</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000;">بازسازی</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap; color: #000000;">بدهی قبلی</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 6px; font-weight: bold; color: #000000;">جمع مبلغ<br>قابل پرداخت</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rep.rows.map(r => {
+            let rowBg = '#ffffff';
+            if (r.remaining <= 0) rowBg = '#00B050'; // سبز
+            else if (r.prev_debt > 0) rowBg = '#FFC000'; // زرد
+
+            return `<tr style="background-color: ${rowBg}; color: #000000;">
+              <td style="border: 1px solid #333; padding: 6px; font-weight: bold; white-space: nowrap;">
+                واحد ${fa(r.unit_no)}
+                <div style="font-size: 10px; font-weight: normal; color: #000; margin-top: 2px;">${esc(r.occupancy || '')}</div>
+              </td>
+              <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.charge)}</td>
+              <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.water)}</td>
+              <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.gas)}</td>
+              <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.repair)}</td>
+              <td style="border: 1px solid #333; padding: 6px; white-space: nowrap;">${fmt(r.prev_debt)}</td>
+              <td style="border: 1px solid #333; padding: 6px; font-weight: bold; font-size: 21px; white-space: nowrap;">${fmt(r.remaining)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  bindPeriod(() => go('report'));
+  
+  $('#pr-btn')?.addEventListener('click', () => window.print());
+  
+  $('#bale-btn')?.addEventListener('click', async () => {
+    const btn = $('#bale-btn');
+    const oldText = btn.textContent;
+    btn.textContent = 'در حال ساخت عکس...';
+    btn.disabled = true;
+
+    try {
+      const tableElement = $('.tbl-wrap');
+      
+      const originalOverflow = tableElement.style.overflow;
+      const originalMaxHeight = tableElement.style.maxHeight;
+      const originalWidth = tableElement.style.width;
+
+      tableElement.style.overflow = 'visible';
+      tableElement.style.maxHeight = 'none';
       tableElement.style.width = '1200px';
 
       const canvas = await html2canvas(tableElement, { 
