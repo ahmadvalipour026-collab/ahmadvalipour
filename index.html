@@ -171,6 +171,18 @@ function attachNumericInputIn(root, ...selectors) {
 const attachNumericInput = (...sels) => attachNumericInputIn(document, ...sels);
 
 /* =========================================================
+   2.5 اتصال به پیام‌رسان بله (Bale)
+   ========================================================= */
+async function notifyBale(msg) {
+  try {
+    await sb.functions.invoke('send-bale', { body: { text: msg } });
+    console.log('✅ Bale: پیام با موفقیت ارسال شد');
+  } catch(e) {
+    console.warn('❌ Bale: ارسال پیام ناموفق بود:', e);
+  }
+}
+
+/* =========================================================
    3. State
    ========================================================= */
 const S = {
@@ -823,11 +835,18 @@ async function viewAnnouncements(el) {
     $('#af')?.addEventListener('submit', async e => {
       e.preventDefault();
       try {
+        const title = $('#a-title').value;
+        const content = $('#a-content').value;
+        const type = $('#a-type').value;
         await T('app_admin_save_announcement', {
-          p_title: $('#a-title').value,
-          p_content: $('#a-content').value,
-          p_type: $('#a-type').value,
+          p_title: title,
+          p_content: content,
+          p_type: type,
         });
+        
+        // ارسال به بله
+        notifyBale(`📢 اعلان جدید در ساختمان:\n\n🔹 ${title}\n\n${content}`);
+        
         toast('ثبت شد'); go('announcements');
       } catch (err) { showErr(err); }
     });
@@ -873,7 +892,13 @@ async function viewRequests(el) {
     $('#rf2')?.addEventListener('submit', async e => {
       e.preventDefault();
       try {
-        await T('app_submit_request', { p_type: $('#rq-type').value, p_description: $('#rq-desc').value });
+        const type = $('#rq-type').value;
+        const desc = $('#rq-desc').value;
+        await T('app_submit_request', { p_type: type, p_description: desc });
+        
+        // ارسال به بله
+        notifyBale(`🔔 درخواست جدید از واحد ${S.me.unit_no}:\n\n🔹 نوع: ${type}\n📝 توضیحات: ${desc}`);
+        
         toast('ثبت شد'); go('requests');
       } catch (err) { showErr(err); }
     });
@@ -914,16 +939,22 @@ function payModal(r) {
     let base64Image = null;
     if (fileInput.files.length > 0) base64Image = await compressImage(fileInput.files[0]);
     try {
+      const category = $('#pf-c', m).value;
+      const amount = toNum($('#pf-a', m).value);
       await T('app_submit_payment', {
         p_year: +$('#pf-y', m).value,
         p_month: +$('#pf-m', m).value,
-        p_category: $('#pf-c', m).value,
-        p_amount: toNum($('#pf-a', m).value),
+        p_category: category,
+        p_amount: amount,
         p_ref_code: $('#pf-r', m).value,
         p_note: $('#pf-n', m).value,
         p_pay_date: $('#pf-d', m).value,
         p_receipt_image: base64Image,
       });
+      
+      // ارسال به بله
+      notifyBale(`💸 پرداخت جدید ثبت شد (منتظر تایید):\n\n👤 واحد ${S.me.unit_no} - ${S.me.full_name}\n💰 بابت: ${CATS[category] || category}\n📅 ماه: ${MONTHS[S.m-1]} ${S.y}\n🔢 مبلغ: ${fmt(amount)} تومان`);
+      
       m.remove(); toast('پرداخت ثبت شد و منتظر تایید است'); go(S.view);
     } catch (err) { showErr(err); }
   });
@@ -979,6 +1010,10 @@ function approveModal(p) {
   $('#ap-go', m).addEventListener('click', async () => {
     try {
       await T('app_admin_review_payment', { p_id: p.id, p_approve: true, p_amount: toNum($('#ap-a', m).value), p_admin_note: $('#ap-n', m).value });
+      
+      // ارسال به بله
+      notifyBale(`✅ پرداخت تایید شد:\n\n👤 واحد ${p.unit_no} - ${p.full_name}\n💰 مبلغ: ${fmt(p.amount)} تومان\n📅 بابت: ${CATS[p.category] || p.category} - ${MONTHS[p.month-1]} ${p.year}`);
+      
       m.remove(); toast('تایید شد'); go('pay');
     } catch (e) { showErr(e); }
   });
@@ -1082,20 +1117,29 @@ function txModal(t, units) {
   $('#tf', m).addEventListener('submit', async e => {
     e.preventDefault();
     try {
+      const txType = $('#t-type', m).value;
+      const unitNo = +$('#t-unit', m).value || null;
+      const amount = toNum($('#t-amt', m).value);
+      const desc = $('#t-desc', m).value || CATS[$('#t-cat', m).value];
+      
       await T('app_admin_save_transaction', {
         p_id: isNew ? null : t.id,
         p_year: +$('#t-y', m).value,
         p_month: +$('#t-m', m).value,
         p_day: +$('#t-d', m).value || 1,
-        p_unit_no: +$('#t-unit', m).value || null,
-        p_tx_type: $('#t-type', m).value,
+        p_unit_no: unitNo,
+        p_tx_type: txType,
         p_category: $('#t-cat', m).value,
         p_location: $('#t-loc', m).value,
         p_description: $('#t-desc', m).value,
-        p_amount: toNum($('#t-amt', m).value),
+        p_amount: amount,
         p_occupancy: $('#t-occ', m).value,
         p_force: false,
       });
+      
+      // ارسال به بله
+      notifyBale(`📝 تراکنش جدید ثبت شد:\n\n🔹 نوع: ${txType}\n🏢 واحد: ${unitNo ? 'واحد ' + unitNo : 'ساختمان'}\n💰 مبلغ: ${fmt(amount)} تومان\n📄 شرح: ${desc || '—'}`);
+      
       m.remove(); toast('ثبت شد'); go('tx');
     } catch (e) { showErr(e); }
   });
