@@ -1178,26 +1178,26 @@ async function viewReport(el) {
     </div>
     ${rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">نرخ ماه‌های ${rep.missing_rates.map(fa).join('، ')} تعریف نشده.</div>` : ''}
     
-    <!-- 👇 اسکرول و استایل جدول -->
+    <!-- 👇 اسکرول و استایل جدول (فونت ۱۸ شد) -->
     <div class="tbl-wrap" style="border-radius: 8px; overflow-x: auto; border: 1px solid #333; padding: 0; background: #fff;">
-      <table style="width: 100%; min-width: 850px; border-collapse: collapse; font-size: 16px; font-weight: bold; text-align: center; direction: rtl; border: 2px solid #000;">
+      <table style="width: 100%; min-width: 850px; border-collapse: collapse; font-size: 18px; font-weight: bold; text-align: center; direction: rtl; border: 2px solid #000;">
         <thead>
           <tr>
-            <th colspan="2" style="background-color: #7A9CBE; color: white; padding: 10px; font-size: 18px; font-weight: bold; border: 1px solid #333; text-align: center;">
+            <th colspan="2" style="background-color: #7A9CBE; color: white; padding: 10px; font-size: 20px; font-weight: bold; border: 1px solid #333; text-align: center;">
               گزارش ${rep.month_name} ماه
             </th>
-            <th colspan="4" style="background-color: #7A9CBE; color: white; padding: 10px; font-size: 18px; font-weight: bold; border: 1px solid #333; text-align: center;">
+            <th colspan="4" style="background-color: #7A9CBE; color: white; padding: 10px; font-size: 20px; font-weight: bold; border: 1px solid #333; text-align: center;">
               ${fa(rep.year)}/${String(rep.month).padStart(2, '0')}
             </th>
           </tr>
           <tr>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px;">واحد</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px;">شارژ</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px;">قبض آب</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px;">قبض گاز</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px;">بازسازی</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px;">بدهی قبلی</th>
-            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 120px;">جمع مبلغ قابل پرداخت</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px; color: #000000;">واحد</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px; color: #000000;">شارژ</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px; color: #000000;">قبض آب</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px; color: #000000;">قبض گاز</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px; color: #000000;">بازسازی</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 100px; color: #000000;">بدهی قبلی</th>
+            <th style="background-color: #D9E1F2; border: 1px solid #333; padding: 8px; font-weight: bold; width: 120px; color: #000000;">جمع مبلغ قابل پرداخت</th>
           </tr>
         </thead>
         <tbody>
@@ -1205,17 +1205,16 @@ async function viewReport(el) {
             let rowBg = '#ffffff';
             if (r.remaining <= 0) rowBg = '#00B050'; // سبز (تسویه)
             else if (r.prev_debt > 0) rowBg = '#FFC000'; // زرد (بدهی دارد)
-            
-            const textColor = r.remaining <= 0 ? '#ffffff' : '#000000';
 
-            return `<tr style="background-color: ${rowBg}; color: ${textColor};">
+            // 👇 همه متن‌ها مشکی میشن (حتی روی پس‌زمینه سبز)
+            return `<tr style="background-color: ${rowBg}; color: #000000;">
               <td style="border: 1px solid #333; padding: 8px; font-weight: bold;">واحد ${fa(r.unit_no)}</td>
               <td style="border: 1px solid #333; padding: 8px;">${fmt(r.charge)}</td>
               <td style="border: 1px solid #333; padding: 8px;">${fmt(r.water)}</td>
               <td style="border: 1px solid #333; padding: 8px;">${fmt(r.gas)}</td>
               <td style="border: 1px solid #333; padding: 8px;">${fmt(r.repair)}</td>
               <td style="border: 1px solid #333; padding: 8px;">${fmt(r.prev_debt)}</td>
-              <td style="border: 1px solid #333; padding: 8px; font-weight: bold; font-size: 17px;">${fmt(r.remaining)}</td>
+              <td style="border: 1px solid #333; padding: 8px; font-weight: bold; font-size: 19px;">${fmt(r.remaining)}</td>
             </tr>`;
           }).join('')}
         </tbody>
@@ -1241,19 +1240,17 @@ async function viewReport(el) {
       const originalMaxHeight = tableElement.style.maxHeight;
       const originalWidth = tableElement.style.width;
 
-      // عرض رو کمتر میکنیم تا فشرده نشه و فونت‌ها درشت بمونن
       tableElement.style.overflow = 'visible';
       tableElement.style.maxHeight = 'none';
-      tableElement.style.width = '1100px'; // 👈 عرض 1100 برای درشتی فونت‌ها خوبه
+      tableElement.style.width = '1200px'; // عرض بیشتر برای فونت‌های درشت‌تر
 
       const canvas = await html2canvas(tableElement, { 
-        scale: 3, // 👈 کیفیت رو بالا بردیم تا فونت‌ها توی عکس شارپ باشن
+        scale: 3, 
         backgroundColor: '#ffffff',
-        windowWidth: 1100, 
-        width: 1100
+        windowWidth: 1200, 
+        width: 1200
       });
       
-      // برگرداندن استایل‌ها به حالت اول
       tableElement.style.overflow = originalOverflow;
       tableElement.style.maxHeight = originalMaxHeight;
       tableElement.style.width = originalWidth;
