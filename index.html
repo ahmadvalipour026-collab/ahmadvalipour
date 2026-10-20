@@ -179,6 +179,7 @@ const S = {
   view: 'dash', y: TODAY.y, m: TODAY.m,
   building: 'مجتمع نگین ۲',
   txFilter: null,
+  renderId: 0,
 };
 
 // پاک کردن توکن‌های قدیمی از حافظه مرورگر
@@ -272,24 +273,53 @@ function smsBtn(phone, text, label = 'پیامک') {
    ========================================================= */
 async function compressImage(file) {
   return new Promise(resolve => {
+    if (!(file instanceof File) || !file.type.startsWith('image/')) {
+      resolve(null);
+      return;
+    }
+
     const reader = new FileReader();
-    reader.readAsDataURL(file);
+
     reader.onload = ev => {
       const img = new Image();
-      img.src = ev.target.result;
+
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX = 800;
-        let w = img.width, h = img.height;
-        if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
-        else { if (h > MAX) { w *= MAX / h; h = MAX; } }
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.6));
+        const MAX = 1000;
+
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+
+        if (!w || !h) {
+          resolve(null);
+          return;
+        }
+
+        const scale = Math.min(1, MAX / Math.max(w, h));
+        w = Math.max(1, Math.round(w * scale));
+        h = Math.max(1, Math.round(h * scale));
+
+        canvas.width = w;
+        canvas.height = h;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, w, h);
+
+        // JPEG فشرده برای کاهش حجم ذخیره‌سازی/انتقال
+        resolve(canvas.toDataURL('image/jpeg', 0.62));
       };
+
       img.onerror = () => resolve(null);
+      img.src = ev.target.result;
     };
+
     reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
   });
 }
 
@@ -371,9 +401,26 @@ async function renderLogin() {
 }
 
 async function logout(silent = false) {
-  if (S.token && !silent) { try { await api('app_logout', { p_token: S.token }); } catch {} }
-  S.token = null; S.me = null;
-  sessionStorage.clear(); // 👈 تغییر کرد
+  const token = S.token;
+
+  // ابتدا State محلی را invalidate می‌کنیم تا درخواست‌های قبلی نتوانند UI را برگردانند.
+  S.renderId++;
+  S.token = null;
+  S.me = null;
+  S.view = 'dash';
+
+  if (token && !silent) {
+    try {
+      await api('app_logout', { p_token: token });
+    } catch {
+      // خروج محلی باید حتی در صورت قطع شبکه انجام شود.
+    }
+  }
+
+  // فقط داده‌های مربوط به همین برنامه پاک شوند؛ sessionStorage سایر برنامه‌ها دست‌نخورده بماند.
+  sessionStorage.removeItem('bm_token');
+  sessionStorage.removeItem('bm_me');
+
   renderLogin();
 }
 
@@ -397,10 +444,17 @@ function getMenuItems() {
 }
 
 async function renderShell() {
+  const renderId = ++S.renderId;
   $('#app').innerHTML = `<div class="loading-screen"><div class="spinner"></div><p class="sub">در حال اتصال به سرور...</p></div>`;
   try {
-    S.me = await T('app_me');
-    localStorage.setItem('bm_me', JSON.stringify(S.me));
+    const account = await T('app_me');
+
+    // جلوگیری از race condition:
+    // اگر در این فاصله render دیگری شروع شده باشد، نتیجه قدیمی نباید UI را بازنویسی کند.
+    if (renderId !== S.renderId) return;
+
+    S.me = account;
+    sessionStorage.setItem('bm_me', JSON.stringify(S.me));
   } catch (e) {
     if (e.message === 'AUTH_ERROR') { logout(true); return; }
     if (e.message === 'NETWORK_ERROR') { showConnectionError(); return; }
@@ -432,43 +486,80 @@ async function renderShell() {
 
   $('#lo').addEventListener('click', () => logout());
   $('#main-menu-btn').addEventListener('click', e => { e.stopPropagation(); $('#main-menu').classList.toggle('show'); });
-  document.addEventListener('click', () => $('#main-menu')?.classList.remove('show'));
-  $$('#main-menu button').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
+  $$('#main-menu button').forEach(b => b.addEventListener('click', () => {
+    $('#main-menu')?.classList.remove('show');
+    go(b.dataset.v);
+  }));
   go(S.view);
 }
 
 function go(v, isBackNavigation = false) {
-  S.view = v;
-  const el = $('#view'); if (!el) return;
-  el.innerHTML = `<p class="sub">در حال بارگذاری...</p>`;
   const views = {
-    dash: viewDash, announcements: viewAnnouncements, requests: viewRequests,
-    tx: viewTx, pay: viewPay, report: viewReport, units: viewUnits,
-    rates: viewRates, activity: viewActivity, profile: viewProfile,
+    dash: viewDash,
+    announcements: viewAnnouncements,
+    requests: viewRequests,
+    tx: viewTx,
+    pay: viewPay,
+    report: viewReport,
+    units: viewUnits,
+    rates: viewRates,
+    activity: viewActivity,
+    profile: viewProfile,
   };
-  renderShellHeaderState();
-  
-  (views[v] || viewDash)(el).catch(e => {
-    if (e.message === 'AUTH_ERROR') { logout(true); return; }
-    if (e.message === 'NETWORK_ERROR') {
-      el.innerHTML = `<div class="card" style="text-align:center;padding:60px 20px">
-        <div style="font-size:48px;margin-bottom:16px">📡</div>
-        <h2>اتصال به سرور برقرار نیست</h2>
-        <p class="sub">لطفاً اینترنت خود را بررسی کنید</p>
-        <button class="btn sf" data-retry>تلاش مجدد</button>
-      </div>`;
-      $('[data-retry]', el)?.addEventListener('click', () => go(v));
-      return;
-    }
-    showErr(e);
-    el.innerHTML = `<div class="card" style="color:var(--danger)">خطا: ${esc(e.message)}</div>`;
-  });
 
-  // 📌 مدیریت تاریخچه‌ی مرورگر برای دکمه بک گوشی
-  if (!isBackNavigation) {
-    // اگه از داشبورد به صفحه دیگه‌ای میریم، یه قدم به تاریخچه اضافه می‌کنیم
-    if (v !== 'dash' && history.state?.view !== v) {
-      history.pushState({ view: v }, '', '');
+  // مسیر نامعتبر را هرگز وارد State نکن
+  if (!views[v]) v = 'dash';
+
+  S.view = v;
+
+  const el = $('#view');
+  if (!el) return;
+
+  el.innerHTML = `<p class="sub">در حال بارگذاری...</p>`;
+  renderShellHeaderState();
+
+  const currentRenderId = ++S.renderId;
+
+  Promise.resolve(views[v](el))
+    .catch(e => {
+      // نتیجه/خطای یک view قدیمی نباید view فعلی را خراب کند.
+      if (currentRenderId !== S.renderId) return;
+
+      if (e.message === 'AUTH_ERROR') {
+        logout(true);
+        return;
+      }
+
+      if (e.message === 'NETWORK_ERROR') {
+        el.innerHTML = `<div class="card" style="text-align:center;padding:60px 20px">
+          <div style="font-size:48px;margin-bottom:16px">📡</div>
+          <h2>اتصال به سرور برقرار نیست</h2>
+          <p class="sub">لطفاً اینترنت خود را بررسی کنید</p>
+          <button class="btn sf" data-retry>تلاش مجدد</button>
+        </div>`;
+        $('[data-retry]', el)?.addEventListener('click', () => go(v));
+        return;
+      }
+
+      showErr(e);
+      el.innerHTML = `<div class="card" style="color:var(--danger)">خطا: ${esc(e.message)}</div>`;
+    });
+
+  /*
+   * History policy:
+   * - داشبورد صفحه ریشه منطقی برنامه است.
+   * - برای viewهای داخلی یک history entry ساخته می‌شود.
+   * - popstate فقط مسئول برگشت به داشبورد/خروج است.
+   */
+  if (!isBackNavigation && S.me) {
+    const currentState = history.state;
+
+    if (v !== 'dash' && currentState?.view !== v) {
+      history.pushState(
+        { app: true, view: v },
+        '',
+        `#${encodeURIComponent(v)}`
+      );
     }
   }
 }
@@ -1709,86 +1800,122 @@ async function viewProfile(el) {
 window.addEventListener('online', () => toast('اتصال اینترنت برقرار شد'));
 window.addEventListener('offline', () => toast('اتصال اینترنت قطع شد', true));
 /* =========================================================
-   مدیریت دکمه Back
-   خروج فقط با دو بار زدن پشت سر هم
+   مدیریت Back
+   ---------------------------------------------------------
+   سیاست:
+   1) داخل هر صفحه‌ای غیر از داشبورد:
+      Back => داشبورد
+   2) روی داشبورد:
+      Back اول => پیام «دوباره بزنید»
+      Back دوم در بازه 2 ثانیه => خروج از history برنامه
    ========================================================= */
+
+const BACK_EXIT_WINDOW_MS = 2000;
 
 let backPressCount = 0;
 let backPressTimer = null;
 
-// ایجاد یک History Entry اولیه
-if (!window.location.hash) {
-  history.replaceState({ page: 'app' }, '', '#app');
-  history.pushState({ page: 'app' }, '', '#app');
+function resetBackPress() {
+  backPressCount = 0;
+  if (backPressTimer) {
+    clearTimeout(backPressTimer);
+    backPressTimer = null;
+  }
 }
 
-window.addEventListener('popstate', () => {
+function armBackExitWindow() {
+  resetBackPress();
+  backPressCount = 1;
 
-  // اگر داخل یکی از صفحات برنامه هستیم،
-  // Back اول فقط به داشبورد برمی‌گردد
-  if (S.me && S.view !== 'dash') {
+  backPressTimer = setTimeout(() => {
     backPressCount = 0;
-    clearTimeout(backPressTimer);
+    backPressTimer = null;
+  }, BACK_EXIT_WINDOW_MS);
+}
 
-    go('dash', true);
+function ensureAppHistory() {
+  const state = history.state;
 
-    // جلوگیری از خروج واقعی از برنامه
-    history.pushState({ page: 'app' }, '', '#app');
+  if (!state?.app) {
+    // یک ورودی ریشه برای برنامه و یک guard برای جلوگیری از خروج ناخواسته
+    history.replaceState(
+      { app: true, view: 'dash', root: true },
+      '',
+      '#app'
+    );
+    history.pushState(
+      { app: true, view: 'dash', guard: true },
+      '',
+      '#app'
+    );
     return;
   }
 
-  // اگر روی داشبورد هستیم
-  if (S.me && S.view === 'dash') {
+  // اگر state متعلق به برنامه است ولی guard ندارد، یک guard بساز.
+  if (state.view === 'dash' && !state.guard) {
+    history.pushState(
+      { app: true, view: 'dash', guard: true },
+      '',
+      '#app'
+    );
+  }
+}
 
-    backPressCount++;
+function handleBackNavigation() {
+  if (!S.me) return;
 
-    // -----------------------------
-    // بار اول
-    // -----------------------------
-    if (backPressCount === 1) {
+  // Back از هر صفحه داخلی: فقط به داشبورد برگرد.
+  if (S.view !== 'dash') {
+    resetBackPress();
+    go('dash', true);
 
-      toast('برای خروج، دوباره دکمه بازگشت را بزنید', true);
+    // وضعیت فعلی را به ریشه منطقی برنامه تبدیل می‌کنیم.
+    history.replaceState(
+      { app: true, view: 'dash', guard: true },
+      '',
+      '#app'
+    );
+    return;
+  }
 
-      // جلوگیری از خروج
-      history.pushState({ page: 'app' }, '', '#app');
+  // داشبورد: Double Back to Exit
+  if (backPressCount === 0) {
+    armBackExitWindow();
+    toast('برای خروج، دوباره دکمه بازگشت را بزنید', true);
 
-      clearTimeout(backPressTimer);
+    // یک guard جدید می‌سازیم تا Back دوم به بیرون از برنامه برسد.
+    history.pushState(
+      { app: true, view: 'dash', guard: true },
+      '',
+      '#app'
+    );
+    return;
+  }
 
-      // فقط ۲ ثانیه فرصت برای بار دوم
-      backPressTimer = setTimeout(() => {
-        backPressCount = 0;
-      }, 1000);
+  // Back دوم: اجازه عبور از ریشه برنامه را بده.
+  resetBackPress();
 
-      return;
-    }
+  // توجه: این «logout» نیست؛ فقط خروج از history برنامه است.
+  // sessionStorage عمداً پاک نمی‌شود تا Back با خروج از حساب اشتباه نشود.
+  history.back();
+}
 
-    // -----------------------------
-    // بار دوم
-    // -----------------------------
-    if (backPressCount >= 2) {
+window.addEventListener('popstate', handleBackNavigation);
 
-      clearTimeout(backPressTimer);
-      backPressCount = 0;
+// راه‌اندازی تاریخچه فقط یک بار
+ensureAppHistory();
 
-      // خروج از حساب
-      sessionStorage.clear();
-
-      // اجازه خروج واقعی از صفحه
-      history.back();
-    }
+// بستن منوی اصلی با کلیک بیرون از آن — فقط یک listener سراسری
+document.addEventListener('click', e => {
+  if (!e.target.closest('.menu-dropdown')) {
+    $('#main-menu')?.classList.remove('show');
   }
 });
 
-// وقتی برنامه به پس‌زمینه می‌رود شمارنده صفر شود
+// وقتی برنامه به پس‌زمینه می‌رود، Double Back از حالت نیمه‌کاره خارج شود.
 document.addEventListener('visibilitychange', () => {
-
   if (document.visibilityState === 'hidden') {
-    backPressCount = 0;
-
-    if (backPressTimer) {
-      clearTimeout(backPressTimer);
-      backPressTimer = null;
-    }
+    resetBackPress();
   }
 });
 if (S.token) renderShell(); else renderLogin();
