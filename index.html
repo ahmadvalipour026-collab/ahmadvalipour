@@ -491,33 +491,57 @@ const mustChangeBanner = () => S.me?.must_change_password
   : '';
 
 function billCard(r, rep) {
-  const line = (label, amt, ok) => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)">
-      <span>${label}</span>
-      <span>${(amt === 0 || ok) ? '<span class="chip ok">پرداخت شده</span>' : '<span class="chip no">پرداخت نشده</span>'}</span>
-    </div>`;
-  return `<div class="card" style="padding:0;overflow:hidden">
+  // این خطوط رو دقیقا کپی کن
+  const w = Number(r.water) || 0;
+  const rep_amt = Number(r.repair) || 0;
+  const park = Number(r.parking) || 0;
+  const prev = Number(r.prev_debt) || 0;
+  const paid = Number(r.paid_this_month) || 0;
+  const rem = Number(r.remaining) || 0;
+
+  return `
+  <div class="card" style="padding:0;overflow:hidden">
     <div style="background:var(--primary);color:#fff;padding:24px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
       <div>
-        <div style="color:#94a3b8;font-size:13px">صورتحساب ${fa(rep.year)} · ${esc(r.full_name || '')} <span class="chip ex" style="color:#fff;border:1px solid #fff">${esc(r.occupancy)}</span></div>
+        <div style="color:#94a3b8;font-size:13px">
+          صورتحساب ${fa(rep.year)} · ${esc(r.full_name || '')} 
+          <span class="chip ex" style="color:#fff;border:1px solid #fff">${esc(r.occupancy)}</span>
+        </div>
       </div>
       <div style="text-align:left">
         <small style="color:#94a3b8">مانده قابل پرداخت (تومان)</small>
-        <div style="font-size:36px;font-weight:900;line-height:1.2">${fmt(r.remaining)}</div>
+        <div style="font-size:36px;font-weight:900;line-height:1.2">${fmt(rem)}</div>
       </div>
     </div>
+    
     <div style="padding:10px 24px">
-      ${line('سهم قبض آب', r.water, r.ok_water)}
-      ${line('بازسازی', r.repair, r.ok_repair)}
-      ${r.parking > 0 ? line('اجاره پارکینگ', r.parking, r.ok_parking) : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)">
+        <span>سهم قبض آب</span>
+        <span>${(w === 0 || r.ok_water) ? '<span class="chip ok">پرداخت شده</span>' : '<span class="chip no">پرداخت نشده</span>'}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)">
+        <span>بازسازی</span>
+        <span>${(rep_amt === 0 || r.ok_repair) ? '<span class="chip ok">پرداخت شده</span>' : '<span class="chip no">پرداخت نشده</span>'}</span>
+      </div>
+      ${park > 0 ? `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)">
+        <span>اجاره پارکینگ</span>
+        <span>${r.ok_parking ? '<span class="chip ok">پرداخت شده</span>' : '<span class="chip no">پرداخت نشده</span>'}</span>
+      </div>` : ''}
     </div>
+    
     <div style="background:#f8fafc;padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px;border-top:1px solid var(--line)">
-      <div><small style="color:var(--muted);display:block">بدهی قبلی</small><b>${money(r.prev_debt)}</b></div>
-      <div><small style="color:var(--muted);display:block">پرداختی این ماه</small><b>${money(r.paid_this_month)}</b></div>
+      <div>
+        <small style="color:var(--muted);display:block">بدهی قبلی</small>
+        <b>${money(prev)}</b>
+      </div>
+      <div>
+        <small style="color:var(--muted);display:block">پرداختی این ماه</small>
+        <b>${money(paid)}</b>
+      </div>
     </div>
   </div>`;
 }
-
 function reminderText(r, rep) {
   return `${S.building} - واحد ${r.unit_no}\nصورتحساب ${rep.month_name} ${rep.year}:\n` +
     `شارژ ${fmt(r.charge)} | آب ${fmt(r.water)} | گاز ${fmt(r.gas)} | بازسازی ${fmt(r.repair)}` +
