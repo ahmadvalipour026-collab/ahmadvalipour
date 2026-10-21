@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2d3463">
-<title>Ù…Ø¬ØªÙ…Ø¹ Ù†Ú¯ÛŒÙ† Û² | Ù…Ø¯ÛŒØ±ÛŒØª Ø³Ø§Ø®ØªÙ…Ø§Ù†</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366f1'/><path d='M20 80 L20 30 L50 10 L80 30 L80 80 Z' fill='white'/><rect x='40' y='60' width='20' height='20' fill='%236366f1'/></svg>">
+<title>مجتمع نگین ۲ | مدیریت ساختمان</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232d3463'/><path d='M20 80 L20 30 L50 10 L80 30 L80 80 Z' fill='white'/><rect x='40' y='60' width='20' height='20' fill='%23f7ae74'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -187,34 +187,24 @@ tr:hover td{background:#f8f8fc}
 <div id="toast" class="toast"></div>
 
 <script>
-/* =========================================================
-   1. Ø«Ø§Ø¨Øªâ€ŒÙ‡Ø§
-   ========================================================= */
 const SUPABASE_URL = 'https://hpgvgoehkcpjmdbfmnse.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_BuJxTaMP2rYWTe5mh-N55Q_gSHE1O8g';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
 
-const MONTHS = ['ÙØ±ÙˆØ±Ø¯ÛŒÙ†','Ø§Ø±Ø¯ÛŒØ¨Ù‡Ø´Øª','Ø®Ø±Ø¯Ø§Ø¯','ØªÛŒØ±','Ù…Ø±Ø¯Ø§Ø¯','Ø´Ù‡Ø±ÛŒÙˆØ±','Ù…Ù‡Ø±','Ø¢Ø¨Ø§Ù†','Ø¢Ø°Ø±','Ø¯ÛŒ','Ø¨Ù‡Ù…Ù†','Ø§Ø³ÙÙ†Ø¯'];
-const CATS = { charge:'Ø´Ø§Ø±Ú˜ Ù…Ø§Ù‡ÛŒØ§Ù†Ù‡', water:'Ù‚Ø¨Ø¶ Ø¢Ø¨', gas:'Ù‚Ø¨Ø¶ Ú¯Ø§Ø²', electric:'Ø¨Ø±Ù‚ Ø¹Ù…ÙˆÙ…ÛŒ', repair:'Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ', parking:'Ø§Ø¬Ø§Ø±Ù‡ Ù¾Ø§Ø±Ú©ÛŒÙ†Ú¯', debt:'Ù¾Ø±Ø¯Ø§Ø®Øª Ø¨Ø¯Ù‡ÛŒ Ù…Ø¹ÙˆÙ‚', other:'Ø³Ø§ÛŒØ±', bill:'Ú©Ù„ ØµÙˆØ±ØªØ­Ø³Ø§Ø¨ Ù…Ø§Ù‡' };
-const OCC = ['Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù†','Ù…Ø§Ù„Ú©','Ù…Ø³ØªØ£Ø¬Ø±'];
+const MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+const CATS = { charge:'شارژ ماهیانه', water:'قبض آب', gas:'قبض گاز', electric:'برق عمومی', repair:'بازسازی', parking:'اجاره پارکینگ', debt:'پرداخت بدهی معوق', other:'سایر', bill:'کل صورتحساب ماه' };
+const OCC = ['مالک ساکن','مالک','مستأجر'];
 
-/* =========================================================
-   2. HelperÙ‡Ø§
-   ========================================================= */
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = n => new Intl.NumberFormat('fa-IR').format(Math.round(Number(n) || 0));
-const fa = v => String(v ?? '').replace(/\d/g, d => 'Û°Û±Û²Û³Û´ÛµÛ¶Û·Û¸Û¹'[d]);
+const fa = v => String(v ?? '').replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
 const money = n => `<span style="font-feature-settings:'tnum';white-space:nowrap;color:${Number(n)<0?'var(--danger)':'inherit'}">${fmt(n)}</span>`;
 
 const toNum = v => {
   if (!v) return 0;
-  const str = String(v)
-    .replace(/[Û°-Û¹]/g, d => 'Û°Û±Û²Û³Û´ÛµÛ¶Û·Û¸Û¹'.indexOf(d))
-    .replace(/[Ù -Ù©]/g, d => 'Ù Ù¡Ù¢Ù£Ù¤Ù¥Ù¦Ù§Ù¨Ù©'.indexOf(d))
-    .replace(/[,\u066C\u066B\s]/g, '')
-    .replace(/[^\d.-]/g, '');
+  const str = String(v).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[,\u066C\u066B\s]/g, '').replace(/[^\d.-]/g, '');
   return Number(str) || 0;
 };
 
@@ -231,68 +221,44 @@ function jalaliToday() {
 const TODAY = jalaliToday();
 
 function debounce(fn, ms = 300) {
-  let t;
-  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
 function toast(msg, err = false) {
-  const t = $('#toast');
-  if (!t) return;
-  t.textContent = msg;
-  t.className = 'toast on' + (err ? ' err' : '');
-  clearTimeout(t._h);
-  t._h = setTimeout(() => t.className = 'toast', 3200);
+  const t = $('#toast'); if (!t) return;
+  t.textContent = msg; t.className = 'toast on' + (err ? ' err' : '');
+  clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', 3200);
 }
-const showErr = e => toast(e?.message === 'NETWORK_ERROR' ? 'Ø§ØªØµØ§Ù„ Ø¨Ù‡ Ø³Ø±ÙˆØ± Ø¨Ø±Ù‚Ø±Ø§Ø± Ù†ÛŒØ³Øª' : (e?.message || 'Ø®Ø·Ø§'), true);
+const showErr = e => toast(e?.message === 'NETWORK_ERROR' ? 'اتصال به سرور برقرار نیست' : (e?.message || 'خطا'), true);
 
 function attachNumericInputIn(root, ...selectors) {
   selectors.forEach(sel => {
     $$(sel, root).forEach(el => {
       el.addEventListener('input', e => {
-        const n = toNum(e.target.value);
-        e.target.value = n ? fmt(n) : '';
+        const n = toNum(e.target.value); e.target.value = n ? fmt(n) : '';
       });
     });
   });
 }
 const attachNumericInput = (...sels) => attachNumericInputIn(document, ...sels);
 
-/* =========================================================
-   2.5 Ø§ØªØµØ§Ù„ Ø¨Ù‡ Ù¾ÛŒØ§Ù…â€ŒØ±Ø³Ø§Ù† Ø¨Ù„Ù‡ (Bale)
-   ========================================================= */
 async function notifyBale(msg, imageBase64 = null) {
   try {
     const payload = { text: msg };
     if (imageBase64) payload.image = imageBase64;
-    
     await sb.functions.invoke('send-bale', { body: payload });
-    console.log('âœ… Bale: Ù¾ÛŒØ§Ù… Ø¨Ø§ Ù…ÙˆÙÙ‚ÛŒØª Ø§Ø±Ø³Ø§Ù„ Ø´Ø¯');
-  } catch(e) {
-    console.warn('âŒ Bale: Ø§Ø±Ø³Ø§Ù„ Ù¾ÛŒØ§Ù… Ù†Ø§Ù…ÙˆÙÙ‚ Ø¨ÙˆØ¯:', e);
-  }
+    console.log('✅ Bale: پیام با موفقیت ارسال شد');
+  } catch(e) { console.warn('❌ Bale: ارسال پیام ناموفق بود:', e); }
 }
 
-/* =========================================================
-   3. State
-   ========================================================= */
 const S = {
-  token: sessionStorage.getItem('bm_token'), // ðŸ‘ˆ Ø§Ø³ØªÙØ§Ø¯Ù‡ Ø§Ø² sessionStorage
+  token: sessionStorage.getItem('bm_token'),
   me: JSON.parse(sessionStorage.getItem('bm_me') || 'null'),
-  view: 'dash', y: TODAY.y, m: TODAY.m,
-  building: 'Ù…Ø¬ØªÙ…Ø¹ Ù†Ú¯ÛŒÙ† Û²',
-  txFilter: null,
-  renderId: 0,
+  view: 'dash', y: TODAY.y, m: TODAY.m, building: 'مجتمع نگین ۲', txFilter: null, renderId: 0,
 };
-
-// Ù¾Ø§Ú© Ú©Ø±Ø¯Ù† ØªÙˆÚ©Ù†â€ŒÙ‡Ø§ÛŒ Ù‚Ø¯ÛŒÙ…ÛŒ Ø§Ø² Ø­Ø§ÙØ¸Ù‡ Ù…Ø±ÙˆØ±Ú¯Ø±
 localStorage.removeItem('bm_token');
 
-/* =========================================================
-   4. API
-   ========================================================= */
-function isNetworkError(msg) {
-  return !!msg && /failed to fetch|network|fetch|timeout|ECONN|ERR_NETWORK|ERR_INTERNET/i.test(String(msg));
-}
+function isNetworkError(msg) { return !!msg && /failed to fetch|network|fetch|timeout|ECONN|ERR_NETWORK|ERR_INTERNET/i.test(String(msg)); }
 async function api(fn, args = {}) {
   try {
     const { data, error } = await sb.rpc(fn, args);
@@ -300,7 +266,7 @@ async function api(fn, args = {}) {
       const rawMsg = error.message || '';
       if (rawMsg.includes('AUTH_REQUIRED')) { logout(true); throw new Error('AUTH_ERROR'); }
       if (isNetworkError(rawMsg)) throw new Error('NETWORK_ERROR');
-      throw new Error(rawMsg.replace(/^AUTH_REQUIRED:\s*/, '') || 'Ø®Ø·Ø§ Ø¯Ø± Ø§Ø±ØªØ¨Ø§Ø· Ø¨Ø§ Ø³Ø±ÙˆØ±');
+      throw new Error(rawMsg.replace(/^AUTH_REQUIRED:\s*/, '') || 'خطا در ارتباط با سرور');
     }
     return data;
   } catch (e) {
@@ -310,230 +276,57 @@ async function api(fn, args = {}) {
 }
 const T = (fn, args = {}) => api(fn, { p_token: S.token, ...args });
 
-/* =========================================================
-   5. Option builders
-   ========================================================= */
-const monthOptions = (sel, withAll = false) =>
-  (withAll ? `<option value="">Ù‡Ù…Ù‡ Ù…Ø§Ù‡â€ŒÙ‡Ø§</option>` : '') +
-  MONTHS.map((n, i) => `<option value="${i+1}" ${+sel === i+1 ? 'selected' : ''}>${n}</option>`).join('');
-const yearOptions = (sel) => {
-  const ys = []; for (let y = TODAY.y + 1; y >= 1403; y--) ys.push(y);
-  return ys.map(y => `<option value="${y}" ${+y === +sel ? 'selected' : ''}>${fa(y)}</option>`).join('');
-};
-const unitOptions = (sel, withBuilding = true, withAll = false) =>
-  (withAll ? `<option value="">Ù‡Ù…Ù‡</option>` : '') +
-  (withBuilding ? `<option value="0" ${+sel === 0 ? 'selected' : ''}>Ø³Ø§Ø®ØªÙ…Ø§Ù†</option>` : '') +
-  Array.from({length:10}, (_,i) => `<option value="${i+1}" ${+sel === i+1 ? 'selected' : ''}>ÙˆØ§Ø­Ø¯ ${fa(i+1)}</option>`).join('');
+const monthOptions = (sel, withAll = false) => (withAll ? `<option value="">همه ماه‌ها</option>` : '') + MONTHS.map((n, i) => `<option value="${i+1}" ${+sel === i+1 ? 'selected' : ''}>${n}</option>`).join('');
+const yearOptions = (sel) => { const ys = []; for (let y = TODAY.y + 1; y >= 1403; y--) ys.push(y); return ys.map(y => `<option value="${y}" ${+y === +sel ? 'selected' : ''}>${fa(y)}</option>`).join(''); };
+const unitOptions = (sel, withBuilding = true, withAll = false) => (withAll ? `<option value="">همه</option>` : '') + (withBuilding ? `<option value="0" ${+sel === 0 ? 'selected' : ''}>ساختمان</option>` : '') + Array.from({length:10}, (_,i) => `<option value="${i+1}" ${+sel === i+1 ? 'selected' : ''}>واحد ${fa(i+1)}</option>`).join('');
 
-/* =========================================================
-   6. bindPeriod
-   ========================================================= */
 let periodAbort = null;
 function bindPeriod(cb) {
-  periodAbort?.abort();
-  periodAbort = new AbortController();
-  const opt = { signal: periodAbort.signal };
+  periodAbort?.abort(); periodAbort = new AbortController(); const opt = { signal: periodAbort.signal };
   $('#pk-m')?.addEventListener('change', e => { S.m = +e.target.value; cb(); }, opt);
   $('#pk-y')?.addEventListener('change', e => { S.y = +e.target.value; cb(); }, opt);
 }
-function periodPicker() {
-  return `<div style="display:flex;gap:10px;margin-bottom:20px">
-    <select id="pk-m" style="width:120px">${monthOptions(S.m)}</select>
-    <select id="pk-y" style="width:100px">${yearOptions(S.y)}</select>
-  </div>`;
-}
+function periodPicker() { return `<div style="display:flex;gap:10px;margin-bottom:20px"><select id="pk-m" style="width:120px">${monthOptions(S.m)}</select><select id="pk-y" style="width:100px">${yearOptions(S.y)}</select></div>`; }
 
-/* =========================================================
-   7. Modal
-   ========================================================= */
 function modal(html) {
-  const bg = document.createElement('div');
-  bg.className = 'modal-bg';
-  bg.innerHTML = `<div class="modal"><button class="x" aria-label="Ø¨Ø³ØªÙ†">Ã—</button>${html}</div>`;
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal"><button class="x" aria-label="بستن">×</button>${html}</div>`;
   bg.addEventListener('click', e => { if (e.target === bg || e.target.classList.contains('x')) bg.remove(); });
-  document.body.appendChild(bg);
-  return bg;
+  document.body.appendChild(bg); return bg;
 }
 
-/* =========================================================
-   8. SMS
-   ========================================================= */
 function smsLink(phone, text) {
-  if (!phone) return '';
-  const safe = String(phone).replace(/[^\d+\-]/g, '').trim();
-  if (!safe) return '';
-  const sep = /iPhone|iPad|iPod/.test(navigator.userAgent) ? '&' : '?';
-  return `sms:${safe}${sep}body=${encodeURIComponent(text)}`;
+  if (!phone) return ''; const safe = String(phone).replace(/[^\d+\-]/g, '').trim(); if (!safe) return '';
+  const sep = /iPhone|iPad|iPod/.test(navigator.userAgent) ? '&' : '?'; return `sms:${safe}${sep}body=${encodeURIComponent(text)}`;
 }
-function smsBtn(phone, text, label = 'Ù¾ÛŒØ§Ù…Ú©') {
-  if (!phone) return `<span class="muted" title="Ø´Ù…Ø§Ø±Ù‡ Ø«Ø¨Øª Ù†Ø´Ø¯Ù‡">â€”</span>`;
-  return `<a class="btn lt sm" href="${smsLink(phone, text)}" style="padding:4px 8px;font-size:12px;">âœ‰ ${esc(label)}</a>`;
+function smsBtn(phone, text, label = 'پیامک') {
+  if (!phone) return `<span class="muted" title="شماره ثبت نشده">—</span>`;
+  return `<a class="btn lt sm" href="${smsLink(phone, text)}" style="padding:4px 8px;font-size:12px;">✉ ${esc(label)}</a>`;
 }
 
-/* =========================================================
-   9. Image compress
-   ========================================================= */
 async function compressImage(file) {
   return new Promise(resolve => {
-    if (!(file instanceof File) || !file.type.startsWith('image/')) {
-      resolve(null);
-      return;
-    }
-
+    if (!(file instanceof File) || !file.type.startsWith('image/')) { resolve(null); return; }
     const reader = new FileReader();
-
     reader.onload = ev => {
       const img = new Image();
-
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX = 1000;
-
-        let w = img.naturalWidth || img.width;
-        let h = img.naturalHeight || img.height;
-
-        if (!w || !h) {
-          resolve(null);
-          return;
-        }
-
+        const canvas = document.createElement('canvas'); const MAX = 1000;
+        let w = img.naturalWidth || img.width; let h = img.naturalHeight || img.height;
+        if (!w || !h) { resolve(null); return; }
         const scale = Math.min(1, MAX / Math.max(w, h));
-        w = Math.max(1, Math.round(w * scale));
-        h = Math.max(1, Math.round(h * scale));
-
-        canvas.width = w;
-        canvas.height = h;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(null);
-          return;
-        }
-
+        w = Math.max(1, Math.round(w * scale)); h = Math.max(1, Math.round(h * scale));
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d'); if (!ctx) { resolve(null); return; }
         ctx.drawImage(img, 0, 0, w, h);
-
-        // JPEG ÙØ´Ø±Ø¯Ù‡ Ø¨Ø±Ø§ÛŒ Ú©Ø§Ù‡Ø´ Ø­Ø¬Ù… Ø°Ø®ÛŒØ±Ù‡â€ŒØ³Ø§Ø²ÛŒ/Ø§Ù†ØªÙ‚Ø§Ù„
         resolve(canvas.toDataURL('image/jpeg', 0.62));
       };
-
-      img.onerror = () => resolve(null);
-      img.src = ev.target.result;
+      img.onerror = () => resolve(null); img.src = ev.target.result;
     };
-
-    reader.onerror = () => resolve(null);
-    reader.readAsDataURL(file);
+    reader.onerror = () => resolve(null); reader.readAsDataURL(file);
   });
 }
 
-/* =========================================================
-   10. Login
-   ========================================================= */
-async function renderLogin() {
-  $('#app').innerHTML = `
-  <div class="login">
-    <div class="art">
-      <div class="logo"><svg width="38" height="38" viewBox="0 0 48 48"><path d="M8 22 24 8l16 14v16a3 3 0 0 1-3 3H11a3 3 0 0 1-3-3z" fill="#2d3463"/><rect x="19" y="27" width="10" height="14" rx="2" fill="#f7ae74"/></svg></div>
-      <h1 id="login-title">${esc(S.building)}</h1>
-      <p>Ø³Ø§Ù…Ø§Ù†Ù‡ Ù…Ø¯ÛŒØ±ÛŒØª Ø³Ø§Ø®ØªÙ…Ø§Ù†</p>
-    </div>
-    <div class="form">
-      <div class="card">
-        <h2>ÙˆØ±ÙˆØ¯ Ø¨Ù‡ Ø³Ø§Ù…Ø§Ù†Ù‡</h2>
-        <p class="sub">Ù„Ø·ÙØ§Ù‹ Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ø®ÙˆØ¯ Ø±Ø§ ÙˆØ§Ø±Ø¯ Ú©Ù†ÛŒØ¯.</p>
-        <form id="lg" class="grid" style="gap:16px">
-          <label class="f">Ù†Ø§Ù… Ú©Ø§Ø±Ø¨Ø±ÛŒ<input id="lg-user" autocomplete="username" dir="ltr" required></label>
-          <label class="f">Ø±Ù…Ø² Ø¹Ø¨ÙˆØ±<input id="lg-pass" type="password" autocomplete="current-password" dir="ltr" required></label>
-          <button class="btn sf" type="submit" id="lg-btn">ÙˆØ±ÙˆØ¯ Ø¨Ù‡ Ù¾Ù†Ù„</button>
-          <p id="lg-err" style="color:var(--danger);margin:0;min-height:24px"></p>
-          <a href="#" id="forgot-pass" style="text-align:center;font-size:13px;color:var(--muted);display:block;">Ø±Ù…Ø² Ø¹Ø¨ÙˆØ± Ø±Ø§ ÙØ±Ø§Ù…ÙˆØ´ Ú©Ø±Ø¯Ù‡â€ŒØ§ÛŒØ¯ØŸ</a>
-        </form>
-      </div>
-    </div>
-  </div>`;
-
-  try {
-    const info = await api('app_public_info');
-    if (info?.building_name) {
-      S.building = info.building_name;
-      const el = $('#login-title'); if (el) el.textContent = S.building;
-    }
-  } catch (e) {
-    if (e.message === 'NETWORK_ERROR') {
-      const err = $('#lg-err');
-      if (err) err.textContent = 'Ø§ØªØµØ§Ù„ Ø¨Ù‡ Ø³Ø±ÙˆØ± Ø¨Ø±Ù‚Ø±Ø§Ø± Ù†ÛŒØ³Øª. Ø§ØªØµØ§Ù„ Ø§ÛŒÙ†ØªØ±Ù†Øª Ø±Ø§ Ø¨Ø±Ø±Ø³ÛŒ Ú©Ù†ÛŒØ¯.';
-    }
-  }
-
-  $('#lg').addEventListener('submit', async e => {
-    e.preventDefault();
-    const btn = $('#lg-btn'); const old = btn.textContent;
-    btn.disabled = true; btn.textContent = 'Ø¯Ø± Ø­Ø§Ù„ Ø¨Ø±Ø±Ø³ÛŒ...';
-    $('#lg-err').textContent = '';
-    try {
-      const r = await api('app_login', { p_login: $('#lg-user').value.trim(), p_password: $('#lg-pass').value });
-      if (!r.ok) { $('#lg-err').textContent = r.error; return; }
-      S.token = r.token; 
-      S.me = r.account;
-      sessionStorage.setItem('bm_token', S.token);     // ðŸ‘ˆ ØªØºÛŒÛŒØ± Ú©Ø±Ø¯
-      sessionStorage.setItem('bm_me', JSON.stringify(S.me)); // ðŸ‘ˆ ØªØºÛŒÛŒØ± Ú©Ø±Ø¯
-      renderShell();
-    } catch (err) { showErr(err); }
-    finally { btn.disabled = false; btn.textContent = old; }
-  });
-
-  $('#forgot-pass').addEventListener('click', e => {
-    e.preventDefault();
-    const m = modal(`
-      <h2>ÙØ±Ø§Ù…ÙˆØ´ÛŒ Ø±Ù…Ø² Ø¹Ø¨ÙˆØ±</h2>
-      <form id="fp-form" class="grid g2">
-        <label class="f">Ù†Ø§Ù… Ú©Ø§Ø±Ø¨Ø±ÛŒ<input id="fp-user" dir="ltr" required></label>
-        <label class="f">Ø´Ù…Ø§Ø±Ù‡ Ù…ÙˆØ¨Ø§ÛŒÙ„<input id="fp-phone" dir="ltr" required></label>
-        <label class="f" style="grid-column:1/-1">Ø±Ù…Ø² Ø¹Ø¨ÙˆØ± Ø¬Ø¯ÛŒØ¯<input id="fp-pass" type="password" dir="ltr" required></label>
-        <button class="btn sf" style="grid-column:1/-1">ØªØºÛŒÛŒØ± Ø±Ù…Ø² Ø¹Ø¨ÙˆØ±</button>
-      </form>`);
-    $('#fp-form', m).addEventListener('submit', async e => {
-      e.preventDefault();
-      try {
-        const r = await api('app_reset_password', {
-          p_username: $('#fp-user', m).value,
-          p_phone: $('#fp-phone', m).value,
-          p_new_password: $('#fp-pass', m).value,
-        });
-        if (!r.ok) { toast(r.error, true); return; }
-        m.remove(); toast('Ø±Ù…Ø² Ø¹Ø¨ÙˆØ± ØªØºÛŒÛŒØ± Ú©Ø±Ø¯. ÙˆØ§Ø±Ø¯ Ø´ÙˆÛŒØ¯.');
-      } catch (err) { showErr(err); }
-    });
-  });
-}
-
-async function logout(silent = false) {
-  const token = S.token;
-
-  // Ø§Ø¨ØªØ¯Ø§ State Ù…Ø­Ù„ÛŒ Ø±Ø§ invalidate Ù…ÛŒâ€ŒÚ©Ù†ÛŒÙ… ØªØ§ Ø¯Ø±Ø®ÙˆØ§Ø³Øªâ€ŒÙ‡Ø§ÛŒ Ù‚Ø¨Ù„ÛŒ Ù†ØªÙˆØ§Ù†Ù†Ø¯ UI Ø±Ø§ Ø¨Ø±Ú¯Ø±Ø¯Ø§Ù†Ù†Ø¯.
-  S.renderId++;
-  S.token = null;
-  S.me = null;
-  S.view = 'dash';
-
-  if (token && !silent) {
-    try {
-      await api('app_logout', { p_token: token });
-    } catch {
-      // Ø®Ø±ÙˆØ¬ Ù…Ø­Ù„ÛŒ Ø¨Ø§ÛŒØ¯ Ø­ØªÛŒ Ø¯Ø± ØµÙˆØ±Øª Ù‚Ø·Ø¹ Ø´Ø¨Ú©Ù‡ Ø§Ù†Ø¬Ø§Ù… Ø´ÙˆØ¯.
-    }
-  }
-
-  // ÙÙ‚Ø· Ø¯Ø§Ø¯Ù‡â€ŒÙ‡Ø§ÛŒ Ù…Ø±Ø¨ÙˆØ· Ø¨Ù‡ Ù‡Ù…ÛŒÙ† Ø¨Ø±Ù†Ø§Ù…Ù‡ Ù¾Ø§Ú© Ø´ÙˆÙ†Ø¯Ø› sessionStorage Ø³Ø§ÛŒØ± Ø¨Ø±Ù†Ø§Ù…Ù‡â€ŒÙ‡Ø§ Ø¯Ø³Øªâ€ŒÙ†Ø®ÙˆØ±Ø¯Ù‡ Ø¨Ù…Ø§Ù†Ø¯.
-  sessionStorage.removeItem('bm_token');
-  sessionStorage.removeItem('bm_me');
-
-  renderLogin();
-}
-
-
-/* =========================================================
-   10.5 Ø¢ÛŒÚ©ÙˆÙ†â€ŒÙ‡Ø§ (Ø¯ÙˆØªÙˆÙ† Ø³Ø±Ù…Ù‡â€ŒØ§ÛŒ / Ù‡Ù„ÙˆÛŒÛŒ) + Ø§ÙÚ©Øªâ€ŒÙ‡Ø§
-   ========================================================= */
 const N='#2d3463', P='#f7ae74';
 const ICONS = {
   dash:`<svg viewBox="0 0 48 48"><path d="M8 22 24 8l16 14v16a3 3 0 0 1-3 3H11a3 3 0 0 1-3-3z" fill="${P}"/><rect x="19" y="27" width="10" height="14" rx="2" fill="#fff"/></svg>`,
@@ -559,7 +352,6 @@ const LINE_ICONS = {
 LINE_ICONS.services = ICONS.services;
 const ico = k => ICONS[k] || ICONS.services;
 
-// Ø§ÙÚ©Øª Ù…ÙˆØ¬ Ø±ÙˆÛŒ Ø¯Ú©Ù…Ù‡â€ŒÙ‡Ø§
 document.addEventListener('pointerdown', e => {
   const b = e.target.closest('.btn,.tile,.win');
   if (!b) return;
@@ -571,7 +363,6 @@ document.addEventListener('pointerdown', e => {
   setTimeout(() => c.remove(), 650);
 });
 
-// Ø´Ù…Ø§Ø±Ù†Ø¯Ù‡â€ŒÛŒ Ù…ØªØ­Ø±Ú© Ø¨Ø±Ø§ÛŒ Ø§Ø¹Ø¯Ø§Ø¯
 function countUp(root = document) {
   $$('[data-count]', root).forEach(el => {
     const to = Number(el.dataset.count) || 0, t0 = performance.now(), d = 900;
@@ -595,34 +386,92 @@ function bindEyes(root = document) {
 }
 const EYE = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`;
 
-/* =========================================================
-   11. Shell
-   ========================================================= */
+async function renderLogin() {
+  $('#app').innerHTML = `
+  <div class="login">
+    <div class="art">
+      <div class="logo"><svg width="38" height="38" viewBox="0 0 48 48"><path d="M8 22 24 8l16 14v16a3 3 0 0 1-3 3H11a3 3 0 0 1-3-3z" fill="#2d3463"/><rect x="19" y="27" width="10" height="14" rx="2" fill="#f7ae74"/></svg></div>
+      <h1 id="login-title">${esc(S.building)}</h1>
+      <p>سامانه مدیریت ساختمان</p>
+    </div>
+    <div class="form">
+      <div class="card">
+        <h2>ورود به سامانه</h2>
+        <p class="sub">لطفاً اطلاعات خود را وارد کنید.</p>
+        <form id="lg" class="grid" style="gap:16px">
+          <label class="f">نام کاربری<input id="lg-user" autocomplete="username" dir="ltr" required></label>
+          <label class="f">رمز عبور<input id="lg-pass" type="password" autocomplete="current-password" dir="ltr" required></label>
+          <button class="btn sf" type="submit" id="lg-btn">ورود به پنل</button>
+          <p id="lg-err" style="color:var(--danger);margin:0;min-height:24px"></p>
+          <a href="#" id="forgot-pass" style="text-align:center;font-size:13px;color:var(--muted);display:block;">رمز عبور را فراموش کرده‌اید؟</a>
+        </form>
+      </div>
+    </div>
+  </div>`;
+
+  try {
+    const info = await api('app_public_info');
+    if (info?.building_name) { S.building = info.building_name; const el = $('#login-title'); if (el) el.textContent = S.building; }
+  } catch (e) {
+    if (e.message === 'NETWORK_ERROR') { const err = $('#lg-err'); if (err) err.textContent = 'اتصال به سرور برقرار نیست. اتصال اینترنت را بررسی کنید.'; }
+  }
+
+  $('#lg').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('#lg-btn'); const old = btn.textContent;
+    btn.disabled = true; btn.textContent = 'در حال بررسی...'; $('#lg-err').textContent = '';
+    try {
+      const r = await api('app_login', { p_login: $('#lg-user').value.trim(), p_password: $('#lg-pass').value });
+      if (!r.ok) { $('#lg-err').textContent = r.error; return; }
+      S.token = r.token; S.me = r.account;
+      sessionStorage.setItem('bm_token', S.token); sessionStorage.setItem('bm_me', JSON.stringify(S.me));
+      renderShell();
+    } catch (err) { showErr(err); }
+    finally { btn.disabled = false; btn.textContent = old; }
+  });
+
+  $('#forgot-pass').addEventListener('click', e => {
+    e.preventDefault();
+    const m = modal(`
+      <h2>فراموشی رمز عبور</h2>
+      <form id="fp-form" class="grid g2">
+        <label class="f">نام کاربری<input id="fp-user" dir="ltr" required></label>
+        <label class="f">شماره موبایل<input id="fp-phone" dir="ltr" required></label>
+        <label class="f" style="grid-column:1/-1">رمز عبور جدید<input id="fp-pass" type="password" dir="ltr" required></label>
+        <button class="btn sf" style="grid-column:1/-1">تغییر رمز عبور</button>
+      </form>`);
+    $('#fp-form', m).addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        const r = await api('app_reset_password', { p_username: $('#fp-user', m).value, p_phone: $('#fp-phone', m).value, p_new_password: $('#fp-pass', m).value });
+        if (!r.ok) { toast(r.error, true); return; }
+        m.remove(); toast('رمز عبور تغییر کرد. وارد شوید.');
+      } catch (err) { showErr(err); }
+    });
+  });
+}
+
+async function logout(silent = false) {
+  const token = S.token; S.renderId++; S.token = null; S.me = null; S.view = 'dash';
+  if (token && !silent) { try { await api('app_logout', { p_token: token }); } catch {} }
+  sessionStorage.removeItem('bm_token'); sessionStorage.removeItem('bm_me'); renderLogin();
+}
+
 function getMenuItems() {
   const a = S.me?.is_admin;
   return [
-    ['dash', 'Ø¯Ø§Ø´Ø¨ÙˆØ±Ø¯'],
-    a && ['units', 'Ù…Ø¯ÛŒØ±ÛŒØª ÙˆØ§Ø­Ø¯Ù‡Ø§'],
-    ['announcements', 'Ø§Ø¹Ù„Ø§Ù†Ø§Øª'],
-    ['requests', a ? 'Ø¯Ø±Ø®ÙˆØ§Ø³Øªâ€ŒÙ‡Ø§' : 'Ø§Ø±ØªØ¨Ø§Ø· Ø¨Ø§ Ù…Ø¯ÛŒØ±'],
-    ['tx', 'ØªØ±Ø§Ú©Ù†Ø´â€ŒÙ‡Ø§'],
-    a && ['pay', 'ØªØ§ÛŒÛŒØ¯ Ù¾Ø±Ø¯Ø§Ø®Øªâ€ŒÙ‡Ø§'],
-    ['report', 'Ú¯Ø²Ø§Ø±Ø´ Ù…Ø§Ù‡Ø§Ù†Ù‡'],
-    a && ['rates', 'Ù†Ø±Ø®â€ŒÙ‡Ø§ Ùˆ ØªÙ†Ø¸ÛŒÙ…Ø§Øª'],
-    a && ['activity', 'Ú¯Ø²Ø§Ø±Ø´ ÙØ¹Ø§Ù„ÛŒØªâ€ŒÙ‡Ø§'],
-    ['profile', 'Ù¾Ø±ÙˆÙØ§ÛŒÙ„'],
+    ['dash', 'داشبورد'], a && ['units', 'مدیریت واحدها'], ['announcements', 'اعلانات'],
+    ['requests', a ? 'درخواست‌ها' : 'ارتباط با مدیر'], ['tx', 'تراکنش‌ها'],
+    a && ['pay', 'تایید پرداخت‌ها'], ['report', 'گزارش ماهانه'],
+    a && ['rates', 'نرخ‌ها و تنظیمات'], a && ['activity', 'گزارش فعالیت‌ها'], ['profile', 'پروفایل'],
   ].filter(Boolean);
 }
 
 function navItems() {
   const a = S.me?.is_admin;
-  // ØªØ±ØªÛŒØ¨ Ø±Ø§Ø³Øª Ø¨Ù‡ Ú†Ù¾ Ù…Ø«Ù„ Ø§Ù¾â€ŒÙ‡Ø§ÛŒ Ø¨Ø§Ù†Ú©ÛŒ
   return [
-    ['tx', 'ØªØ±Ø§Ú©Ù†Ø´â€ŒÙ‡Ø§'],
-    a ? ['pay', 'ØªØ§ÛŒÛŒØ¯ Ù¾Ø±Ø¯Ø§Ø®Øª'] : ['requests', 'Ø§Ø±ØªØ¨Ø§Ø· Ø¨Ø§ Ù…Ø¯ÛŒØ±'],
-    ['dash', 'Ø®Ø§Ù†Ù‡'],
-    ['report', 'Ú¯Ø²Ø§Ø±Ø´'],
-    ['services', 'Ø®Ø¯Ù…Ø§Øª'],
+    ['tx', 'تراکنش‌ها'], a ? ['pay', 'تایید پرداخت'] : ['requests', 'ارتباط با مدیر'],
+    ['dash', 'خانه'], ['report', 'گزارش'], ['services', 'خدمات'],
   ];
 }
 
@@ -630,9 +479,9 @@ async function viewServices(el) {
   const items = getMenuItems().filter(([k]) => k !== 'dash');
   const a = S.me?.is_admin;
   const groups = [
-    ['Ø§Ù…ÙˆØ± Ù…Ø§Ù„ÛŒ', ['tx', 'pay', 'report']],
-    ['Ø³Ø§Ø®ØªÙ…Ø§Ù† Ùˆ Ø³Ø§Ú©Ù†ÛŒÙ†', ['units', 'announcements', 'requests']],
-    [a ? 'Ù…Ø¯ÛŒØ±ÛŒØª Ø³Ø§Ù…Ø§Ù†Ù‡' : 'Ø­Ø³Ø§Ø¨ Ú©Ø§Ø±Ø¨Ø±ÛŒ', ['rates', 'activity', 'profile']],
+    ['امور مالی', ['tx', 'pay', 'report']],
+    ['ساختمان و ساکنین', ['units', 'announcements', 'requests']],
+    [a ? 'مدیریت سامانه' : 'حساب کاربری', ['rates', 'activity', 'profile']],
   ];
   el.innerHTML = groups.map(([t, keys]) => {
     const list = items.filter(([k]) => keys.includes(k));
@@ -645,36 +494,30 @@ async function viewServices(el) {
 
 async function renderShell() {
   const renderId = ++S.renderId;
-  $('#app').innerHTML = `<div class="loading-screen"><div class="spinner"></div><p class="sub">Ø¯Ø± Ø­Ø§Ù„ Ø§ØªØµØ§Ù„ Ø¨Ù‡ Ø³Ø±ÙˆØ±...</p></div>`;
+  $('#app').innerHTML = `<div class="loading-screen"><div class="spinner"></div><p class="sub">در حال اتصال به سرور...</p></div>`;
   try {
     const account = await T('app_me');
-
-    // Ø¬Ù„ÙˆÚ¯ÛŒØ±ÛŒ Ø§Ø² race condition:
-    // Ø§Ú¯Ø± Ø¯Ø± Ø§ÛŒÙ† ÙØ§ØµÙ„Ù‡ render Ø¯ÛŒÚ¯Ø±ÛŒ Ø´Ø±ÙˆØ¹ Ø´Ø¯Ù‡ Ø¨Ø§Ø´Ø¯ØŒ Ù†ØªÛŒØ¬Ù‡ Ù‚Ø¯ÛŒÙ…ÛŒ Ù†Ø¨Ø§ÛŒØ¯ UI Ø±Ø§ Ø¨Ø§Ø²Ù†ÙˆÛŒØ³ÛŒ Ú©Ù†Ø¯.
     if (renderId !== S.renderId) return;
-
-    S.me = account;
-    sessionStorage.setItem('bm_me', JSON.stringify(S.me));
+    S.me = account; sessionStorage.setItem('bm_me', JSON.stringify(S.me));
   } catch (e) {
     if (e.message === 'AUTH_ERROR') { logout(true); return; }
     if (e.message === 'NETWORK_ERROR') { showConnectionError(); return; }
     showErr(e); return;
   }
 
-  const menuItems = getMenuItems();
-  const current = menuItems.find(t => t[0] === S.view);
+  const menuItems = getMenuItems(); const current = menuItems.find(t => t[0] === S.view);
 
   $('#app').innerHTML = `
     <header class="top">
       <div class="top-in">
-        <button class="ic-btn avatar" id="who-btn" aria-label="Ø­Ø³Ø§Ø¨ Ú©Ø§Ø±Ø¨Ø±ÛŒ">${ICONS.profile.replace('<svg','<svg width="26" height="26"')}</button>
+        <button class="ic-btn avatar" id="who-btn" aria-label="حساب کاربری">${ICONS.profile.replace('<svg','<svg width="26" height="26"')}</button>
         <div class="appbar-title" id="appbar-title"></div>
-        <button class="ic-btn" id="go-req" aria-label="Ù¾ÛŒØ§Ù…â€ŒÙ‡Ø§"><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"><path d="M8 12a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H20l-8 7v-7a4 4 0 0 1-4-4z"/><g fill="#fff" stroke="none"><circle cx="17" cy="20" r="2.4"/><circle cx="24" cy="20" r="2.4"/><circle cx="31" cy="20" r="2.4"/></g></svg></button>
+        <button class="ic-btn" id="go-req" aria-label="پیام‌ها"><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"><path d="M8 12a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H20l-8 7v-7a4 4 0 0 1-4-4z"/><g fill="#fff" stroke="none"><circle cx="17" cy="20" r="2.4"/><circle cx="24" cy="20" r="2.4"/><circle cx="31" cy="20" r="2.4"/></g></svg></button>
         <div class="who-pop" id="who-pop">
           <b>${esc(S.me.full_name || S.me.username)}</b>
-          <span>ÙˆØ§Ø­Ø¯ ${fa(S.me.unit_no || 'â€”')}${S.me.is_admin ? ' Â· Ù…Ø¯ÛŒØ± Ø³Ø§Ø®ØªÙ…Ø§Ù†' : ''}</span>
-          <button class="btn lt sm" id="go-prof" style="margin-top:12px;width:100%">Ù¾Ø±ÙˆÙØ§ÛŒÙ„</button>
-          <button class="btn rd" id="lo">Ø®Ø±ÙˆØ¬ Ø§Ø² Ø­Ø³Ø§Ø¨</button>
+          <span>واحد ${fa(S.me.unit_no || '—')}${S.me.is_admin ? ' · مدیر ساختمان' : ''}</span>
+          <button class="btn lt sm" id="go-prof" style="margin-top:12px;width:100%">پروفایل</button>
+          <button class="btn rd" id="lo">خروج از حساب</button>
         </div>
       </div>
     </header>
@@ -699,81 +542,36 @@ async function renderShell() {
 
 function go(v, isBackNavigation = false) {
   const views = {
-    dash: viewDash,
-    announcements: viewAnnouncements,
-    requests: viewRequests,
-    tx: viewTx,
-    pay: viewPay,
-    report: viewReport,
-    units: viewUnits,
-    rates: viewRates,
-    activity: viewActivity,
-    profile: viewProfile,
-    services: viewServices,
+    dash: viewDash, announcements: viewAnnouncements, requests: viewRequests, tx: viewTx, pay: viewPay,
+    report: viewReport, units: viewUnits, rates: viewRates, activity: viewActivity, profile: viewProfile, services: viewServices,
   };
-
-  // Ù…Ø³ÛŒØ± Ù†Ø§Ù…Ø¹ØªØ¨Ø± Ø±Ø§ Ù‡Ø±Ú¯Ø² ÙˆØ§Ø±Ø¯ State Ù†Ú©Ù†
   if (!views[v]) v = 'dash';
-
   S.view = v;
-
-  const el = $('#view');
-  if (!el) return;
-
-  el.innerHTML = `<p class="sub">Ø¯Ø± Ø­Ø§Ù„ Ø¨Ø§Ø±Ú¯Ø°Ø§Ø±ÛŒ...</p>`;
+  const el = $('#view'); if (!el) return;
+  el.innerHTML = `<p class="sub">در حال بارگذاری...</p>`;
   renderShellHeaderState();
-
   const currentRenderId = ++S.renderId;
-
-  Promise.resolve(views[v](el))
-    .catch(e => {
-      // Ù†ØªÛŒØ¬Ù‡/Ø®Ø·Ø§ÛŒ ÛŒÚ© view Ù‚Ø¯ÛŒÙ…ÛŒ Ù†Ø¨Ø§ÛŒØ¯ view ÙØ¹Ù„ÛŒ Ø±Ø§ Ø®Ø±Ø§Ø¨ Ú©Ù†Ø¯.
-      if (currentRenderId !== S.renderId) return;
-
-      if (e.message === 'AUTH_ERROR') {
-        logout(true);
-        return;
-      }
-
-      if (e.message === 'NETWORK_ERROR') {
-        el.innerHTML = `<div class="card" style="text-align:center;padding:60px 20px">
-          <div style="font-size:48px;margin-bottom:16px">ðŸ“¡</div>
-          <h2>Ø§ØªØµØ§Ù„ Ø¨Ù‡ Ø³Ø±ÙˆØ± Ø¨Ø±Ù‚Ø±Ø§Ø± Ù†ÛŒØ³Øª</h2>
-          <p class="sub">Ù„Ø·ÙØ§Ù‹ Ø§ÛŒÙ†ØªØ±Ù†Øª Ø®ÙˆØ¯ Ø±Ø§ Ø¨Ø±Ø±Ø³ÛŒ Ú©Ù†ÛŒØ¯</p>
-          <button class="btn sf" data-retry>ØªÙ„Ø§Ø´ Ù…Ø¬Ø¯Ø¯</button>
-        </div>`;
-        $('[data-retry]', el)?.addEventListener('click', () => go(v));
-        return;
-      }
-
-      showErr(e);
-      el.innerHTML = `<div class="card" style="color:var(--danger)">Ø®Ø·Ø§: ${esc(e.message)}</div>`;
-    });
-
-  /*
-   * History policy:
-   * - Ø¯Ø§Ø´Ø¨ÙˆØ±Ø¯ ØµÙØ­Ù‡ Ø±ÛŒØ´Ù‡ Ù…Ù†Ø·Ù‚ÛŒ Ø¨Ø±Ù†Ø§Ù…Ù‡ Ø§Ø³Øª.
-   * - Ø¨Ø±Ø§ÛŒ viewÙ‡Ø§ÛŒ Ø¯Ø§Ø®Ù„ÛŒ ÛŒÚ© history entry Ø³Ø§Ø®ØªÙ‡ Ù…ÛŒâ€ŒØ´ÙˆØ¯.
-   * - popstate ÙÙ‚Ø· Ù…Ø³Ø¦ÙˆÙ„ Ø¨Ø±Ú¯Ø´Øª Ø¨Ù‡ Ø¯Ø§Ø´Ø¨ÙˆØ±Ø¯/Ø®Ø±ÙˆØ¬ Ø§Ø³Øª.
-   */
+  Promise.resolve(views[v](el)).catch(e => {
+    if (currentRenderId !== S.renderId) return;
+    if (e.message === 'AUTH_ERROR') { logout(true); return; }
+    if (e.message === 'NETWORK_ERROR') {
+      el.innerHTML = `<div class="card" style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:16px">📡</div><h2>اتصال به سرور برقرار نیست</h2><p class="sub">لطفاً اینترنت خود را بررسی کنید</p><button class="btn sf" data-retry>تلاش مجدد</button></div>`;
+      $('[data-retry]', el)?.addEventListener('click', () => go(v)); return;
+    }
+    showErr(e); el.innerHTML = `<div class="card" style="color:var(--danger)">خطا: ${esc(e.message)}</div>`;
+  });
   if (!isBackNavigation && S.me) {
     const currentState = history.state;
-
-    if (v !== 'dash' && currentState?.view !== v) {
-      history.pushState(
-        { app: true, view: v },
-        '',
-        `#${encodeURIComponent(v)}`
-      );
-    }
+    if (v !== 'dash' && currentState?.view !== v) { history.pushState({ app: true, view: v }, '', `#${encodeURIComponent(v)}`); }
   }
 }
+
 function renderShellHeaderState() {
-  const all = [...getMenuItems(), ['services', 'Ø®Ø¯Ù…Ø§Øª']];
+  const all = [...getMenuItems(), ['services', 'خدمات']];
   const current = all.find(t => t[0] === S.view);
   const t = $('#appbar-title');
   if (t) t.innerHTML = S.view === 'dash'
-    ? `${esc(S.building)}<small>${S.me?.is_admin ? 'Ù¾Ù†Ù„ Ù…Ø¯ÛŒØ±ÛŒØª' : 'ÙˆØ§Ø­Ø¯ ' + fa(S.me?.unit_no || '')}</small>`
+    ? `${esc(S.building)}<small>${S.me?.is_admin ? 'پنل مدیریت' : 'واحد ' + fa(S.me?.unit_no || '')}</small>`
     : esc(current ? current[1] : '');
   const btns = $$('.bnav-items button');
   let active = btns.find(b => b.dataset.v === S.view) || btns.find(b => b.dataset.v === 'services');
@@ -792,120 +590,87 @@ function renderShellHeaderState() {
 function showConnectionError() {
   $('#app').innerHTML = `
     <div class="offline-screen">
-      <div class="offline-icon">ðŸ“¡</div>
-      <h1>Ø§ØªØµØ§Ù„ Ø¨Ù‡ Ø³Ø±ÙˆØ± Ø¨Ø±Ù‚Ø±Ø§Ø± Ù†ÛŒØ³Øª</h1>
-      <p class="sub" style="max-width:420px">Ù„Ø·ÙØ§Ù‹ Ø§ØªØµØ§Ù„ Ø§ÛŒÙ†ØªØ±Ù†Øª Ø®ÙˆØ¯ Ø±Ø§ Ø¨Ø±Ø±Ø³ÛŒ Ú©Ù†ÛŒØ¯ Ùˆ Ø¯ÙˆØ¨Ø§Ø±Ù‡ ØªÙ„Ø§Ø´ Ú©Ù†ÛŒØ¯. Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ø­Ø³Ø§Ø¨ Ø´Ù…Ø§ Ø­ÙØ¸ Ø´Ø¯Ù‡ Ø§Ø³Øª.</p>
+      <div class="offline-icon">📡</div>
+      <h1>اتصال به سرور برقرار نیست</h1>
+      <p class="sub" style="max-width:420px">لطفاً اتصال اینترنت خود را بررسی کنید و دوباره تلاش کنید. اطلاعات حساب شما حفظ شده است.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
-        <button class="btn sf" id="retry" style="min-width:180px">ØªÙ„Ø§Ø´ Ù…Ø¬Ø¯Ø¯</button>
-        <button class="btn lt" id="lo2" style="min-width:180px">Ø®Ø±ÙˆØ¬ Ø§Ø² Ø­Ø³Ø§Ø¨</button>
+        <button class="btn sf" id="retry" style="min-width:180px">تلاش مجدد</button>
+        <button class="btn lt" id="lo2" style="min-width:180px">خروج از حساب</button>
       </div>
     </div>`;
   $('#retry').addEventListener('click', renderShell);
   $('#lo2').addEventListener('click', () => logout());
 }
 
-/* =========================================================
-   12. Dashboard
-   ========================================================= */
-const mustChangeBanner = () => S.me?.must_change_password
-  ? `<div class="card" style="background:#fef3c7;color:#92400e;margin-bottom:20px">Ø±Ù…Ø² Ø¹Ø¨ÙˆØ± Ø´Ù…Ø§ Ù‡Ù†ÙˆØ² Ù¾ÛŒØ´â€ŒÙØ±Ø¶ Ø§Ø³Øª. Ø§Ø² Ø¨Ø®Ø´ <a href="#" id="go-profile">Ù¾Ø±ÙˆÙØ§ÛŒÙ„</a> Ø¢Ù† Ø±Ø§ ØªØºÛŒÛŒØ± Ø¯Ù‡ÛŒØ¯.</div>`
-  : '';
+const mustChangeBanner = () => S.me?.must_change_password ? `<div class="card" style="background:#fef3c7;color:#92400e;margin-bottom:20px">رمز عبور شما هنوز پیش‌فرض است. از بخش <a href="#" id="go-profile">پروفایل</a> آن را تغییر دهید.</div>` : '';
 
 function billCard(r, rep) {
-  // ØªØ¨Ø¯ÛŒÙ„ Ù…Ù‚Ø§Ø¯ÛŒØ± Ø¨Ù‡ Ø¹Ø¯Ø¯ Ø¨Ø±Ø§ÛŒ Ø¬Ù„ÙˆÚ¯ÛŒØ±ÛŒ Ø§Ø² Ø®Ø·Ø§
-  const w = Number(r.water) || 0;
-  const rep_amt = Number(r.repair) || 0;
-  const park = Number(r.parking) || 0;
-  const prev = Number(r.prev_debt) || 0;
-  const paid = Number(r.paid_this_month) || 0;
-  const rem = Number(r.remaining) || 0;
-
+  const w = Number(r.water) || 0; const rep_amt = Number(r.repair) || 0; const park = Number(r.parking) || 0;
+  const prev = Number(r.prev_debt) || 0; const paid = Number(r.paid_this_month) || 0; const rem = Number(r.remaining) || 0;
   return `
   <div class="card" style="padding:0;overflow:hidden">
     <div class="bank-card" style="border-radius:20px 20px 0 0;box-shadow:none"><i class="shine"></i>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-        <b style="font-size:15px">ØµÙˆØ±ØªØ­Ø³Ø§Ø¨ ${esc(rep.month_name || '')} ${fa(rep.year)}</b>
+        <b style="font-size:15px">صورتحساب ${esc(rep.month_name || '')} ${fa(rep.year)}</b>
         <span class="chip" style="background:rgba(247,174,116,.2);color:var(--peach)">${esc(r.occupancy)}</span>
       </div>
-      <div class="bc-row"><span>${esc(r.full_name || '')}</span><span>ÙˆØ§Ø­Ø¯ ${fa(r.unit_no || '')}</span></div>
+      <div class="bc-row"><span>${esc(r.full_name || '')}</span><span>واحد ${fa(r.unit_no || '')}</span></div>
       <div class="bc-row" style="margin-top:16px;align-items:flex-end">
-        <div><small style="color:#c9cce6">Ù…Ø§Ù†Ø¯Ù‡ Ù‚Ø§Ø¨Ù„ Ù¾Ø±Ø¯Ø§Ø®Øª (ØªÙˆÙ…Ø§Ù†)</small>
+        <div><small style="color:#c9cce6">مانده قابل پرداخت (تومان)</small>
           <div style="display:flex;align-items:center;gap:10px"><button class="eye" type="button">${EYE}</button><span class="bc-amt" data-count="${rem}">${fmt(rem)}</span></div></div>
       </div>
     </div>
-    
     <div style="padding:10px 24px">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)">
-        <span>Ø³Ù‡Ù… Ù‚Ø¨Ø¶ Ø¢Ø¨: <b>${money(w)}</b> ØªÙˆÙ…Ø§Ù†</span>
-        <span>${(w === 0 || r.ok_water) ? '<span class="chip ok">Ù¾Ø±Ø¯Ø§Ø®Øª Ø´Ø¯Ù‡</span>' : '<span class="chip no">Ù¾Ø±Ø¯Ø§Ø®Øª Ù†Ø´Ø¯Ù‡</span>'}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)">
-        <span>Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ: <b>${money(rep_amt)}</b> ØªÙˆÙ…Ø§Ù†</span>
-        <span>${(rep_amt === 0 || r.ok_repair) ? '<span class="chip ok">Ù¾Ø±Ø¯Ø§Ø®Øª Ø´Ø¯Ù‡</span>' : '<span class="chip no">Ù¾Ø±Ø¯Ø§Ø®Øª Ù†Ø´Ø¯Ù‡</span>'}</span>
-      </div>
-      ${park > 0 ? `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)">
-        <span>Ø§Ø¬Ø§Ø±Ù‡ Ù¾Ø§Ø±Ú©ÛŒÙ†Ú¯: <b>${money(park)}</b> ØªÙˆÙ…Ø§Ù†</span>
-        <span>${r.ok_parking ? '<span class="chip ok">Ù¾Ø±Ø¯Ø§Ø®Øª Ø´Ø¯Ù‡</span>' : '<span class="chip no">Ù¾Ø±Ø¯Ø§Ø®Øª Ù†Ø´Ø¯Ù‡</span>'}</span>
-      </div>` : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)"><span>سهم قبض آب: <b>${money(w)}</b> تومان</span><span>${(w === 0 || r.ok_water) ? '<span class="chip ok">پرداخت شده</span>' : '<span class="chip no">پرداخت نشده</span>'}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)"><span>بازسازی: <b>${money(rep_amt)}</b> تومان</span><span>${(rep_amt === 0 || r.ok_repair) ? '<span class="chip ok">پرداخت شده</span>' : '<span class="chip no">پرداخت نشده</span>'}</span></div>
+      ${park > 0 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)"><span>اجاره پارکینگ: <b>${money(park)}</b> تومان</span><span>${r.ok_parking ? '<span class="chip ok">پرداخت شده</span>' : '<span class="chip no">پرداخت نشده</span>'}</span></div>` : ''}
     </div>
-    
     <div style="background:#fafafd;padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px;border-top:1px solid var(--line)">
-      <div>
-        <small style="color:var(--muted);display:block">Ø¨Ø¯Ù‡ÛŒ Ù‚Ø¨Ù„ÛŒ</small>
-        <b>${money(prev)}</b> ØªÙˆÙ…Ø§Ù†
-      </div>
-      <div>
-        <small style="color:var(--muted);display:block">Ù¾Ø±Ø¯Ø§Ø®ØªÛŒ Ø§ÛŒÙ† Ù…Ø§Ù‡</small>
-        <b>${money(paid)}</b> ØªÙˆÙ…Ø§Ù†
-      </div>
+      <div><small style="color:var(--muted);display:block">بدهی قبلی</small><b>${money(prev)}</b> تومان</div>
+      <div><small style="color:var(--muted);display:block">پرداختی این ماه</small><b>${money(paid)}</b> تومان</div>
     </div>
   </div>`;
 }
+
 function reminderText(r, rep) {
-  return `${S.building} - ÙˆØ§Ø­Ø¯ ${r.unit_no}\nØµÙˆØ±ØªØ­Ø³Ø§Ø¨ ${rep.month_name} ${rep.year}:\n` +
-    `Ø´Ø§Ø±Ú˜ ${fmt(r.charge)} | Ø¢Ø¨ ${fmt(r.water)} | Ú¯Ø§Ø² ${fmt(r.gas)} | Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ ${fmt(r.repair)}` +
-    (r.parking ? ` | Ù¾Ø§Ø±Ú©ÛŒÙ†Ú¯ ${fmt(r.parking)}` : '') +
-    `\nØ¨Ø¯Ù‡ÛŒ Ù‚Ø¨Ù„ÛŒ: ${fmt(r.prev_debt)}\nÙ…Ø§Ù†Ø¯Ù‡ Ù‚Ø§Ø¨Ù„ Ù¾Ø±Ø¯Ø§Ø®Øª: ${fmt(r.remaining)} ØªÙˆÙ…Ø§Ù†`;
+  return `${S.building} - واحد ${r.unit_no}\nصورتحساب ${rep.month_name} ${rep.year}:\n` +
+    `شارژ ${fmt(r.charge)} | آب ${fmt(r.water)} | گاز ${fmt(r.gas)} | بازسازی ${fmt(r.repair)}` +
+    (r.parking ? ` | پارکینگ ${fmt(r.parking)}` : '') +
+    `\nبدهی قبلی: ${fmt(r.prev_debt)}\nمانده قابل پرداخت: ${fmt(r.remaining)} تومان`;
 }
 
 function reqTable(list, admin) {
-  if (!list || !list.length) return `<p class="sub">Ù…ÙˆØ±Ø¯ÛŒ Ù†ÛŒØ³Øª</p>`;
-  const st = s => s === 'approved' ? '<span class="chip ok">ØªØ§ÛŒÛŒØ¯ Ø´Ø¯</span>'
-    : s === 'rejected' ? '<span class="chip no">Ø±Ø¯ Ø´Ø¯</span>'
-    : '<span class="chip pd">Ù…Ù†ØªØ¸Ø± ØªØ§ÛŒÛŒØ¯</span>';
+  if (!list || !list.length) return `<p class="sub">موردی نیست</p>`;
+  const st = s => s === 'approved' ? '<span class="chip ok">تایید شد</span>' : s === 'rejected' ? '<span class="chip no">رد شد</span>' : '<span class="chip pd">منتظر تایید</span>';
   return `<div class="tbl-wrap" style="border:0"><table><thead><tr>
-    ${admin ? '<th>ÙˆØ§Ø­Ø¯</th>' : ''}<th>Ù…Ø§Ù‡</th><th>Ù…Ø¨Ù„Øº</th><th>ÙˆØ¶Ø¹ÛŒØª</th>${admin ? '<th></th>' : ''}
+    ${admin ? '<th>واحد</th>' : ''}<th>ماه</th><th>مبلغ</th><th>وضعیت</th>${admin ? '<th></th>' : ''}
   </tr></thead><tbody>
     ${list.map(p => `<tr>
-      ${admin ? `<td><b>ÙˆØ§Ø­Ø¯ ${fa(p.unit_no)}</b><br><span style="font-size:12px;color:var(--muted)">${esc(p.full_name || '')}</span></td>` : ''}
+      ${admin ? `<td><b>واحد ${fa(p.unit_no)}</b><br><span style="font-size:12px;color:var(--muted)">${esc(p.full_name || '')}</span></td>` : ''}
       <td>${MONTHS[p.month - 1]} ${fa(p.year)}</td>
       <td>${money(p.amount)}</td>
       <td>${st(p.status)}</td>
-      <td>${admin && p.status === 'pending' ? `<button class="btn sm" data-ap="${p.id}">Ø¨Ø±Ø±Ø³ÛŒ</button>` : ''}</td>
+      <td>${admin && p.status === 'pending' ? `<button class="btn sm" data-ap="${p.id}">بررسی</button>` : ''}</td>
     </tr>`).join('')}
   </tbody></table></div>`;
 }
 
 async function viewDash(el) {
   const rep = await T('app_report', { p_year: S.y, p_month: S.m });
-  const missing = rep.missing_rates?.length
-    ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">Ù…Ø¨Ø§Ù„Øº Ø´Ø§Ø±Ú˜/Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ Ø¨Ø±Ø§ÛŒ Ø§ÛŒÙ† Ù…Ø§Ù‡â€ŒÙ‡Ø§ ØªØ¹Ø±ÛŒÙ Ù†Ø´Ø¯Ù‡: ${rep.missing_rates.map(fa).join('ØŒ ')}</div>`
-    : '';
+  const missing = rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">مبالغ شارژ/بازسازی برای این ماه‌ها تعریف نشده: ${rep.missing_rates.map(fa).join('، ')}</div>` : '';
 
   if (!S.me.is_admin) {
-    const r = rep.rows[0];
-    const reqs = await T('app_get_payment_requests');
+    const r = rep.rows[0]; const reqs = await T('app_get_payment_requests');
     el.innerHTML = `${mustChangeBanner()}
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:8px">
-        <div><h1>Ø³Ù„Ø§Ù… ${esc(S.me.full_name || ('ÙˆØ§Ø­Ø¯ ' + fa(S.me.unit_no)))} ðŸ‘‹</h1><p class="sub" style="margin:0">ØµÙˆØ±ØªØ­Ø³Ø§Ø¨ ${rep.month_name} ${fa(rep.year)}</p></div>
+        <div><h1>سلام ${esc(S.me.full_name || ('واحد ' + fa(S.me.unit_no)))} 👋</h1><p class="sub" style="margin:0">صورتحساب ${rep.month_name} ${fa(rep.year)}</p></div>
         ${periodPicker()}
       </div>
-      <div><div class="sec-title">Ø¯Ø³ØªØ±Ø³ÛŒ Ø³Ø±ÛŒØ¹</div>
-        <div class="quick">${[['pay','Ù¾Ø±Ø¯Ø§Ø®Øª Ø¨Ø¯Ù‡ÛŒ'],['tx','ØªØ±Ø§Ú©Ù†Ø´â€ŒÙ‡Ø§'],['announcements','Ø§Ø¹Ù„Ø§Ù†Ø§Øª'],['requests','Ø§Ø±ØªØ¨Ø§Ø· Ø¨Ø§ Ù…Ø¯ÛŒØ±']].map(([k,l]) => `<button class="tile" data-go="${k}">${ico(k)}<span>${l}</span></button>`).join('')}</div></div>
+      <div><div class="sec-title">دسترسی سریع</div>
+        <div class="quick">${[['pay','پرداخت بدهی'],['tx','تراکنش‌ها'],['announcements','اعلانات'],['requests','ارتباط با مدیر']].map(([k,l]) => `<button class="tile" data-go="${k}">${ico(k)}<span>${l}</span></button>`).join('')}</div></div>
       ${missing}
-      <div style="margin-top:20px">${r ? billCard(r, rep) : '<p class="sub">ØµÙˆØ±ØªØ­Ø³Ø§Ø¨ÛŒ Ø«Ø¨Øª Ù†Ø´Ø¯Ù‡.</p>'}</div>
-      <div class="sec-title">Ø³Ø§Ø¨Ù‚Ù‡ Ù¾Ø±Ø¯Ø§Ø®Øªâ€ŒÙ‡Ø§</div>
+      <div style="margin-top:20px">${r ? billCard(r, rep) : '<p class="sub">صورتحسابی ثبت نشده.</p>'}</div>
+      <div class="sec-title">سابقه پرداخت‌ها</div>
       ${reqTable(reqs.slice(0, 8), false)}`;
     bindPeriod(() => go('dash'));
     $('#go-profile')?.addEventListener('click', e => { e.preventDefault(); go('profile'); });
@@ -916,86 +681,55 @@ async function viewDash(el) {
 
   const fund = await T('app_fund_summary', { p_year: S.y, p_month: S.m });
   const rows = rep.rows || [];
-
   const unitMap = {};
   rows.forEach(r => {
     if (!unitMap[r.unit_no]) unitMap[r.unit_no] = { unit_no: r.unit_no, remaining: 0, current_due: 0, accounts: [], display_name: '' };
-    unitMap[r.unit_no].remaining += r.remaining;
-    unitMap[r.unit_no].current_due += r.current_due;
-    unitMap[r.unit_no].accounts.push(r);
+    unitMap[r.unit_no].remaining += r.remaining; unitMap[r.unit_no].current_due += r.current_due; unitMap[r.unit_no].accounts.push(r);
     if (!unitMap[r.unit_no].display_name && r.full_name) unitMap[r.unit_no].display_name = r.full_name;
   });
-
-  const mapUnits = [];
-  for (let i = 1; i <= 10; i++) {
-    mapUnits.push(unitMap[i] || { unit_no: i, remaining: 0, current_due: 0, accounts: [], display_name: '-' });
-  }
-
-  const floors = [];
-  for (let u = 9; u >= 1; u -= 2) {
-    floors.push([mapUnits.find(x => x.unit_no === u), mapUnits.find(x => x.unit_no === u + 1)]);
-  }
-
+  const mapUnits = []; for (let i = 1; i <= 10; i++) { mapUnits.push(unitMap[i] || { unit_no: i, remaining: 0, current_due: 0, accounts: [], display_name: '-' }); }
+  const floors = []; for (let u = 9; u >= 1; u -= 2) { floors.push([mapUnits.find(x => x.unit_no === u), mapUnits.find(x => x.unit_no === u + 1)]); }
   const totalDebt = mapUnits.reduce((s, r) => s + Math.max(0, r.remaining), 0);
   const winBg = r => r.remaining <= 0 ? '#e9f8ef' : r.remaining > r.current_due ? '#fdeeee' : '#fff4e8';
 
   el.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:8px">
-      <div><h1>Ø¯Ø§Ø´Ø¨ÙˆØ±Ø¯ Ù…Ø¯ÛŒØ±ÛŒØª</h1><p class="sub" style="margin:0">Ø®Ù„Ø§ØµÙ‡ ÙˆØ¶Ø¹ÛŒØª ØµÙ†Ø¯ÙˆÙ‚ Ø¯Ø± ${rep.month_name} ${fa(rep.year)}</p></div>
+      <div><h1>داشبورد مدیریت</h1><p class="sub" style="margin:0">خلاصه وضعیت صندوق در ${rep.month_name} ${fa(rep.year)}</p></div>
       ${periodPicker()}
     </div>
     ${missing}
     ${mustChangeBanner()}
-    <div><div class="sec-title">Ø¯Ø³ØªØ±Ø³ÛŒ Ø³Ø±ÛŒØ¹</div>
-      <div class="quick">${[['units','ÙˆØ§Ø­Ø¯Ù‡Ø§'],['pay','ØªØ§ÛŒÛŒØ¯ Ù¾Ø±Ø¯Ø§Ø®Øª'],['announcements','Ø§Ø¹Ù„Ø§Ù†Ø§Øª'],['rates','Ù†Ø±Ø®â€ŒÙ‡Ø§']].map(([k,l]) => `<button class="tile" data-go="${k}">${ico(k)}${k==='pay' && +fund.pending_payments ? `<i class="badge">${fa(fund.pending_payments)}</i>` : ''}<span>${l}</span></button>`).join('')}</div></div>
+    <div><div class="sec-title">دسترسی سریع</div>
+      <div class="quick">${[['units','واحدها'],['pay','تایید پرداخت'],['announcements','اعلانات'],['rates','نرخ‌ها']].map(([k,l]) => `<button class="tile" data-go="${k}">${ico(k)}${k==='pay' && +fund.pending_payments ? `<i class="badge">${fa(fund.pending_payments)}</i>` : ''}<span>${l}</span></button>`).join('')}</div></div>
     <div class="grid g3" style="margin:20px 0 8px">
       <div class="bank-card"><i class="shine"></i>
-        <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:15px">ØµÙ†Ø¯ÙˆÙ‚ Ø³Ø§Ø®ØªÙ…Ø§Ù†</b><span style="color:#ffd27a;font-size:20px">â˜…</span></div>
-        <div class="bc-row"><span>Ù…ÙˆØ¬ÙˆØ¯ÛŒ ÙØ¹Ù„ÛŒ (ØªÙˆÙ…Ø§Ù†)</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:15px">صندوق ساختمان</b><span style="color:#ffd27a;font-size:20px">★</span></div>
+        <div class="bc-row"><span>موجودی فعلی (تومان)</span></div>
         <div class="bc-row" style="margin-top:4px;justify-content:flex-start"><button class="eye" type="button">${EYE}</button><span class="bc-amt" data-count="${fund.balance}">${fmt(fund.balance)}</span></div>
-        <div class="bc-row" style="margin-top:14px"><span></span><button class="pill" type="button" data-go="tx">Ú¯Ø±Ø¯Ø´ Ø­Ø³Ø§Ø¨</button></div>
+        <div class="bc-row" style="margin-top:14px"><span></span><button class="pill" type="button" data-go="tx">گردش حساب</button></div>
       </div>
       <div class="bank-card soft"><i class="shine"></i>
-        <b style="font-size:15px">Ø¯Ø±Ø¢Ù…Ø¯ Ø§ÛŒÙ† Ù…Ø§Ù‡</b>
-        <div class="bc-row"><span>ØªÙˆÙ…Ø§Ù†</span></div>
+        <b style="font-size:15px">درآمد این ماه</b>
+        <div class="bc-row"><span>تومان</span></div>
         <div class="bc-amt" data-count="${fund.month_income ?? fund.month_expense}" style="margin-top:4px">${fmt(fund.month_income ?? fund.month_expense)}</div>
-        <div class="bc-row" style="margin-top:14px"><span></span><button class="pill" type="button" data-go="report">Ú¯Ø²Ø§Ø±Ø´ Ù…Ø§Ù‡</button></div>
+        <div class="bc-row" style="margin-top:14px"><span></span><button class="pill" type="button" data-go="report">گزارش ماه</button></div>
       </div>
       <div class="bank-card peach"><i class="shine"></i>
-        <b style="font-size:15px">Ù…Ø·Ø§Ù„Ø¨Ø§Øª Ù…Ø¹ÙˆÙ‚</b>
-        <div class="bc-row" style="color:#fff"><span>ØªÙˆÙ…Ø§Ù†</span></div>
+        <b style="font-size:15px">مطالبات معوق</b>
+        <div class="bc-row" style="color:#fff"><span>تومان</span></div>
         <div class="bc-amt" data-count="${totalDebt}" style="margin-top:4px">${fmt(totalDebt)}</div>
-        <div class="bc-row" style="margin-top:14px"><span></span><button class="pill" type="button" data-go="units">Ù…Ø´Ø§Ù‡Ø¯Ù‡ ÙˆØ§Ø­Ø¯Ù‡Ø§</button></div>
+        <div class="bc-row" style="margin-top:14px"><span></span><button class="pill" type="button" data-go="units">مشاهده واحدها</button></div>
       </div>
     </div>
-
     <div class="grid g2">
-      <div class="card">
-        <h2>Ù†Ù‚Ø´Ù‡ Ø³Ø§Ø®ØªÙ…Ø§Ù†</h2>
+      <div class="card"><h2>نقشه ساختمان</h2>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px">
-          ${floors.map(fl => fl.map(r => r ? `
-            <button class="win" data-u="${r.unit_no}" style="background:${winBg(r)}">
-              <span style="font-size:14px;font-weight:700;color:var(--muted)">ÙˆØ§Ø­Ø¯ ${fa(r.unit_no)}</span>
-              <span style="font-size:16px;font-weight:900">${esc(r.display_name)}</span>
-              <span style="font-size:14px;font-weight:700;margin-top:8px">${r.remaining <= 0 ? 'ØªØ³ÙˆÛŒÙ‡' : fmt(r.remaining) + ' ØªÙˆÙ…Ø§Ù†'}</span>
-            </button>` : '').join('')).join('')}
+          ${floors.map(fl => fl.map(r => r ? `<button class="win" data-u="${r.unit_no}" style="background:${winBg(r)}"><span style="font-size:14px;font-weight:700;color:var(--muted)">واحد ${fa(r.unit_no)}</span><span style="font-size:16px;font-weight:900">${esc(r.display_name)}</span><span style="font-size:14px;font-weight:700;margin-top:8px">${r.remaining <= 0 ? 'تسویه' : fmt(r.remaining) + ' تومان'}</span></button>` : '').join('')).join('')}
         </div>
       </div>
       <div class="grid" style="align-content:start">
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
-            <h2 style="margin:0">Ù¾Ø±Ø¯Ø§Ø®Øªâ€ŒÙ‡Ø§ÛŒ Ù…Ù†ØªØ¸Ø± ØªØ§ÛŒÛŒØ¯</h2>
-            <button class="btn lt sm" id="go-pay">Ù…Ø´Ø§Ù‡Ø¯Ù‡</button>
-          </div>
-          <div style="font-size:36px;font-weight:900;color:var(--warning)">${fa(fund.pending_payments)}</div>
-        </div>
-        <div class="card">
-          <h2>Ù‚Ø¨Ø¶â€ŒÙ‡Ø§ÛŒ Ø§ÛŒÙ† Ù…Ø§Ù‡</h2>
-          <div style="font-size:13px;color:var(--muted);line-height:2">
-            Ù‚Ø¨Ø¶ Ø¢Ø¨: ${fmt(rep.water_total)} ØªÙˆÙ…Ø§Ù†<br>
-            Ù‚Ø¨Ø¶ Ú¯Ø§Ø²: ${fmt(rep.gas_total)} ØªÙˆÙ…Ø§Ù†
-          </div>
-        </div>
+        <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><h2 style="margin:0">پرداخت‌های منتظر تایید</h2><button class="btn lt sm" id="go-pay">مشاهده</button></div><div style="font-size:36px;font-weight:900;color:var(--warning)">${fa(fund.pending_payments)}</div></div>
+        <div class="card"><h2>قبض‌های این ماه</h2><div style="font-size:13px;color:var(--muted);line-height:2">قبض آب: ${fmt(rep.water_total)} تومان<br>قبض گاز: ${fmt(rep.gas_total)} تومان</div></div>
       </div>
     </div>`;
 
@@ -1004,1470 +738,295 @@ async function viewDash(el) {
   countUp(el); bindEyes(el);
   $('#go-pay')?.addEventListener('click', () => go('pay'));
   $('#go-profile')?.addEventListener('click', e => { e.preventDefault(); go('profile'); });
-
   $$('.win', el).forEach(b => b.addEventListener('click', () => {
-    const uData = mapUnits.find(x => x.unit_no == b.dataset.u);
-    if (!uData) return;
-    const cardsHtml = uData.accounts.length
-      ? uData.accounts.map(r => billCard(r, rep)).join('<hr style="border:0;border-top:1px dashed var(--line);margin:20px 0">')
-      : '<p class="sub" style="text-align:center;padding:20px">Ø­Ø³Ø§Ø¨ÛŒ Ø¨Ø±Ø§ÛŒ Ø§ÛŒÙ† ÙˆØ§Ø­Ø¯ Ø«Ø¨Øª Ù†Ø´Ø¯Ù‡ Ø§Ø³Øª.</p>';
-    const smsHtml = uData.accounts.map(r => r.phone ? smsBtn(r.phone, reminderText(r, rep), `Ù¾ÛŒØ§Ù…Ú© Ø¨Ù‡ ${r.full_name || r.occupancy}`) : '').join('');
-    const m = modal(`
-      <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-        <h2 style="margin:0">ØµÙˆØ±ØªØ­Ø³Ø§Ø¨ ÙˆØ§Ø­Ø¯ ${fa(uData.unit_no)}</h2>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">${smsHtml}</div>
-      </div>
-      ${cardsHtml}
-      <div style="margin-top:20px"><button class="btn lt sm" id="m-tx">ØªØ±Ø§Ú©Ù†Ø´â€ŒÙ‡Ø§ÛŒ Ø§ÛŒÙ† ÙˆØ§Ø­Ø¯</button></div>`);
-    $('#m-tx', m)?.addEventListener('click', () => {
-      m.remove();
-      S.txFilter = { y: S.y, m: '', unit: String(uData.unit_no), type: '' };
-      go('tx');
-    });
+    const uData = mapUnits.find(x => x.unit_no == b.dataset.u); if (!uData) return;
+    const cardsHtml = uData.accounts.length ? uData.accounts.map(r => billCard(r, rep)).join('<hr style="border:0;border-top:1px dashed var(--line);margin:20px 0">') : '<p class="sub" style="text-align:center;padding:20px">حسابی برای این واحد ثبت نشده است.</p>';
+    const smsHtml = uData.accounts.map(r => r.phone ? smsBtn(r.phone, reminderText(r, rep), `پیامک به ${r.full_name || r.occupancy}`) : '').join('');
+    const m = modal(`<div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px"><h2 style="margin:0">صورتحساب واحد ${fa(uData.unit_no)}</h2><div style="display:flex;gap:8px;flex-wrap:wrap">${smsHtml}</div></div>${cardsHtml}<div style="margin-top:20px"><button class="btn lt sm" id="m-tx">تراکنش‌های این واحد</button></div>`);
+    $('#m-tx', m)?.addEventListener('click', () => { m.remove(); S.txFilter = { y: S.y, m: '', unit: String(uData.unit_no), type: '' }; go('tx'); });
   }));
 }
 
-/* =========================================================
-   13. Announcements
-   ========================================================= */
 async function viewAnnouncements(el) {
   const list = await T('app_get_announcements');
-  const adminForm = S.me.is_admin ? `
-    <form id="af" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)">
-      <h2 style="grid-column:1/-1;margin:0">Ø§Ø±Ø³Ø§Ù„ Ø§Ø¹Ù„Ø§Ù† Ø¬Ø¯ÛŒØ¯</h2>
-      <label class="f">Ø¹Ù†ÙˆØ§Ù†<input id="a-title" required></label>
-      <label class="f">Ù†ÙˆØ¹<select id="a-type"><option value="general">Ø§Ø·Ù„Ø§Ø¹ÛŒÙ‡ Ø¹Ù…ÙˆÙ…ÛŒ</option><option value="meeting">Ø¯Ø¹ÙˆØª Ø¨Ù‡ Ø¬Ù„Ø³Ù‡</option></select></label>
-      <label class="f" style="grid-column:1/-1">Ù…ØªÙ† Ú©Ø§Ù…Ù„<textarea id="a-content" rows="3" required></textarea></label>
-      <div style="grid-column:1/-1"><button class="btn">Ø«Ø¨Øª Ø§Ø¹Ù„Ø§Ù†</button></div>
-    </form>` : '';
-  el.innerHTML = `<h1>Ø§Ø¹Ù„Ø§Ù†Ø§Øª Ø³Ø§Ø®ØªÙ…Ø§Ù†</h1><p class="sub">Ø§Ø·Ù„Ø§Ø¹ÛŒÙ‡â€ŒÙ‡Ø§ Ùˆ Ø¯Ø¹ÙˆØªâ€ŒÙ†Ø§Ù…Ù‡â€ŒÙ‡Ø§</p>${adminForm}
-    <div class="grid g2">
-      ${list.map(a => `
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap">
-            <h2 style="margin:0">${esc(a.title)}</h2>
-            <span class="chip ${a.type === 'meeting' ? 'pd' : 'ex'}">${a.type === 'meeting' ? 'Ø¬Ù„Ø³Ù‡' : 'Ø§Ø·Ù„Ø§Ø¹ÛŒÙ‡'}</span>
-          </div>
-          <p style="white-space:pre-wrap;margin:0 0 16px">${esc(a.content)}</p>
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-            <span style="font-size:12px;color:var(--muted)">${new Date(a.created_at).toLocaleDateString('fa-IR')}</span>
-            ${S.me.is_admin ? `<button class="btn rd sm" data-del="${a.id}">Ø­Ø°Ù</button>` : ''}
-          </div>
-        </div>`).join('') || '<div class="card sub">Ù‡ÛŒÚ† Ø§Ø¹Ù„Ø§Ù†ÛŒ ÙˆØ¬ÙˆØ¯ Ù†Ø¯Ø§Ø±Ø¯.</div>'}
-    </div>`;
-
+  const adminForm = S.me.is_admin ? `<form id="af" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)"><h2 style="grid-column:1/-1;margin:0">ارسال اعلان جدید</h2><label class="f">عنوان<input id="a-title" required></label><label class="f">نوع<select id="a-type"><option value="general">اطلاعیه عمومی</option><option value="meeting">دعوت به جلسه</option></select></label><label class="f" style="grid-column:1/-1">متن کامل<textarea id="a-content" rows="3" required></textarea></label><div style="grid-column:1/-1"><button class="btn">ثبت اعلان</button></div></form>` : '';
+  el.innerHTML = `<h1>اعلانات ساختمان</h1><p class="sub">اطلاعیه‌ها و دعوت‌نامه‌ها</p>${adminForm}<div class="grid g2">${list.map(a => `<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap"><h2 style="margin:0">${esc(a.title)}</h2><span class="chip ${a.type === 'meeting' ? 'pd' : 'ex'}">${a.type === 'meeting' ? 'جلسه' : 'اطلاعیه'}</span></div><p style="white-space:pre-wrap;margin:0 0 16px">${esc(a.content)}</p><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span style="font-size:12px;color:var(--muted)">${new Date(a.created_at).toLocaleDateString('fa-IR')}</span>${S.me.is_admin ? `<button class="btn rd sm" data-del="${a.id}">حذف</button>` : ''}</div></div>`).join('') || '<div class="card sub">هیچ اعلانی وجود ندارد.</div>'}</div>`;
   if (S.me.is_admin) {
     $('#af')?.addEventListener('submit', async e => {
       e.preventDefault();
       try {
-        const title = $('#a-title').value;
-        const content = $('#a-content').value;
-        const type = $('#a-type').value;
-        await T('app_admin_save_announcement', {
-          p_title: title,
-          p_content: content,
-          p_type: type,
-        });
-        
-        // Ø§Ø±Ø³Ø§Ù„ Ø¨Ù‡ Ø¨Ù„Ù‡
-        notifyBale(`ðŸ“¢ Ø§Ø¹Ù„Ø§Ù† Ø¬Ø¯ÛŒØ¯ Ø¯Ø± Ø³Ø§Ø®ØªÙ…Ø§Ù†:\n\nðŸ”¹ ${title}\n\n${content}`);
-        
-        toast('Ø«Ø¨Øª Ø´Ø¯'); go('announcements');
+        const title = $('#a-title').value; const content = $('#a-content').value; const type = $('#a-type').value;
+        await T('app_admin_save_announcement', { p_title: title, p_content: content, p_type: type });
+        notifyBale(`📢 اعلان جدید در ساختمان:\n\n🔹 ${title}\n\n${content}`);
+        toast('ثبت شد'); go('announcements');
       } catch (err) { showErr(err); }
     });
-    $$('[data-del]').forEach(b => b.addEventListener('click', async () => {
-      if (!confirm('Ø­Ø°Ù Ø´ÙˆØ¯ØŸ')) return;
-      try { await T('app_admin_delete_announcement', { p_id: +b.dataset.del }); toast('Ø­Ø°Ù Ø´Ø¯'); go('announcements'); }
-      catch (e) { showErr(e); }
-    }));
+    $$('[data-del]').forEach(b => b.addEventListener('click', async () => { if (!confirm('حذف شود؟')) return; try { await T('app_admin_delete_announcement', { p_id: +b.dataset.del }); toast('حذف شد'); go('announcements'); } catch (e) { showErr(e); } }));
   }
 }
 
-/* =========================================================
-   14. Requests
-   ========================================================= */
 async function viewRequests(el) {
-  const list = await T('app_get_requests');
-  const admin = S.me.is_admin;
-  const residentForm = !admin ? `
-    <form id="rf2" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)">
-      <h2 style="grid-column:1/-1;margin:0">Ø«Ø¨Øª Ø¯Ø±Ø®ÙˆØ§Ø³Øª Ø¬Ø¯ÛŒØ¯</h2>
-      <label class="f">Ù…ÙˆØ¶ÙˆØ¹<select id="rq-type"><option>Ø¯Ø±Ø®ÙˆØ§Ø³Øª ØªØ¹Ù…ÛŒØ±Ø§Øª</option><option>Ø§Ù†ØªÙ‚Ø§Ø¯ Ùˆ Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯</option></select></label>
-      <label class="f" style="grid-column:1/-1">ØªÙˆØ¶ÛŒØ­Ø§Øª<textarea id="rq-desc" rows="3" required></textarea></label>
-      <div style="grid-column:1/-1"><button class="btn">Ø§Ø±Ø³Ø§Ù„ Ø¨Ù‡ Ù…Ø¯ÛŒØ±</button></div>
-    </form>` : '';
-
-  el.innerHTML = `<h1>${admin ? 'Ø¯Ø±Ø®ÙˆØ§Ø³Øªâ€ŒÙ‡Ø§' : 'Ø§Ø±ØªØ¨Ø§Ø· Ø¨Ø§ Ù…Ø¯ÛŒØ±'}</h1>
-    <p class="sub">${admin ? 'Ø¯Ø±Ø®ÙˆØ§Ø³Øªâ€ŒÙ‡Ø§ÛŒ Ø³Ø§Ú©Ù†ÛŒÙ†' : 'Ø«Ø¨Øª Ø¯Ø±Ø®ÙˆØ§Ø³Øª ØªØ¹Ù…ÛŒØ±Ø§ØªØŒ Ø§Ù†ØªÙ‚Ø§Ø¯Ø§Øª'}</p>
-    ${residentForm}
-    <div class="grid g2">
-      ${list.map(r => `
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap">
-            <h2 style="margin:0">${esc(r.type)}</h2>
-            <span class="chip ${r.status === 'done' ? 'ok' : 'pd'}">${r.status === 'done' ? 'Ø¨Ø±Ø±Ø³ÛŒ Ø´Ø¯' : 'Ø¯Ø± Ø­Ø§Ù„ Ø¨Ø±Ø±Ø³ÛŒ'}</span>
-          </div>
-          <p class="sub" style="font-size:12px;margin:0 0 8px">${esc(r.full_name || '')} ${r.unit_no ? 'Â· ÙˆØ§Ø­Ø¯ ' + fa(r.unit_no) : ''}</p>
-          <p style="white-space:pre-wrap;margin:0 0 16px">${esc(r.description)}</p>
-          ${admin && r.status !== 'done' ? `<button class="btn lt sm" data-ok="${r.id}">Ø¹Ù„Ø§Ù…Øªâ€ŒÚ¯Ø°Ø§Ø±ÛŒ Ø¨Ù‡ Ø¹Ù†ÙˆØ§Ù† Ø¨Ø±Ø±Ø³ÛŒ Ø´Ø¯Ù‡</button>` : ''}
-        </div>`).join('') || '<div class="card sub">Ù…ÙˆØ±Ø¯ÛŒ ÙˆØ¬ÙˆØ¯ Ù†Ø¯Ø§Ø±Ø¯.</div>'}
-    </div>`;
-
+  const list = await T('app_get_requests'); const admin = S.me.is_admin;
+  const residentForm = !admin ? `<form id="rf2" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)"><h2 style="grid-column:1/-1;margin:0">ثبت درخواست جدید</h2><label class="f">موضوع<select id="rq-type"><option>درخواست تعمیرات</option><option>انتقاد و پیشنهاد</option></select></label><label class="f" style="grid-column:1/-1">توضیحات<textarea id="rq-desc" rows="3" required></textarea></label><div style="grid-column:1/-1"><button class="btn">ارسال به مدیر</button></div></form>` : '';
+  el.innerHTML = `<h1>${admin ? 'درخواست‌ها' : 'ارتباط با مدیر'}</h1><p class="sub">${admin ? 'درخواست‌های ساکنین' : 'ثبت درخواست تعمیرات، انتقادات'}</p>${residentForm}<div class="grid g2">${list.map(r => `<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap"><h2 style="margin:0">${esc(r.type)}</h2><span class="chip ${r.status === 'done' ? 'ok' : 'pd'}">${r.status === 'done' ? 'بررسی شد' : 'در حال بررسی'}</span></div><p class="sub" style="font-size:12px;margin:0 0 8px">${esc(r.full_name || '')} ${r.unit_no ? '· واحد ' + fa(r.unit_no) : ''}</p><p style="white-space:pre-wrap;margin:0 0 16px">${esc(r.description)}</p>${admin && r.status !== 'done' ? `<button class="btn lt sm" data-ok="${r.id}">علامت‌گذاری به عنوان بررسی شده</button>` : ''}</div>`).join('') || '<div class="card sub">موردی وجود ندارد.</div>'}</div>`;
   if (!admin) {
     $('#rf2')?.addEventListener('submit', async e => {
       e.preventDefault();
       try {
-        const type = $('#rq-type').value;
-        const desc = $('#rq-desc').value;
+        const type = $('#rq-type').value; const desc = $('#rq-desc').value;
         await T('app_submit_request', { p_type: type, p_description: desc });
-        
-        // Ø§Ø±Ø³Ø§Ù„ Ø¨Ù‡ Ø¨Ù„Ù‡
-        notifyBale(`ðŸ”” Ø¯Ø±Ø®ÙˆØ§Ø³Øª Ø¬Ø¯ÛŒØ¯ Ø§Ø² ÙˆØ§Ø­Ø¯ ${S.me.unit_no}:\n\nðŸ”¹ Ù†ÙˆØ¹: ${type}\nðŸ“ ØªÙˆØ¶ÛŒØ­Ø§Øª: ${desc}`);
-        
-        toast('Ø«Ø¨Øª Ø´Ø¯'); go('requests');
+        notifyBale(`🔔 درخواست جدید از واحد ${S.me.unit_no}:\n\n🔹 نوع: ${type}\n📝 توضیحات: ${desc}`);
+        toast('ثبت شد'); go('requests');
       } catch (err) { showErr(err); }
     });
-  } else {
-    $$('[data-ok]').forEach(b => b.addEventListener('click', async () => {
-      try { await T('app_admin_update_request', { p_id: +b.dataset.ok, p_status: 'done' }); toast('ØªØºÛŒÛŒØ± Ú©Ø±Ø¯'); go('requests'); }
-      catch (e) { showErr(e); }
-    }));
-  }
+  } else { $$('[data-ok]').forEach(b => b.addEventListener('click', async () => { try { await T('app_admin_update_request', { p_id: +b.dataset.ok, p_status: 'done' }); toast('تغییر کرد'); go('requests'); } catch (e) { showErr(e); } })); }
 }
 
-/* =========================================================
-   15. Payment
-   ========================================================= */
 function payModal(r) {
-  const m = modal(`
-    <h2>Ø«Ø¨Øª Ù¾Ø±Ø¯Ø§Ø®Øª</h2>
-    <p class="sub">Ø§Ø·Ù…ÛŒÙ†Ø§Ù† Ø­Ø§ØµÙ„ Ú©Ù†ÛŒØ¯ ØªØµÙˆÛŒØ± ÙÛŒØ´ ÛŒØ§ Ø±Ø³ÛŒØ¯ ÙˆØ§Ø¶Ø­ Ø¨Ø§Ø´Ø¯.</p>
-    <form id="pf" class="grid g2">
-      <label class="f">Ø¨Ø§Ø¨Øª<select id="pf-c">
-        ${Object.entries(CATS).sort(([a],[b]) => (a==='bill'?-1:b==='bill'?1:0))
-          .map(([k,v]) => `<option value="${k}">${esc(v)}</option>`).join('')}
-      </select></label>
-      <label class="f">Ù…Ø¨Ù„Øº (ØªÙˆÙ…Ø§Ù†)<input id="pf-a" inputmode="numeric" required value="${r && r.remaining > 0 ? fmt(r.remaining) : ''}"></label>
-      <label class="f">Ù…Ø§Ù‡<select id="pf-m">${monthOptions(S.m)}</select></label>
-      <label class="f">Ø³Ø§Ù„<select id="pf-y">${yearOptions(S.y)}</select></label>
-      <label class="f">ØªØ§Ø±ÛŒØ® ÙˆØ§Ø±ÛŒØ²<input id="pf-d" dir="ltr" value="${TODAY.y}/${String(TODAY.m).padStart(2,'0')}/${String(TODAY.d).padStart(2,'0')}"></label>
-      <label class="f">Ú©Ø¯ Ù¾ÛŒÚ¯ÛŒØ±ÛŒ<input id="pf-r" dir="ltr"></label>
-      <label class="f" style="grid-column:1/-1">Ø¨Ø§Ø±Ú¯Ø°Ø§Ø±ÛŒ ØªØµÙˆÛŒØ± ÙÛŒØ´ (Ø§Ø®ØªÛŒØ§Ø±ÛŒ)<input id="pf-img" type="file" accept="image/*"></label>
-      <label class="f" style="grid-column:1/-1">ØªÙˆØ¶ÛŒØ­Ø§Øª<input id="pf-n"></label>
-      <button class="btn sf" style="grid-column:1/-1">Ø§Ø±Ø³Ø§Ù„ Ø¨Ø±Ø§ÛŒ ØªØ§ÛŒÛŒØ¯</button>
-    </form>`);
-
+  const m = modal(`<h2>ثبت پرداخت</h2><p class="sub">اطمینان حاصل کنید تصویر فیش یا رسید واضح باشد.</p><form id="pf" class="grid g2"><label class="f">بابت<select id="pf-c">${Object.entries(CATS).sort(([a],[b]) => (a==='bill'?-1:b==='bill'?1:0)).map(([k,v]) => `<option value="${k}">${esc(v)}</option>`).join('')}</select></label><label class="f">مبلغ (تومان)<input id="pf-a" inputmode="numeric" required value="${r && r.remaining > 0 ? fmt(r.remaining) : ''}"></label><label class="f">ماه<select id="pf-m">${monthOptions(S.m)}</select></label><label class="f">سال<select id="pf-y">${yearOptions(S.y)}</select></label><label class="f">تاریخ واریز<input id="pf-d" dir="ltr" value="${TODAY.y}/${String(TODAY.m).padStart(2,'0')}/${String(TODAY.d).padStart(2,'0')}"></label><label class="f">کد پیگیری<input id="pf-r" dir="ltr"></label><label class="f" style="grid-column:1/-1">بارگذاری تصویر فیش (اختیاری)<input id="pf-img" type="file" accept="image/*"></label><label class="f" style="grid-column:1/-1">توضیحات<input id="pf-n"></label><button class="btn sf" style="grid-column:1/-1">ارسال برای تایید</button></form>`);
   attachNumericInputIn(m, '#pf-a');
   $('#pf', m).addEventListener('submit', async e => {
-    e.preventDefault();
-    const fileInput = $('#pf-img', m);
-    let base64Image = null;
+    e.preventDefault(); const fileInput = $('#pf-img', m); let base64Image = null;
     if (fileInput.files.length > 0) base64Image = await compressImage(fileInput.files[0]);
     try {
-      const category = $('#pf-c', m).value;
-      const amount = toNum($('#pf-a', m).value);
-      await T('app_submit_payment', {
-        p_year: +$('#pf-y', m).value,
-        p_month: +$('#pf-m', m).value,
-        p_category: category,
-        p_amount: amount,
-        p_ref_code: $('#pf-r', m).value,
-        p_note: $('#pf-n', m).value,
-        p_pay_date: $('#pf-d', m).value,
-        p_receipt_image: base64Image,
-      });
-      
-      // Ø§Ø±Ø³Ø§Ù„ Ø¨Ù‡ Ø¨Ù„Ù‡
-      notifyBale(`ðŸ’¸ Ù¾Ø±Ø¯Ø§Ø®Øª Ø¬Ø¯ÛŒØ¯ Ø«Ø¨Øª Ø´Ø¯ (Ù…Ù†ØªØ¸Ø± ØªØ§ÛŒÛŒØ¯):\n\nðŸ‘¤ ÙˆØ§Ø­Ø¯ ${S.me.unit_no} - ${S.me.full_name}\nðŸ’° Ø¨Ø§Ø¨Øª: ${CATS[category] || category}\nðŸ“… Ù…Ø§Ù‡: ${MONTHS[S.m-1]} ${S.y}\nðŸ”¢ Ù…Ø¨Ù„Øº: ${fmt(amount)} ØªÙˆÙ…Ø§Ù†`);
-      
-      m.remove(); toast('Ù¾Ø±Ø¯Ø§Ø®Øª Ø«Ø¨Øª Ø´Ø¯ Ùˆ Ù…Ù†ØªØ¸Ø± ØªØ§ÛŒÛŒØ¯ Ø§Ø³Øª'); go(S.view);
+      const category = $('#pf-c', m).value; const amount = toNum($('#pf-a', m).value);
+      await T('app_submit_payment', { p_year: +$('#pf-y', m).value, p_month: +$('#pf-m', m).value, p_category: category, p_amount: amount, p_ref_code: $('#pf-r', m).value, p_note: $('#pf-n', m).value, p_pay_date: $('#pf-d', m).value, p_receipt_image: base64Image });
+      notifyBale(`💸 پرداخت جدید ثبت شد (منتظر تایید):\n\n👤 واحد ${S.me.unit_no} - ${S.me.full_name}\n💰 بابت: ${CATS[category] || category}\n📅 ماه: ${MONTHS[S.m-1]} ${S.y}\n🔢 مبلغ: ${fmt(amount)} تومان`);
+      m.remove(); toast('پرداخت ثبت شد و منتظر تایید است'); go(S.view);
     } catch (err) { showErr(err); }
   });
 }
 
 async function viewPay(el) {
-  const admin = S.me.is_admin;
-  const list = await T('app_get_payment_requests');
-  const pending = list.filter(p => p.status === 'pending');
-  el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap">
-      <div><h1>${admin ? 'Ø¨Ø±Ø±Ø³ÛŒ Ù¾Ø±Ø¯Ø§Ø®Øªâ€ŒÙ‡Ø§' : 'Ù¾Ø±Ø¯Ø§Ø®Øª Ø¨Ø¯Ù‡ÛŒ'}</h1>
-        <p class="sub" style="margin:0">${admin ? 'Ù¾Ø±Ø¯Ø§Ø®Øªâ€ŒÙ‡Ø§ÛŒ Ù…Ù†ØªØ¸Ø± ØªØ§ÛŒÛŒØ¯ Ø´Ù…Ø§' : 'Ù¾Ø±Ø¯Ø§Ø®Øª Ø®ÙˆØ¯ Ø±Ø§ Ø«Ø¨Øª Ú©Ù†ÛŒØ¯.'}</p></div>
-      <button class="btn sf" id="np">Ø«Ø¨Øª Ù¾Ø±Ø¯Ø§Ø®Øª Ø¬Ø¯ÛŒØ¯</button>
-    </div>
-    ${admin ? `
-      <h2>Ù…Ù†ØªØ¸Ø± ØªØ§ÛŒÛŒØ¯ (${fa(pending.length)})</h2>
-      ${reqTable(pending, true)}
-      <h2 style="margin-top:28px">Ø³Ø§Ø¨Ù‚Ù‡</h2>
-      ${reqTable(list.filter(p => p.status !== 'pending'), true)}
-    ` : reqTable(list, false)}`;
-
-  $('#np').addEventListener('click', async () => {
-    let r = null;
-    if (!admin) { const rep = await T('app_report', { p_year: S.y, p_month: S.m }); r = rep.rows[0]; }
-    payModal(r);
-  });
+  const admin = S.me.is_admin; const list = await T('app_get_payment_requests'); const pending = list.filter(p => p.status === 'pending');
+  el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap"><div><h1>${admin ? 'بررسی پرداخت‌ها' : 'پرداخت بدهی'}</h1><p class="sub" style="margin:0">${admin ? 'پرداخت‌های منتظر تایید شما' : 'پرداخت خود را ثبت کنید.'}</p></div><button class="btn sf" id="np">ثبت پرداخت جدید</button></div>${admin ? `<h2>منتظر تایید (${fa(pending.length)})</h2>${reqTable(pending, true)}<h2 style="margin-top:28px">سابقه</h2>${reqTable(list.filter(p => p.status !== 'pending'), true)}` : reqTable(list, false)}`;
+  $('#np').addEventListener('click', async () => { let r = null; if (!admin) { const rep = await T('app_report', { p_year: S.y, p_month: S.m }); r = rep.rows[0]; } payModal(r); });
   $$('[data-ap]').forEach(b => b.addEventListener('click', () => approveModal(list.find(p => p.id == b.dataset.ap))));
 }
 
 function approveModal(p) {
-  const m = modal(`
-    <h2>ØªØ§ÛŒÛŒØ¯ Ù¾Ø±Ø¯Ø§Ø®Øª ÙˆØ§Ø­Ø¯ ${fa(p.unit_no)}</h2>
-    <p class="sub">${esc(p.full_name || '')} Â· Ø¨Ø§Ø¨Øª ${esc(CATS[p.category] || p.category)} Â· ${MONTHS[p.month-1]} ${fa(p.year)}</p>
-    ${p.receipt_image
-      ? `<div style="margin-bottom:16px;text-align:center"><img src="${p.receipt_image}" style="max-width:100%;max-height:300px;border-radius:12px;border:1px solid var(--line)"></div>`
-      : `<div class="card" style="background:#f8fafc;margin-bottom:16px;text-align:center;color:var(--muted)">ØªØµÙˆÛŒØ±ÛŒ Ø¨Ø§Ø±Ú¯Ø°Ø§Ø±ÛŒ Ù†Ø´Ø¯Ù‡ Ø§Ø³Øª</div>`}
-    <div class="grid g2">
-      <label class="f">Ù…Ø¨Ù„Øº ØªØ§ÛŒÛŒØ¯ÛŒ (ØªÙˆÙ…Ø§Ù†)<input id="ap-a" value="${fmt(p.amount)}" inputmode="numeric"></label>
-      <label class="f">ÛŒØ§Ø¯Ø¯Ø§Ø´Øª<input id="ap-n"></label>
-    </div>
-    <div style="margin-top:20px;display:flex;gap:10px">
-      <button class="btn" id="ap-go" style="flex:1">ØªØ§ÛŒÛŒØ¯ Ùˆ Ø«Ø¨Øª</button>
-      <button class="btn rd" id="ap-rj">Ø±Ø¯ Ú©Ø±Ø¯Ù†</button>
-    </div>`);
+  const m = modal(`<h2>تایید پرداخت واحد ${fa(p.unit_no)}</h2><p class="sub">${esc(p.full_name || '')} · بابت ${esc(CATS[p.category] || p.category)} · ${MONTHS[p.month-1]} ${fa(p.year)}</p>${p.receipt_image ? `<div style="margin-bottom:16px;text-align:center"><img src="${p.receipt_image}" style="max-width:100%;max-height:300px;border-radius:12px;border:1px solid var(--line)"></div>` : `<div class="card" style="background:#f8fafc;margin-bottom:16px;text-align:center;color:var(--muted)">تصویری بارگذاری نشده است</div>`}<div class="grid g2"><label class="f">مبلغ تاییدی (تومان)<input id="ap-a" value="${fmt(p.amount)}" inputmode="numeric"></label><label class="f">یادداشت<input id="ap-n"></label></div><div style="margin-top:20px;display:flex;gap:10px"><button class="btn" id="ap-go" style="flex:1">تایید و ثبت</button><button class="btn rd" id="ap-rj">رد کردن</button></div>`);
   attachNumericInputIn(m, '#ap-a');
-  $('#ap-rj', m).addEventListener('click', async () => {
-    const note = prompt('Ø¯Ù„ÛŒÙ„ Ø±Ø¯:') ?? null;
-    if (note === null) return;
-    try { await T('app_admin_review_payment', { p_id: p.id, p_approve: false, p_admin_note: note }); m.remove(); toast('Ø±Ø¯ Ø´Ø¯'); go('pay'); }
-    catch (e) { showErr(e); }
-  });
+  $('#ap-rj', m).addEventListener('click', async () => { const note = prompt('دلیل رد:') ?? null; if (note === null) return; try { await T('app_admin_review_payment', { p_id: p.id, p_approve: false, p_admin_note: note }); m.remove(); toast('رد شد'); go('pay'); } catch (e) { showErr(e); } });
   $('#ap-go', m).addEventListener('click', async () => {
     try {
       await T('app_admin_review_payment', { p_id: p.id, p_approve: true, p_amount: toNum($('#ap-a', m).value), p_admin_note: $('#ap-n', m).value });
-      
-      // Ø§Ø±Ø³Ø§Ù„ Ø¨Ù‡ Ø¨Ù„Ù‡
-      notifyBale(`âœ… Ù¾Ø±Ø¯Ø§Ø®Øª ØªØ§ÛŒÛŒØ¯ Ø´Ø¯:\n\nðŸ‘¤ ÙˆØ§Ø­Ø¯ ${p.unit_no} - ${p.full_name}\nðŸ’° Ù…Ø¨Ù„Øº: ${fmt(p.amount)} ØªÙˆÙ…Ø§Ù†\nðŸ“… Ø¨Ø§Ø¨Øª: ${CATS[p.category] || p.category} - ${MONTHS[p.month-1]} ${p.year}`);
-      
-      m.remove(); toast('ØªØ§ÛŒÛŒØ¯ Ø´Ø¯'); go('pay');
+      notifyBale(`✅ پرداخت تایید شد:\n\n👤 واحد ${p.unit_no} - ${p.full_name}\n💰 مبلغ: ${fmt(p.amount)} تومان\n📅 بابت: ${CATS[p.category] || p.category} - ${MONTHS[p.month-1]} ${p.year}`);
+      m.remove(); toast('تایید شد'); go('pay');
     } catch (e) { showErr(e); }
   });
 }
 
-/* =========================================================
-   16. Transactions
-   ========================================================= */
 async function viewTx(el) {
-  const admin = S.me.is_admin;
-  if (!S.txFilter) S.txFilter = { y: String(S.y), m: '', unit: '', type: '' };
-  const f = S.txFilter;
-
+  const admin = S.me.is_admin; if (!S.txFilter) S.txFilter = { y: String(S.y), m: '', unit: '', type: '' }; const f = S.txFilter;
   const unitParam = admin && f.unit !== '' ? +f.unit : null;
-  const list = await T('app_get_transactions', {
-    p_year: f.y ? +f.y : null,
-    p_month: f.m ? +f.m : null,
-    p_unit: unitParam,
-  });
-
+  const list = await T('app_get_transactions', { p_year: f.y ? +f.y : null, p_month: f.m ? +f.m : null, p_unit: unitParam });
   const rows = list.filter(t => !f.type || t.tx_type === f.type);
-  const inc = rows.filter(t => t.tx_type === 'Ø¯Ø±Ø¢Ù…Ø¯').reduce((s, t) => s + t.amount, 0);
-  const exp = rows.filter(t => t.tx_type === 'Ù‡Ø²ÛŒÙ†Ù‡').reduce((s, t) => s + t.amount, 0);
+  const inc = rows.filter(t => t.tx_type === 'درآمد').reduce((s, t) => s + t.amount, 0); const exp = rows.filter(t => t.tx_type === 'هزینه').reduce((s, t) => s + t.amount, 0);
   const units = admin ? await T('app_get_units') : [];
-  const phoneOf = u => {
-    const un = units.find(x => x.unit_no === u);
-    const a = un?.accounts.find(a => a.is_primary && a.is_active) || un?.accounts[0];
-    return a?.phone;
-  };
-
-  el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap">
-      <div><h1>ØªØ±Ø§Ú©Ù†Ø´â€ŒÙ‡Ø§</h1><p class="sub" style="margin:0">Ø¯Ø±Ø¢Ù…Ø¯ ${fmt(inc)} Â· Ù‡Ø²ÛŒÙ†Ù‡ ${fmt(exp)} Â· ${fa(rows.length)} Ø±Ø¯ÛŒÙ</p></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        ${admin ? '<button class="btn sf" id="tx-new">Ø«Ø¨Øª ØªØ±Ø§Ú©Ù†Ø´</button>' : ''}
-        <button class="btn lt" id="tx-csv">Ø®Ø±ÙˆØ¬ÛŒ Ø§Ú©Ø³Ù„</button>
-      </div>
-    </div>
-    <div class="card no-print" style="margin-bottom:16px;padding:14px;display:flex;gap:8px;flex-wrap:wrap">
-      <label class="f" style="width:110px">Ø³Ø§Ù„<select id="f-y"><option value="">Ù‡Ù…Ù‡</option>${yearOptions(f.y)}</select></label>
-      <label class="f" style="width:130px">Ù…Ø§Ù‡<select id="f-m">${monthOptions(f.m, true)}</select></label>
-      ${admin ? `<label class="f" style="width:130px">ÙˆØ§Ø­Ø¯<select id="f-u">${unitOptions(f.unit, true, true)}</select></label>` : ''}
-      <label class="f" style="width:110px">Ù†ÙˆØ¹<select id="f-t"><option value="">Ù‡Ù…Ù‡</option><option value="Ø¯Ø±Ø¢Ù…Ø¯" ${f.type === 'Ø¯Ø±Ø¢Ù…Ø¯' ? 'selected' : ''}>Ø¯Ø±Ø¢Ù…Ø¯</option><option value="Ù‡Ø²ÛŒÙ†Ù‡" ${f.type === 'Ù‡Ø²ÛŒÙ†Ù‡' ? 'selected' : ''}>Ù‡Ø²ÛŒÙ†Ù‡</option></select></label>
-    </div>
-    <div class="tbl-wrap"><table><thead><tr>
-      <th>ØªØ§Ø±ÛŒØ®</th><th>ÙˆØ§Ø­Ø¯</th><th>Ù†ÙˆØ¹</th><th>Ù…Ø­Ù„</th><th>Ø´Ø±Ø­</th><th>Ù…Ø¨Ù„Øº</th><th>Ø³Ú©ÙˆÙ†Øª</th>${admin ? '<th></th>' : ''}
-    </tr></thead><tbody>
-      ${rows.map(t => `<tr>
-        <td class="num">${fa(t.tx_date)}</td>
-        <td>${t.unit_no ? 'ÙˆØ§Ø­Ø¯ ' + fa(t.unit_no) : '<b>Ø³Ø§Ø®ØªÙ…Ø§Ù†</b>'}</td>
-        <td>${t.tx_type === 'Ø¯Ø±Ø¢Ù…Ø¯' ? '<span class="chip ok">Ø¯Ø±Ø¢Ù…Ø¯</span>' : '<span class="chip no">Ù‡Ø²ÛŒÙ†Ù‡</span>'}${t.source === 'payment' ? ' <span class="chip pd">Ù¾Ø±Ø¯Ø§Ø®Øª</span>' : ''}</td>
-        <td>${esc(t.location || 'â€”')}</td>
-        <td>${esc(t.description || 'â€”')}</td>
-        <td>${money(t.amount)}</td>
-        <td class="muted">${esc(t.occupancy || 'â€”')}</td>
-        ${admin ? `<td><div style="display:flex;gap:6px;flex-wrap:nowrap">
-          ${t.unit_no ? smsBtn(phoneOf(t.unit_no), `${S.building} - ÙˆØ§Ø­Ø¯ ${t.unit_no}\n${t.tx_type === 'Ø¯Ø±Ø¢Ù…Ø¯' ? 'Ø¯Ø±ÛŒØ§ÙØª' : 'Ø«Ø¨Øª'} ${fmt(t.amount)} ØªÙˆÙ…Ø§Ù† Ø¨Ø§Ø¨Øª ${t.description} Ø«Ø¨Øª Ø´Ø¯.`) : ''}
-          <button class="btn rd sm" data-dl="${t.id}">Ø­Ø°Ù</button>
-        </div></td>` : ''}
-      </tr>`).join('') || `<tr><td colspan="${admin?8:7}" class="muted" style="text-align:center">ØªØ±Ø§Ú©Ù†Ø´ÛŒ Ù†ÛŒØ³Øª</td></tr>`}
-    </tbody></table></div>`;
-
-  const upd = debounce(() => {
-    f.y = $('#f-y')?.value ?? '';
-    f.m = $('#f-m')?.value ?? '';
-    f.unit = $('#f-u')?.value ?? '';
-    f.type = $('#f-t')?.value ?? '';
-    go('tx');
-  }, 300);
+  const phoneOf = u => { const un = units.find(x => x.unit_no === u); const a = un?.accounts.find(a => a.is_primary && a.is_active) || un?.accounts[0]; return a?.phone; };
+  el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap"><div><h1>تراکنش‌ها</h1><p class="sub" style="margin:0">درآمد ${fmt(inc)} · هزینه ${fmt(exp)} · ${fa(rows.length)} ردیف</p></div><div style="display:flex;gap:10px;flex-wrap:wrap">${admin ? '<button class="btn sf" id="tx-new">ثبت تراکنش</button>' : ''}<button class="btn lt" id="tx-csv">خروجی اکسل</button></div></div><div class="card no-print" style="margin-bottom:16px;padding:14px;display:flex;gap:8px;flex-wrap:wrap"><label class="f" style="width:110px">سال<select id="f-y"><option value="">همه</option>${yearOptions(f.y)}</select></label><label class="f" style="width:130px">ماه<select id="f-m">${monthOptions(f.m, true)}</select></label>${admin ? `<label class="f" style="width:130px">واحد<select id="f-u">${unitOptions(f.unit, true, true)}</select></label>` : ''}<label class="f" style="width:110px">نوع<select id="f-t"><option value="">همه</option><option value="درآمد" ${f.type === 'درآمد' ? 'selected' : ''}>درآمد</option><option value="هزینه" ${f.type === 'هزینه' ? 'selected' : ''}>هزینه</option></select></label></div><div class="tbl-wrap"><table><thead><tr><th>تاریخ</th><th>واحد</th><th>نوع</th><th>محل</th><th>شرح</th><th>مبلغ</th><th>سکونت</th>${admin ? '<th></th>' : ''}</tr></thead><tbody>${rows.map(t => `<tr><td class="num">${fa(t.tx_date)}</td><td>${t.unit_no ? 'واحد ' + fa(t.unit_no) : '<b>ساختمان</b>'}</td><td>${t.tx_type === 'درآمد' ? '<span class="chip ok">درآمد</span>' : '<span class="chip no">هزینه</span>'}${t.source === 'payment' ? ' <span class="chip pd">پرداخت</span>' : ''}</td><td>${esc(t.location || '—')}</td><td>${esc(t.description || '—')}</td><td>${money(t.amount)}</td><td class="muted">${esc(t.occupancy || '—')}</td>${admin ? `<td><div style="display:flex;gap:6px;flex-wrap:nowrap">${t.unit_no ? smsBtn(phoneOf(t.unit_no), `${S.building} - واحد ${t.unit_no}\n${t.tx_type === 'درآمد' ? 'دریافت' : 'ثبت'} ${fmt(t.amount)} تومان بابت ${t.description} ثبت شد.`) : ''}<button class="btn rd sm" data-dl="${t.id}">حذف</button></div></td>` : ''}</tr>`).join('') || `<tr><td colspan="${admin?8:7}" class="muted" style="text-align:center">تراکنشی نیست</td></tr>`}</tbody></table></div>`;
+  const upd = debounce(() => { f.y = $('#f-y')?.value ?? ''; f.m = $('#f-m')?.value ?? ''; f.unit = $('#f-u')?.value ?? ''; f.type = $('#f-t')?.value ?? ''; go('tx'); }, 300);
   ['#f-y', '#f-m', '#f-u', '#f-t'].forEach(s => $(s)?.addEventListener('change', upd));
-
-  $('#tx-csv')?.addEventListener('click', () => exportCsv(rows));
-  if (!admin) return;
+  $('#tx-csv')?.addEventListener('click', () => exportCsv(rows)); if (!admin) return;
   $('#tx-new')?.addEventListener('click', () => txModal(null, units));
-  $$('[data-dl]').forEach(b => b.addEventListener('click', async () => {
-    if (!confirm('Ø­Ø°Ù Ø´ÙˆØ¯ØŸ')) return;
-    try { await T('app_admin_delete_transaction', { p_id: +b.dataset.dl }); toast('Ø­Ø°Ù Ø´Ø¯'); go('tx'); }
-    catch (e) { showErr(e); }
-  }));
+  $$('[data-dl]').forEach(b => b.addEventListener('click', async () => { if (!confirm('حذف شود؟')) return; try { await T('app_admin_delete_transaction', { p_id: +b.dataset.dl }); toast('حذف شد'); go('tx'); } catch (e) { showErr(e); } }));
 }
 
 function txModal(t, units) {
-  const isNew = !t;
-  t = t || { year: TODAY.y, month: TODAY.m, day: TODAY.d, unit_no: null, tx_type: 'Ø¯Ø±Ø¢Ù…Ø¯', category: 'charge', location: '', description: '', amount: '', occupancy: '' };
-  const m = modal(`
-    <h2>${isNew ? 'Ø«Ø¨Øª ØªØ±Ø§Ú©Ù†Ø´ Ø¬Ø¯ÛŒØ¯' : 'ÙˆÛŒØ±Ø§ÛŒØ´ ØªØ±Ø§Ú©Ù†Ø´'}</h2>
-    <form id="tf" class="grid g3">
-      <label class="f">Ù†ÙˆØ¹<select id="t-type"><option value="Ø¯Ø±Ø¢Ù…Ø¯" ${t.tx_type === 'Ø¯Ø±Ø¢Ù…Ø¯' ? 'selected' : ''}>Ø¯Ø±Ø¢Ù…Ø¯</option><option value="Ù‡Ø²ÛŒÙ†Ù‡" ${t.tx_type === 'Ù‡Ø²ÛŒÙ†Ù‡' ? 'selected' : ''}>Ù‡Ø²ÛŒÙ†Ù‡</option></select></label>
-      <label class="f">ÙˆØ§Ø­Ø¯<select id="t-unit">${unitOptions(t.unit_no ?? 0, true)}</select></label>
-      <label class="f">Ø¯Ø³ØªÙ‡<select id="t-cat">${Object.entries(CATS).filter(([k]) => k !== 'bill').map(([k,v]) => `<option value="${k}" ${t.category === k ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></label>
-      <label class="f">Ø³Ú©ÙˆÙ†Øª<select id="t-occ">${OCC.map(o => `<option ${t.occupancy === o ? 'selected' : ''}>${o}</option>`).join('')}</select></label>
-      <label class="f">Ø³Ø§Ù„<select id="t-y">${yearOptions(t.year)}</select></label>
-      <label class="f">Ù…Ø§Ù‡<select id="t-m">${monthOptions(t.month)}</select></label>
-      <label class="f">Ø±ÙˆØ²<input id="t-d" type="number" min="1" max="31" value="${t.day || 1}"></label>
-      <label class="f">Ù…Ø­Ù„<input id="t-loc" value="${esc(t.location || '')}"></label>
-      <label class="f">Ø´Ø±Ø­<input id="t-desc" value="${esc(t.description || '')}"></label>
-      <label class="f" style="grid-column:1/-1">Ù…Ø¨Ù„Øº (ØªÙˆÙ…Ø§Ù†)<input id="t-amt" inputmode="numeric" required value="${t.amount ? fmt(t.amount) : ''}"></label>
-      <div style="grid-column:1/-1"><button class="btn sf" type="submit">${isNew ? 'Ø«Ø¨Øª' : 'Ø°Ø®ÛŒØ±Ù‡'}</button></div>
-    </form>`);
+  const isNew = !t; t = t || { year: TODAY.y, month: TODAY.m, day: TODAY.d, unit_no: null, tx_type: 'درآمد', category: 'charge', location: '', description: '', amount: '', occupancy: '' };
+  const m = modal(`<h2>${isNew ? 'ثبت تراکنش جدید' : 'ویرایش تراکنش'}</h2><form id="tf" class="grid g3"><label class="f">نوع<select id="t-type"><option value="درآمد" ${t.tx_type === 'درآمد' ? 'selected' : ''}>درآمد</option><option value="هزینه" ${t.tx_type === 'هزینه' ? 'selected' : ''}>هزینه</option></select></label><label class="f">واحد<select id="t-unit">${unitOptions(t.unit_no ?? 0, true)}</select></label><label class="f">دسته<select id="t-cat">${Object.entries(CATS).filter(([k]) => k !== 'bill').map(([k,v]) => `<option value="${k}" ${t.category === k ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></label><label class="f">سکونت<select id="t-occ">${OCC.map(o => `<option ${t.occupancy === o ? 'selected' : ''}>${o}</option>`).join('')}</select></label><label class="f">سال<select id="t-y">${yearOptions(t.year)}</select></label><label class="f">ماه<select id="t-m">${monthOptions(t.month)}</select></label><label class="f">روز<input id="t-d" type="number" min="1" max="31" value="${t.day || 1}"></label><label class="f">محل<input id="t-loc" value="${esc(t.location || '')}"></label><label class="f">شرح<input id="t-desc" value="${esc(t.description || '')}"></label><label class="f" style="grid-column:1/-1">مبلغ (تومان)<input id="t-amt" inputmode="numeric" required value="${t.amount ? fmt(t.amount) : ''}"></label><div style="grid-column:1/-1"><button class="btn sf" type="submit">${isNew ? 'ثبت' : 'ذخیره'}</button></div></form>`);
   attachNumericInputIn(m, '#t-amt');
   $('#tf', m).addEventListener('submit', async e => {
     e.preventDefault();
     try {
-      const txType = $('#t-type', m).value;
-      const unitNo = +$('#t-unit', m).value || null;
-      const amount = toNum($('#t-amt', m).value);
-      const desc = $('#t-desc', m).value || CATS[$('#t-cat', m).value];
-      
-      await T('app_admin_save_transaction', {
-        p_id: isNew ? null : t.id,
-        p_year: +$('#t-y', m).value,
-        p_month: +$('#t-m', m).value,
-        p_day: +$('#t-d', m).value || 1,
-        p_unit_no: unitNo,
-        p_tx_type: txType,
-        p_category: $('#t-cat', m).value,
-        p_location: $('#t-loc', m).value,
-        p_description: $('#t-desc', m).value,
-        p_amount: amount,
-        p_occupancy: $('#t-occ', m).value,
-        p_force: false,
-      });
-      
-      // Ø§Ø±Ø³Ø§Ù„ Ø¨Ù‡ Ø¨Ù„Ù‡
-      notifyBale(`ðŸ“ ØªØ±Ø§Ú©Ù†Ø´ Ø¬Ø¯ÛŒØ¯ Ø«Ø¨Øª Ø´Ø¯:\n\nðŸ”¹ Ù†ÙˆØ¹: ${txType}\nðŸ¢ ÙˆØ§Ø­Ø¯: ${unitNo ? 'ÙˆØ§Ø­Ø¯ ' + unitNo : 'Ø³Ø§Ø®ØªÙ…Ø§Ù†'}\nðŸ’° Ù…Ø¨Ù„Øº: ${fmt(amount)} ØªÙˆÙ…Ø§Ù†\nðŸ“„ Ø´Ø±Ø­: ${desc || 'â€”'}`);
-      
-      m.remove(); toast('Ø«Ø¨Øª Ø´Ø¯'); go('tx');
+      const txType = $('#t-type', m).value; const unitNo = +$('#t-unit', m).value || null; const amount = toNum($('#t-amt', m).value); const desc = $('#t-desc', m).value || CATS[$('#t-cat', m).value];
+      await T('app_admin_save_transaction', { p_id: isNew ? null : t.id, p_year: +$('#t-y', m).value, p_month: +$('#t-m', m).value, p_day: +$('#t-d', m).value || 1, p_unit_no: unitNo, p_tx_type: txType, p_category: $('#t-cat', m).value, p_location: $('#t-loc', m).value, p_description: $('#t-desc', m).value, p_amount: amount, p_occupancy: $('#t-occ', m).value, p_force: false });
+      notifyBale(`📝 تراکنش جدید ثبت شد:\n\n🔹 نوع: ${txType}\n🏢 واحد: ${unitNo ? 'واحد ' + unitNo : 'ساختمان'}\n💰 مبلغ: ${fmt(amount)} تومان\n📄 شرح: ${desc || '—'}`);
+      m.remove(); toast('ثبت شد'); go('tx');
     } catch (e) { showErr(e); }
   });
 }
 
 function exportCsv(rows) {
-  const sep = ';';
-  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const head = ['ØªØ§Ø±ÛŒØ®', 'Ø³Ø§Ù„', 'Ù…Ø§Ù‡', 'ÙˆØ§Ø­Ø¯', 'Ù†ÙˆØ¹', 'Ù…Ø­Ù„', 'Ø´Ø±Ø­', 'Ù…Ø¨Ù„Øº', 'Ù†ÙˆØ¹ Ø³Ú©ÙˆÙ†Øª'];
-  const lines = [head.map(q).join(sep)].concat(rows.slice().reverse().map(t => [
-    t.tx_date, t.year, t.month_name, t.unit_no ? 'ÙˆØ§Ø­Ø¯ ' + t.unit_no : 'Ø³Ø§Ø®ØªÙ…Ø§Ù†',
-    t.tx_type, t.location, t.description, t.amount, t.occupancy,
-  ].map(q).join(sep)));
+  const sep = ';'; const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const head = ['تاریخ', 'سال', 'ماه', 'واحد', 'نوع', 'محل', 'شرح', 'مبلغ', 'نوع سکونت'];
+  const lines = [head.map(q).join(sep)].concat(rows.slice().reverse().map(t => [t.tx_date, t.year, t.month_name, t.unit_no ? 'واحد ' + t.unit_no : 'ساختمان', t.tx_type, t.location, t.description, t.amount, t.occupancy].map(q).join(sep)));
   const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'Transactions.csv';
-  a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Transactions.csv'; a.click();
 }
-  /* =========================================================
-   17. Report
-   ========================================================= */
+
 async function viewReport(el) {
   const rep = await T('app_report', { p_year: S.y, p_month: S.m });
-  
   el.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; flex-wrap:wrap; width:100%; box-sizing:border-box;">
-      <div>
-        <h1 style="margin:0; line-height:1.5;">Ú¯Ø²Ø§Ø±Ø´ ${rep.month_name} ${fa(rep.year)}</h1>
-      </div>
-      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-        ${periodPicker()}
-        <button class="btn sf no-print" id="bale-btn">Ø§Ø±Ø³Ø§Ù„ Ø¨Ù‡ Ø¨Ù„Ù‡ ðŸ“¤</button>
-        <button class="btn lt no-print" id="pr-btn">Ú†Ø§Ù¾</button>
-      </div>
+      <div><h1 style="margin:0; line-height:1.5;">گزارش ${rep.month_name} ${fa(rep.year)}</h1></div>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${periodPicker()}<button class="btn sf no-print" id="bale-btn">ارسال به بله 📤</button><button class="btn lt no-print" id="pr-btn">چاپ</button></div>
     </div>
-
-    ${rep.missing_rates?.length ? `
-      <div class="card" style="background:#fee2e2; color:#991b1b; margin-bottom:20px;">
-        Ù†Ø±Ø® Ù…Ø§Ù‡â€ŒÙ‡Ø§ÛŒ ${rep.missing_rates.map(fa).join('ØŒ ')} ØªØ¹Ø±ÛŒÙ Ù†Ø´Ø¯Ù‡.
-      </div>
-    ` : ''}
-
-    <!-- Ø¬Ø¯ÙˆÙ„ Ú¯Ø²Ø§Ø±Ø´ -->
+    ${rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2; color:#991b1b; margin-bottom:20px;">نرخ ماه‌های ${rep.missing_rates.map(fa).join('، ')} تعریف نشده.</div>` : ''}
     <div class="tbl-wrap" style="border-radius:8px; overflow-x:auto; overflow-y:visible; -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y; border:1px solid #333; padding:0; background:#fff; width:100%; max-width:100%; box-sizing:border-box; position:relative;">
       <table style="width:max-content; min-width:100%; border-collapse:collapse; font-size:20px; font-weight:bold; text-align:center; direction:rtl; border:2px solid #000; table-layout:auto;">
-        
-        <colgroup>
-          <col style="min-width:105px;"> <!-- ÙˆØ§Ø­Ø¯ -->
-          <col style="min-width:145px;"> <!-- Ø´Ø§Ø±Ú˜ -->
-          <col style="min-width:145px;"> <!-- Ø¢Ø¨ -->
-          <col style="min-width:145px;"> <!-- Ú¯Ø§Ø² -->
-          <col style="min-width:155px;"> <!-- Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ -->
-          <col style="min-width:165px;"> <!-- Ø¨Ø¯Ù‡ÛŒ Ù‚Ø¨Ù„ÛŒ -->
-          <col style="min-width:190px;"> <!-- Ø¬Ù…Ø¹ -->
-        </colgroup>
-
+        <colgroup><col style="min-width:105px;"><col style="min-width:145px;"><col style="min-width:145px;"><col style="min-width:145px;"><col style="min-width:155px;"><col style="min-width:165px;"><col style="min-width:190px;"></colgroup>
         <thead>
-          <tr>
-            <th colspan="7" style="background-color:#7A9CBE; color:white; padding:10px 12px; font-size:22px; font-weight:bold; border:1px solid #333; text-align:center; white-space:nowrap;">
-              Ú¯Ø²Ø§Ø±Ø´ ${rep.month_name} Ù…Ø§Ù‡ - ${fa(rep.year)}/${String(rep.month).padStart(2, '0')}
-            </th>
-          </tr>
-          <tr>
-            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">ÙˆØ§Ø­Ø¯</th>
-            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">Ø´Ø§Ø±Ú˜</th>
-            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">Ù‚Ø¨Ø¶ Ø¢Ø¨</th>
-            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">Ù‚Ø¨Ø¶ Ú¯Ø§Ø²</th>
-            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ</th>
-            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">Ø¨Ø¯Ù‡ÛŒ Ù‚Ø¨Ù„ÛŒ</th>
-            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">Ø¬Ù…Ø¹ Ù…Ø¨Ù„Øº<br>Ù‚Ø§Ø¨Ù„ Ù¾Ø±Ø¯Ø§Ø®Øª</th>
-          </tr>
+          <tr><th colspan="7" style="background-color:#7A9CBE; color:white; padding:10px 12px; font-size:22px; font-weight:bold; border:1px solid #333; text-align:center; white-space:nowrap;">گزارش ${rep.month_name} ماه - ${fa(rep.year)}/${String(rep.month).padStart(2, '0')}</th></tr>
+          <tr><th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">واحد</th><th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">شارژ</th><th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">قبض آب</th><th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">قبض گاز</th><th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">بازسازی</th><th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">بدهی قبلی</th><th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">جمع مبلغ<br>قابل پرداخت</th></tr>
         </thead>
         <tbody>
-          ${rep.rows?.length ? rep.rows.map(r => {
-            let rowBg = '#ffffff';
-            if (r.remaining <= 0) rowBg = '#00B050'; // Ø³Ø¨Ø²
-            else if (r.prev_debt > 0) rowBg = '#FFC000'; // Ø²Ø±Ø¯
-
-            return `
-              <tr style="background-color:${rowBg}; color:#000000; font-size:30px;">
-                <td style="border:1px solid #333; padding:6px 10px; font-weight:bold; white-space:nowrap; text-align:center; vertical-align:middle;">
-                  ÙˆØ§Ø­Ø¯ ${fa(r.unit_no)}
-                  <div style="font-size:12px; font-weight:normal; color:#000; margin-top:2px; line-height:1.2;">${esc(r.occupancy || '')}</div>
-                </td>
-                <td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.charge)}</td>
-                <td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.water)}</td>
-                <td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.gas)}</td>
-                <td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.repair)}</td>
-                <td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.prev_debt)}</td>
-                <td style="border:1px solid #333; padding:6px 10px; font-weight:bold; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.remaining)}</td>
-              </tr>
-            `;
-          }).join('') : `
-            <tr>
-              <td colspan="7" style="border:1px solid #333; padding:20px; font-size:20px; text-align:center;">Ø§Ø·Ù„Ø§Ø¹Ø§ØªÛŒ Ø¨Ø±Ø§ÛŒ Ø§ÛŒÙ† Ø¯ÙˆØ±Ù‡ ÙˆØ¬ÙˆØ¯ Ù†Ø¯Ø§Ø±Ø¯.</td>
-            </tr>
-          `}
+          ${rep.rows?.length ? rep.rows.map(r => { let rowBg = '#ffffff'; if (r.remaining <= 0) rowBg = '#00B050'; else if (r.prev_debt > 0) rowBg = '#FFC000'; return `<tr style="background-color:${rowBg}; color:#000000; font-size:30px;"><td style="border:1px solid #333; padding:6px 10px; font-weight:bold; white-space:nowrap; text-align:center; vertical-align:middle;">واحد ${fa(r.unit_no)}<div style="font-size:12px; font-weight:normal; color:#000; margin-top:2px; line-height:1.2;">${esc(r.occupancy || '')}</div></td><td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.charge)}</td><td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.water)}</td><td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.gas)}</td><td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.repair)}</td><td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.prev_debt)}</td><td style="border:1px solid #333; padding:6px 10px; font-weight:bold; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.remaining)}</td></tr>`; }).join('') : `<tr><td colspan="7" style="border:1px solid #333; padding:20px; font-size:20px; text-align:center;">اطلاعاتی برای این دوره وجود ندارد.</td></tr>`}
         </tbody>
       </table>
-    </div>
-  `;
+    </div>`;
 
   bindPeriod(() => go('report'));
+  $('#pr-btn')?.addEventListener('click', () => { const tableElement = $('.tbl-wrap'); if (!tableElement) return; const oldWidth = tableElement.style.width; const oldOverflowX = tableElement.style.overflowX; const oldOverflowY = tableElement.style.overflowY; tableElement.style.width = '1400px'; tableElement.style.overflowX = 'visible'; tableElement.style.overflowY = 'visible'; window.print(); setTimeout(() => { tableElement.style.width = oldWidth; tableElement.style.overflowX = oldOverflowX; tableElement.style.overflowY = oldOverflowY; }, 1000); });
 
-  /* =========================================================
-     Ú†Ø§Ù¾ Ú¯Ø²Ø§Ø±Ø´
-     ========================================================= */
-  $('#pr-btn')?.addEventListener('click', () => {
-    const tableElement = $('.tbl-wrap');
-    if (!tableElement) return;
-
-    const oldWidth = tableElement.style.width;
-    const oldOverflowX = tableElement.style.overflowX;
-    const oldOverflowY = tableElement.style.overflowY;
-
-    tableElement.style.width = '1400px';
-    tableElement.style.overflowX = 'visible';
-    tableElement.style.overflowY = 'visible';
-
-    window.print();
-
-    setTimeout(() => {
-      tableElement.style.width = oldWidth;
-      tableElement.style.overflowX = oldOverflowX;
-      tableElement.style.overflowY = oldOverflowY;
-    }, 1000);
-  });
-
-  /* =========================================================
-     Ø§Ø±Ø³Ø§Ù„ ØªØµÙˆÛŒØ± Ú¯Ø²Ø§Ø±Ø´ Ø¨Ù‡ Ø¨Ù„Ù‡ - Ø§ØµÙ„Ø§Ø­ Ø§Ø¨Ø¹Ø§Ø¯ ØªØµÙˆÛŒØ±
-     ========================================================= */
   $('#bale-btn')?.addEventListener('click', async () => {
-    const btn = $('#bale-btn');
-    if (!btn) return;
-
-    const oldText = btn.textContent;
-    btn.disabled = true;
-
-    let table = null;
-    let originalStyles = null;
-
+    const btn = $('#bale-btn'); if (!btn) return; const oldText = btn.textContent; btn.disabled = true; let table = null; let originalStyles = null;
     try {
-      btn.textContent = 'Ø¯Ø± Ø­Ø§Ù„ Ø¢Ù…Ø§Ø¯Ù‡â€ŒØ³Ø§Ø²ÛŒ ØªØµÙˆÛŒØ±...';
-
-      const wrapper = el.querySelector('.tbl-wrap');
-      table = wrapper?.querySelector('table');
-
-      if (!wrapper || !table) {
-        throw new Error('Ø¬Ø¯ÙˆÙ„ Ú¯Ø²Ø§Ø±Ø´ Ù¾ÛŒØ¯Ø§ Ù†Ø´Ø¯.');
-      }
-
-      // Ø°Ø®ÛŒØ±Ù‡ Ø§Ø³ØªØ§ÛŒÙ„â€ŒÙ‡Ø§ÛŒ ÙØ¹Ù„ÛŒ
-      originalStyles = {
-        wrapperWidth: wrapper.style.width,
-        wrapperMaxWidth: wrapper.style.maxWidth,
-        wrapperOverflowX: wrapper.style.overflowX,
-        wrapperOverflowY: wrapper.style.overflowY,
-        tableWidth: table.style.width,
-        tableMinWidth: table.style.minWidth
-      };
-
-      /*
-       * Ø§Ù†Ø¯Ø§Ø²Ù‡ ÙˆØ§Ù‚Ø¹ÛŒ Ø¬Ø¯ÙˆÙ„Ø› Ø¨Ø¯ÙˆÙ† Ø¹Ø±Ø¶ Ø«Ø§Ø¨Øª 1400 Ù¾ÛŒÚ©Ø³Ù„
-       */
-      table.style.width = 'max-content';
-      table.style.minWidth = '0';
-
-      wrapper.style.width = 'max-content';
-      wrapper.style.maxWidth = 'none';
-      wrapper.style.overflowX = 'visible';
-      wrapper.style.overflowY = 'visible';
-
-      // Ø§Ø¬Ø§Ø²Ù‡ Ø¨Ø¯Ù‡ Ù…Ø±ÙˆØ±Ú¯Ø± Ø§Ø¨Ø¹Ø§Ø¯ Ø¬Ø¯ÛŒØ¯ Ø±Ø§ Ù…Ø­Ø§Ø³Ø¨Ù‡ Ú©Ù†Ø¯
-      await new Promise(resolve =>
-        requestAnimationFrame(() =>
-          requestAnimationFrame(resolve)
-        )
-      );
-
-      const tableWidth = Math.ceil(
-        Math.max(table.scrollWidth, table.getBoundingClientRect().width)
-      );
-
-      const tableHeight = Math.ceil(
-        Math.max(table.scrollHeight, table.getBoundingClientRect().height)
-      );
-
-      if (!tableWidth || !tableHeight) {
-        throw new Error('Ø§Ø¨Ø¹Ø§Ø¯ Ø¬Ø¯ÙˆÙ„ Ù‚Ø§Ø¨Ù„ Ù…Ø­Ø§Ø³Ø¨Ù‡ Ù†ÛŒØ³Øª.');
-      }
-
-      btn.textContent = 'Ø¯Ø± Ø­Ø§Ù„ Ø³Ø§Ø®Øª ØªØµÙˆÛŒØ±...';
-
-      /*
-       * Ø¹Ú©Ø³ Ù…Ø³ØªÙ‚ÛŒÙ…Ø§Ù‹ Ø§Ø² Ø®ÙˆØ¯ Ø¬Ø¯ÙˆÙ„ Ú¯Ø±ÙØªÙ‡ Ù…ÛŒâ€ŒØ´ÙˆØ¯Ø›
-       * Ø¨Ù†Ø§Ø¨Ø±Ø§ÛŒÙ† ÙØ¶Ø§ÛŒ Ø³ÙÛŒØ¯ Ú©Ø§Ù†ØªÛŒÙ†Ø± Ø­Ø°Ù Ø®ÙˆØ§Ù‡Ø¯ Ø´Ø¯.
-       */
-      const canvas = await html2canvas(table, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-        width: tableWidth,
-        height: tableHeight,
-        windowWidth: tableWidth,
-        windowHeight: tableHeight,
-        scrollX: 0,
-        scrollY: 0,
-        useCORS: true,
-        logging: false
-      });
-
-      // ØªØ¨Ø¯ÛŒÙ„ ØªØµÙˆÛŒØ± Ø¨Ù‡ JPEG Ø¨Ø§ Ø­Ø¬Ù… Ù…Ù†Ø§Ø³Ø¨
-      const base64Image = canvas.toDataURL(
-        'image/jpeg',
-        0.88
-      );
-
-      btn.textContent = 'Ø¯Ø± Ø­Ø§Ù„ Ø§Ø±Ø³Ø§Ù„ Ø¨Ù‡ Ø¨Ù„Ù‡...';
-
-      await notifyBale(
-        `ðŸ“Š Ú¯Ø²Ø§Ø±Ø´ Ù…Ø§Ù‡Ø§Ù†Ù‡ ${rep.month_name} ${fa(rep.year)}\n${S.building}`,
-        base64Image
-      );
-
-      toast('Ú¯Ø²Ø§Ø±Ø´ Ø¨Ø§ Ù…ÙˆÙÙ‚ÛŒØª Ø¨Ù‡ Ú¯Ø±ÙˆÙ‡ Ø¨Ù„Ù‡ Ø§Ø±Ø³Ø§Ù„ Ø´Ø¯');
-
-    } catch (e) {
-      showErr(e);
-
-    } finally {
-
-      // Ø¨Ø§Ø²Ú¯Ø±Ø¯Ø§Ù†Ø¯Ù† ØªÙ…Ø§Ù… Ø§Ø³ØªØ§ÛŒÙ„â€ŒÙ‡Ø§ØŒ Ø­ØªÛŒ Ø¯Ø± ØµÙˆØ±Øª Ø¨Ø±ÙˆØ² Ø®Ø·Ø§
+      btn.textContent = 'در حال آماده‌سازی تصویر...'; const wrapper = el.querySelector('.tbl-wrap'); table = wrapper?.querySelector('table');
+      if (!wrapper || !table) throw new Error('جدول گزارش پیدا نشد.');
+      originalStyles = { wrapperWidth: wrapper.style.width, wrapperMaxWidth: wrapper.style.maxWidth, wrapperOverflowX: wrapper.style.overflowX, wrapperOverflowY: wrapper.style.overflowY, tableWidth: table.style.width, tableMinWidth: table.style.minWidth };
+      table.style.width = 'max-content'; table.style.minWidth = '0'; wrapper.style.width = 'max-content'; wrapper.style.maxWidth = 'none'; wrapper.style.overflowX = 'visible'; wrapper.style.overflowY = 'visible';
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const tableWidth = Math.ceil(Math.max(table.scrollWidth, table.getBoundingClientRect().width)); const tableHeight = Math.ceil(Math.max(table.scrollHeight, table.getBoundingClientRect().height));
+      if (!tableWidth || !tableHeight) throw new Error('ابعاد جدول قابل محاسبه نیست.');
+      btn.textContent = 'در حال ساخت تصویر...';
+      const canvas = await html2canvas(table, { backgroundColor: '#ffffff', scale: 2, width: tableWidth, height: tableHeight, windowWidth: tableWidth, windowHeight: tableHeight, scrollX: 0, scrollY: 0, useCORS: true, logging: false });
+      const base64Image = canvas.toDataURL('image/jpeg', 0.88);
+      btn.textContent = 'در حال ارسال به بله...';
+      await notifyBale(`📊 گزارش ماهانه ${rep.month_name} ${fa(rep.year)}\n${S.building}`, base64Image);
+      toast('گزارش با موفقیت به گروه بله ارسال شد');
+    } catch (e) { showErr(e); } finally {
       if (table && originalStyles) {
-        const wrapper = el.querySelector('.tbl-wrap');
-
-        table.style.width = originalStyles.tableWidth;
-        table.style.minWidth = originalStyles.tableMinWidth;
-
-        if (wrapper) {
-          wrapper.style.width = originalStyles.wrapperWidth;
-          wrapper.style.maxWidth = originalStyles.wrapperMaxWidth;
-          wrapper.style.overflowX = originalStyles.wrapperOverflowX;
-          wrapper.style.overflowY = originalStyles.wrapperOverflowY;
-        }
+        const wrapper = el.querySelector('.tbl-wrap'); table.style.width = originalStyles.tableWidth; table.style.minWidth = originalStyles.tableMinWidth;
+        if (wrapper) { wrapper.style.width = originalStyles.wrapperWidth; wrapper.style.maxWidth = originalStyles.wrapperMaxWidth; wrapper.style.overflowX = originalStyles.wrapperOverflowX; wrapper.style.overflowY = originalStyles.wrapperOverflowY; }
       }
-
-      btn.textContent = oldText;
-      btn.disabled = false;
+      btn.textContent = oldText; btn.disabled = false;
     }
   });
-} 
-/* =========================================================
-   18. Units (admin) â€” Ø¨Ø§ Ø¢Ø±Ø´ÛŒÙˆ Ùˆ ØªØºÛŒÛŒØ± ÙˆØ¶Ø¹ÛŒØª
-   ========================================================= */
+}
+
 async function viewUnits(el) {
   const units = await T('app_get_units');
-  el.innerHTML = `<h1>ÙˆØ§Ø­Ø¯Ù‡Ø§</h1><p class="sub">Ø­Ø³Ø§Ø¨â€ŒÙ‡Ø§ÛŒ Ú©Ø§Ø±Ø¨Ø±ÛŒ Ø³Ø§Ú©Ù†ÛŒÙ†</p>
-    <div class="grid g3">
-      ${units.map(u => {
-        const activeAccs = u.accounts.filter(a => a.is_active !== false);
-        const owners = activeAccs.filter(a => a.occupancy !== 'Ù…Ø³ØªØ£Ø¬Ø±');
-        const tenants = activeAccs.filter(a => a.occupancy === 'Ù…Ø³ØªØ£Ø¬Ø±');
-        return `<div class="card">
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-            <h2 style="margin:0">ÙˆØ§Ø­Ø¯ ${fa(u.unit_no)}</h2>
-            <button class="btn lt sm" data-u="${u.unit_no}">Ù…Ø¯ÛŒØ±ÛŒØª</button>
-          </div>
-          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-            <span class="chip ex">${activeAccs.length} Ø­Ø³Ø§Ø¨ ÙØ¹Ø§Ù„</span>
-            <span class="chip ex">${fa(u.persons || 0)} Ù†ÙØ±</span>
-            ${u.has_parking ? '<span class="chip pd">Ù¾Ø§Ø±Ú©ÛŒÙ†Ú¯</span>' : ''}
-          </div>
-          ${owners.length ? `<div style="font-size:13px;margin-top:6px"><b>Ù…Ø§Ù„Ú©:</b> ${owners.map(a => esc(a.full_name)).join(' Ùˆ ')}</div>` : ''}
-          ${tenants.length ? `<div style="font-size:13px;margin-top:4px;color:var(--accent)"><b>Ù…Ø³ØªØ£Ø¬Ø±:</b> ${tenants.map(a => esc(a.full_name)).join(' Ùˆ ')}</div>` : ''}
-        </div>`;
-      }).join('')}
-    </div>`;
-  $$('[data-u]').forEach(b => b.addEventListener('click', () => {
-    const u = units.find(x => x.unit_no == b.dataset.u);
-    if (u) unitModal(u);
-  }));
+  el.innerHTML = `<h1>واحدها</h1><p class="sub">حساب‌های کاربری ساکنین</p><div class="grid g3">${units.map(u => { const activeAccs = u.accounts.filter(a => a.is_active !== false); const owners = activeAccs.filter(a => a.occupancy !== 'مستأجر'); const tenants = activeAccs.filter(a => a.occupancy === 'مستأجر'); return `<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><h2 style="margin:0">واحد ${fa(u.unit_no)}</h2><button class="btn lt sm" data-u="${u.unit_no}">مدیریت</button></div><div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"><span class="chip ex">${activeAccs.length} حساب فعال</span><span class="chip ex">${fa(u.persons || 0)} نفر</span>${u.has_parking ? '<span class="chip pd">پارکینگ</span>' : ''}</div>${owners.length ? `<div style="font-size:13px;margin-top:6px"><b>مالک:</b> ${owners.map(a => esc(a.full_name)).join(' و ')}</div>` : ''}${tenants.length ? `<div style="font-size:13px;margin-top:4px;color:var(--accent)"><b>مستأجر:</b> ${tenants.map(a => esc(a.full_name)).join(' و ')}</div>` : ''}</div>`; }).join('')}</div>`;
+  $$('[data-u]').forEach(b => b.addEventListener('click', () => { const u = units.find(x => x.unit_no == b.dataset.u); if (u) unitModal(u); }));
 }
 
 async function archiveAccount(acc) {
   const newUsername = `deleted_${Date.now()}_${acc.username}`.slice(0, 60);
-  await T('app_admin_save_account', {
-    p_id: acc.id,
-    p_unit_no: acc.unit_no,
-    p_username: newUsername,
-    p_full_name: acc.full_name,
-    p_phone: acc.phone,
-    p_occupancy: acc.occupancy,
-    p_is_primary: false,
-    p_is_active: false,
-    p_new_password: null,
-    p_start_ym: acc.start_ym || 140406,
-  });
+  await T('app_admin_save_account', { p_id: acc.id, p_unit_no: acc.unit_no, p_username: newUsername, p_full_name: acc.full_name, p_phone: acc.phone, p_occupancy: acc.occupancy, p_is_primary: false, p_is_active: false, p_new_password: null, p_start_ym: acc.start_ym || 140406 });
 }
 
 function unitModal(u) {
-  const activeAccounts = u.accounts.filter(a => a.is_active !== false);
-  const archivedAccounts = u.accounts.filter(a => a.is_active === false);
-
-  const m = modal(`
-    <h2>ÙˆØ§Ø­Ø¯ ${fa(u.unit_no)}</h2>
-    
-    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-      <button class="btn sf" id="quick-change">ðŸ”„ ØªØºÛŒÛŒØ± ÙˆØ¶Ø¹ÛŒØª ÙˆØ§Ø­Ø¯</button>
-      <button class="btn lt" id="add-acc">+ Ø§ÙØ²ÙˆØ¯Ù† Ø­Ø³Ø§Ø¨</button>
-    </div>
-    
-    <h3 style="margin:24px 0 12px;font-size:16px">Ø­Ø³Ø§Ø¨â€ŒÙ‡Ø§ÛŒ ÙØ¹Ø§Ù„ (${fa(activeAccounts.length)})</h3>
-    <div id="active-acc">
-      ${activeAccounts.map(a => `
-        <form class="acc grid g3" data-id="${a.id}" data-name="${esc(a.full_name)}" data-occ="${esc(a.occupancy)}" style="background:#f8fafc;padding:16px;border-radius:12px;margin-bottom:12px">
-          <label class="f">Ù†Ø§Ù…<input name="full_name" value="${esc(a.full_name || '')}" required></label>
-          <label class="f">Ù…ÙˆØ¨Ø§ÛŒÙ„<input name="phone" dir="ltr" value="${esc(a.phone || '')}"></label>
-          <label class="f">Ø³Ú©ÙˆÙ†Øª<select name="occupancy">${OCC.map(o => `<option ${a.occupancy === o ? 'selected' : ''}>${o}</option>`).join('')}</select></label>
-          <label class="f">Ù†Ø§Ù… Ú©Ø§Ø±Ø¨Ø±ÛŒ<input name="username" dir="ltr" value="${esc(a.username || '')}"></label>
-          <label class="f">Ø±Ù…Ø² Ø¬Ø¯ÛŒØ¯<input name="pass" type="text" placeholder="Ø¨Ø¯ÙˆÙ† ØªØºÛŒÛŒØ±"></label>
-          <div style="align-self:end;display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn sm" type="submit">Ø°Ø®ÛŒØ±Ù‡</button>
-            <button type="button" class="btn lt sm" data-reset="${a.id}">Ø±ÛŒØ³Øª Ø±Ù…Ø²</button>
-            <button type="button" class="btn rd sm" data-archive="${a.id}">Ø¢Ø±Ø´ÛŒÙˆ</button>
-          </div>
-        </form>
-      `).join('') || '<p class="sub">Ø­Ø³Ø§Ø¨ÛŒ Ø¨Ø±Ø§ÛŒ Ø§ÛŒÙ† ÙˆØ§Ø­Ø¯ Ø«Ø¨Øª Ù†Ø´Ø¯Ù‡.</p>'}
-    </div>
-    
-    ${archivedAccounts.length ? `
-      <details style="margin-top:20px">
-        <summary style="cursor:pointer;color:var(--muted);font-size:13px;padding:8px 0">
-          ðŸ“¦ Ø³Ø§Ø¨Ù‚Ù‡ (${fa(archivedAccounts.length)} Ø­Ø³Ø§Ø¨ Ø¢Ø±Ø´ÛŒÙˆ Ø´Ø¯Ù‡ â€” Ø¯Ø§Ø¦Ù…ÛŒ)
-        </summary>
-        <div style="margin-top:12px;opacity:.7">
-          <p style="font-size:11px;color:var(--muted);margin:0 0 8px;background:#fef3c7;padding:6px 10px;border-radius:6px">
-            âš ï¸ Ø§ÛŒÙ† Ø­Ø³Ø§Ø¨â€ŒÙ‡Ø§ ØºÛŒØ±ÙØ¹Ø§Ù„ Ø¯Ø§Ø¦Ù…ÛŒ Ù‡Ø³ØªÙ†Ø¯. ØªØ±Ø§Ú©Ù†Ø´â€ŒÙ‡Ø§ÛŒØ´Ø§Ù† Ø­ÙØ¸ Ø´Ø¯Ù‡ØŒ ÙˆÙ„ÛŒ Ø¯Ø³ØªØ±Ø³ÛŒ ÙˆØ±ÙˆØ¯ Ù†Ø¯Ø§Ø±Ù†Ø¯.
-          </p>
-          ${archivedAccounts.map(a => `
-            <div style="background:#f1f5f9;padding:12px;border-radius:8px;margin-bottom:8px;font-size:13px">
-              <b>${esc(a.full_name || 'â€”')}</b> Â· ${esc(a.occupancy)} Â· ${esc(a.phone || 'â€”')}
-              <span class="chip ex" style="margin-right:8px">Ø¢Ø±Ø´ÛŒÙˆ</span>
-            </div>
-          `).join('')}
-        </div>
-      </details>
-    ` : ''}
-  `);
+  const activeAccounts = u.accounts.filter(a => a.is_active !== false); const archivedAccounts = u.accounts.filter(a => a.is_active === false);
+  const m = modal(`<h2>واحد ${fa(u.unit_no)}</h2><div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap"><button class="btn sf" id="quick-change">🔄 تغییر وضعیت واحد</button><button class="btn lt" id="add-acc">+ افزودن حساب</button></div><h3 style="margin:24px 0 12px;font-size:16px">حساب‌های فعال (${fa(activeAccounts.length)})</h3><div id="active-acc">${activeAccounts.map(a => `<form class="acc grid g3" data-id="${a.id}" data-name="${esc(a.full_name)}" data-occ="${esc(a.occupancy)}" style="background:#f8fafc;padding:16px;border-radius:12px;margin-bottom:12px"><label class="f">نام<input name="full_name" value="${esc(a.full_name || '')}" required></label><label class="f">موبایل<input name="phone" dir="ltr" value="${esc(a.phone || '')}"></label><label class="f">سکونت<select name="occupancy">${OCC.map(o => `<option ${a.occupancy === o ? 'selected' : ''}>${o}</option>`).join('')}</select></label><label class="f">نام کاربری<input name="username" dir="ltr" value="${esc(a.username || '')}"></label><label class="f">رمز جدید<input name="pass" type="text" placeholder="بدون تغییر"></label><div style="align-self:end;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" type="submit">ذخیره</button><button type="button" class="btn lt sm" data-reset="${a.id}">ریست رمز</button><button type="button" class="btn rd sm" data-archive="${a.id}">آرشیو</button></div></form>`).join('') || '<p class="sub">حسابی برای این واحد ثبت نشده.</p>'}</div>${archivedAccounts.length ? `<details style="margin-top:20px"><summary style="cursor:pointer;color:var(--muted);font-size:13px;padding:8px 0">📦 سابقه (${fa(archivedAccounts.length)} حساب آرشیو شده — دائمی)</summary><div style="margin-top:12px;opacity:.7"><p style="font-size:11px;color:var(--muted);margin:0 0 8px;background:#fef3c7;padding:6px 10px;border-radius:6px">⚠️ این حساب‌ها غیرفعال دائمی هستند. تراکنش‌هایشان حفظ شده، ولی دسترسی ورود ندارند.</p>${archivedAccounts.map(a => `<div style="background:#f1f5f9;padding:12px;border-radius:8px;margin-bottom:8px;font-size:13px"><b>${esc(a.full_name || '—')}</b> · ${esc(a.occupancy)} · ${esc(a.phone || '—')}<span class="chip ex" style="margin-right:8px">آرشیو</span></div>`).join('')}</div></details>` : ''}`);
 
   $$('form.acc', m).forEach(f => {
-    f.addEventListener('submit', async e => {
-      e.preventDefault();
-      try {
-        await T('app_admin_save_account', {
-          p_id: f.dataset.id,
-          p_unit_no: u.unit_no,
-          p_username: f.elements.username.value,
-          p_full_name: f.elements.full_name.value,
-          p_phone: f.elements.phone.value,
-          p_occupancy: f.elements.occupancy.value,
-          p_is_primary: true,
-          p_is_active: true,
-          p_new_password: f.elements.pass.value || null,
-          p_start_ym: 140406,
-        });
-        toast('Ø°Ø®ÛŒØ±Ù‡ Ø´Ø¯'); go('units');
-      } catch (err) { showErr(err); }
-    });
-
-    $('[data-reset]', f)?.addEventListener('click', async () => {
-      if (!confirm('Ø±Ù…Ø² Ø¹Ø¨ÙˆØ± Ø§ÛŒÙ† Ú©Ø§Ø±Ø¨Ø± Ø¨Ø§Ø²Ù†Ø´Ø§Ù†ÛŒ Ø´ÙˆØ¯ØŸ')) return;
-      try {
-        const newPass = await T('app_admin_reset_password', { p_id: f.dataset.id });
-        alert('Ø±Ù…Ø² Ø¬Ø¯ÛŒØ¯: ' + newPass + '\n\nÙ„Ø·ÙØ§Ù‹ Ø¨Ù‡ Ø³Ø§Ú©Ù† Ø§Ø·Ù„Ø§Ø¹ Ø¯Ù‡ÛŒØ¯.');
-        toast('Ø±Ù…Ø² Ø¨Ø§Ø²Ù†Ø´Ø§Ù†ÛŒ Ø´Ø¯');
-      } catch (err) { showErr(err); }
-    });
-
-    $('[data-archive]', f)?.addEventListener('click', async () => {
-      const name = f.dataset.name;
-      const occ = f.dataset.occ;
-      if (!confirm(
-        `âš ï¸ Ø¢Ø±Ø´ÛŒÙˆ Â«${name}Â» (${occ})\n\n` +
-        `âœ“ ØªØ±Ø§Ú©Ù†Ø´â€ŒÙ‡Ø§ÛŒ Ù‚Ø¨Ù„ÛŒ Ø­ÙØ¸ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯\n` +
-        `âœ“ Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ø­Ø³Ø§Ø¨ Ø¯Ø± Ø³ÛŒØ³ØªÙ… Ù…ÛŒâ€ŒÙ…Ø§Ù†Ø¯\n` +
-        `âœ— Ø§ÛŒÙ† Ú©Ø§Ø±Ø¨Ø± Ø¯ÛŒÚ¯Ø± Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ ÙˆØ§Ø±Ø¯ Ø´ÙˆØ¯\n` +
-        `âœ“ Ù†Ø§Ù… Ú©Ø§Ø±Ø¨Ø±ÛŒ Ø¨Ø±Ø§ÛŒ Ù†ÙØ± Ø¬Ø¯ÛŒØ¯ Ø¢Ø²Ø§Ø¯ Ù…ÛŒâ€ŒØ´ÙˆØ¯\n\n` +
-        `âš ï¸ ØªÙˆØ¬Ù‡: Ø¨Ø¹Ø¯ Ø§Ø² Ø¢Ø±Ø´ÛŒÙˆØŒ Ø¨Ø§Ø²Ú¯Ø±Ø¯Ø§Ù†ÛŒ Ù…Ù…Ú©Ù† Ù†ÛŒØ³Øª.\n` +
-        `   Ø§Ú¯Ø± Ø§ÛŒÙ† Ù†ÙØ± Ø¨Ø±Ú¯Ø´ØªØŒ Ø¨Ø§ÛŒØ¯ Ø­Ø³Ø§Ø¨ Ø¬Ø¯ÛŒØ¯ Ø¨Ø³Ø§Ø²ÛŒØ¯.\n\n` +
-        `Ø¢ÛŒØ§ Ù…Ø·Ù…Ø¦Ù†ÛŒØ¯ØŸ`
-      )) return;
-      
-      try {
-        const acc = activeAccounts.find(a => a.id == f.dataset.id);
-        if (acc) await archiveAccount(acc);
-        toast('Ø­Ø³Ø§Ø¨ Ø¢Ø±Ø´ÛŒÙˆ Ø´Ø¯ (Ø¨Ø§Ø²Ú¯Ø±Ø¯Ø§Ù†ÛŒ Ù…Ù…Ú©Ù† Ù†ÛŒØ³Øª)');
-        go('units');
-      } catch (err) { showErr(err); }
-    });
+    f.addEventListener('submit', async e => { e.preventDefault(); try { await T('app_admin_save_account', { p_id: f.dataset.id, p_unit_no: u.unit_no, p_username: f.elements.username.value, p_full_name: f.elements.full_name.value, p_phone: f.elements.phone.value, p_occupancy: f.elements.occupancy.value, p_is_primary: true, p_is_active: true, p_new_password: f.elements.pass.value || null, p_start_ym: 140406 }); toast('ذخیره شد'); go('units'); } catch (err) { showErr(err); } });
+    $('[data-reset]', f)?.addEventListener('click', async () => { if (!confirm('رمز عبور این کاربر بازنشانی شود؟')) return; try { const newPass = await T('app_admin_reset_password', { p_id: f.dataset.id }); alert('رمز جدید: ' + newPass + '\n\nلطفاً به ساکن اطلاع دهید.'); toast('رمز بازنشانی شد'); } catch (err) { showErr(err); } });
+    $('[data-archive]', f)?.addEventListener('click', async () => { const name = f.dataset.name; const occ = f.dataset.occ; if (!confirm(`⚠️ آرشیو «${name}» (${occ})\n\n✓ تراکنش‌های قبلی حفظ می‌شوند\n✓ اطلاعات حساب در سیستم می‌ماند\n✗ این کاربر دیگر نمی‌تواند وارد شود\n✓ نام کاربری برای نفر جدید آزاد می‌شود\n\n⚠️ توجه: بعد از آرشیو، بازگردانی ممکن نیست.\n   اگر این نفر برگشت، باید حساب جدید بسازید.\n\nآیا مطمئنید؟`)) return; try { const acc = activeAccounts.find(a => a.id == f.dataset.id); if (acc) await archiveAccount(acc); toast('حساب آرشیو شد (بازگردانی ممکن نیست)'); go('units'); } catch (err) { showErr(err); } });
   });
-
-  $('#add-acc', m)?.addEventListener('click', () => addAccountForm(m, u));
-  $('#quick-change', m)?.addEventListener('click', () => quickChangeModal(u, activeAccounts));
+  $('#add-acc', m)?.addEventListener('click', () => addAccountForm(m, u)); $('#quick-change', m)?.addEventListener('click', () => quickChangeModal(u, activeAccounts));
 }
 
 function addAccountForm(m, u) {
-  const list = $('#active-acc', m);
-  const form = document.createElement('form');
-  form.className = 'acc grid g3';
-  form.style.cssText = 'background:#eff6ff;padding:16px;border-radius:12px;margin-bottom:12px;border:2px dashed var(--accent)';
-  form.innerHTML = `
-    <label class="f">Ù†Ø§Ù…<input name="full_name" required></label>
-    <label class="f">Ù…ÙˆØ¨Ø§ÛŒÙ„<input name="phone" dir="ltr" required></label>
-    <label class="f">Ø³Ú©ÙˆÙ†Øª<select name="occupancy">${OCC.map(o => `<option>${o}</option>`).join('')}</select></label>
-    <label class="f">Ù†Ø§Ù… Ú©Ø§Ø±Ø¨Ø±ÛŒ<input name="username" dir="ltr" required></label>
-    <label class="f">Ø±Ù…Ø² Ø§ÙˆÙ„ÛŒÙ‡<input name="pass" type="text" required></label>
-    <div style="align-self:end;display:flex;gap:8px">
-      <button class="btn sm" type="submit">Ø§ÛŒØ¬Ø§Ø¯</button>
-      <button type="button" class="btn lt sm" data-cancel>Ø§Ù†ØµØ±Ø§Ù</button>
-    </div>
-  `;
-  list.appendChild(form);
-  form.querySelector('[data-cancel]').onclick = () => form.remove();
-
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    try {
-      await T('app_admin_save_account', {
-        p_id: null,
-        p_unit_no: u.unit_no,
-        p_username: form.elements.username.value,
-        p_full_name: form.elements.full_name.value,
-        p_phone: form.elements.phone.value,
-        p_occupancy: form.elements.occupancy.value,
-        p_is_primary: true,
-        p_is_active: true,
-        p_new_password: form.elements.pass.value,
-        p_start_ym: 140406,
-      });
-      toast('Ø­Ø³Ø§Ø¨ Ø§ÛŒØ¬Ø§Ø¯ Ø´Ø¯'); go('units');
-    } catch (err) { showErr(err); }
-  });
+  const list = $('#active-acc', m); const form = document.createElement('form');
+  form.className = 'acc grid g3'; form.style.cssText = 'background:#eff6ff;padding:16px;border-radius:12px;margin-bottom:12px;border:2px dashed var(--accent)';
+  form.innerHTML = `<label class="f">نام<input name="full_name" required></label><label class="f">موبایل<input name="phone" dir="ltr" required></label><label class="f">سکونت<select name="occupancy">${OCC.map(o => `<option>${o}</option>`).join('')}</select></label><label class="f">نام کاربری<input name="username" dir="ltr" required></label><label class="f">رمز اولیه<input name="pass" type="text" required></label><div style="align-self:end;display:flex;gap:8px"><button class="btn sm" type="submit">ایجاد</button><button type="button" class="btn lt sm" data-cancel>انصراف</button></div>`;
+  list.appendChild(form); form.querySelector('[data-cancel]').onclick = () => form.remove();
+  form.addEventListener('submit', async e => { e.preventDefault(); try { await T('app_admin_save_account', { p_id: null, p_unit_no: u.unit_no, p_username: form.elements.username.value, p_full_name: form.elements.full_name.value, p_phone: form.elements.phone.value, p_occupancy: form.elements.occupancy.value, p_is_primary: true, p_is_active: true, p_new_password: form.elements.pass.value, p_start_ym: 140406 }); toast('حساب ایجاد شد'); go('units'); } catch (err) { showErr(err); } });
 }
 
 function quickChangeModal(u, activeAccounts) {
-  const hasTenant = activeAccounts.some(a => a.occupancy === 'Ù…Ø³ØªØ£Ø¬Ø±');
-  const hasOwnerResident = activeAccounts.some(a => a.occupancy === 'Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù†');
-
-  const m = modal(`
-    <h2>ØªØºÛŒÛŒØ± ÙˆØ¶Ø¹ÛŒØª ÙˆØ§Ø­Ø¯ ${fa(u.unit_no)}</h2>
-    <p class="sub">Ø­Ø³Ø§Ø¨â€ŒÙ‡Ø§ÛŒ Ù‚Ø¨Ù„ÛŒ Ø¢Ø±Ø´ÛŒÙˆ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯ (ØªØ§Ø±ÛŒØ®Ú†Ù‡ Ù…Ø§Ù„ÛŒ Ø­ÙØ¸ Ù…ÛŒâ€ŒØ´ÙˆØ¯).</p>
-    
-    <div class="grid" style="gap:12px">
-      ${hasTenant ? `
-        <button class="btn lt sc-btn" data-sc="remove-tenant" style="padding:16px;text-align:right;flex-direction:column;align-items:flex-start;gap:4px;height:auto">
-          <b style="font-size:15px">ðŸ”‘ Ù…Ø³ØªØ£Ø¬Ø± Ù…ÛŒâ€ŒØ±ÙˆØ¯ØŒ Ù…Ø§Ù„Ú© Ø®ÙˆØ¯Ø´ Ù…ÛŒâ€ŒØ¢ÛŒØ¯</b>
-          <span style="font-size:12px;color:var(--muted);font-weight:400">Ø­Ø³Ø§Ø¨ Ù…Ø³ØªØ£Ø¬Ø± Ø¢Ø±Ø´ÛŒÙˆØŒ Ù…Ø§Ù„Ú© Ø¨Ù‡ Â«Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù†Â» ØªØºÛŒÛŒØ± Ù…ÛŒâ€ŒÚ©Ù†Ø¯</span>
-        </button>
-      ` : ''}
-      
-      ${hasOwnerResident ? `
-        <button class="btn lt sc-btn" data-sc="owner-to-absent" style="padding:16px;text-align:right;flex-direction:column;align-items:flex-start;gap:4px;height:auto">
-          <b style="font-size:15px">ðŸ  Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù† Ù…ÛŒâ€ŒØ±ÙˆØ¯ØŒ Ù…Ø³ØªØ£Ø¬Ø± Ù…ÛŒâ€ŒØ¢ÛŒØ¯</b>
-          <span style="font-size:12px;color:var(--muted);font-weight:400">Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù† Ø¨Ù‡ Â«Ù…Ø§Ù„Ú© ØºØ§ÛŒØ¨Â»ØŒ Ù…Ø³ØªØ£Ø¬Ø± Ø¬Ø¯ÛŒØ¯ Ø§Ø¶Ø§ÙÙ‡ Ù…ÛŒâ€ŒØ´ÙˆØ¯</span>
-        </button>
-      ` : ''}
-      
-      ${hasTenant ? `
-        <button class="btn lt sc-btn" data-sc="replace-tenant" style="padding:16px;text-align:right;flex-direction:column;align-items:flex-start;gap:4px;height:auto">
-          <b style="font-size:15px">ðŸ‘¥ ØªØ¹ÙˆÛŒØ¶ Ù…Ø³ØªØ£Ø¬Ø±</b>
-          <span style="font-size:12px;color:var(--muted);font-weight:400">Ù…Ø³ØªØ£Ø¬Ø± Ù‚Ø¨Ù„ÛŒ Ø¢Ø±Ø´ÛŒÙˆØŒ Ù…Ø³ØªØ£Ø¬Ø± Ø¬Ø¯ÛŒØ¯ Ø§Ø¶Ø§ÙÙ‡ Ù…ÛŒâ€ŒØ´ÙˆØ¯</span>
-        </button>
-      ` : ''}
-      
-      <button class="btn lt sc-btn" data-sc="replace-all" style="padding:16px;text-align:right;flex-direction:column;align-items:flex-start;gap:4px;height:auto">
-        <b style="font-size:15px">ðŸ‘¥ ØªØ¹ÙˆÛŒØ¶ Ú©Ø§Ù…Ù„ (Ù‡Ù…Ù‡ Ø­Ø³Ø§Ø¨â€ŒÙ‡Ø§)</b>
-        <span style="font-size:12px;color:var(--muted);font-weight:400">Ù‡Ù…Ù‡â€ŒÛŒ Ø­Ø³Ø§Ø¨â€ŒÙ‡Ø§ÛŒ Ù‚Ø¨Ù„ÛŒ Ø¢Ø±Ø´ÛŒÙˆØŒ Ø­Ø³Ø§Ø¨ Ø¬Ø¯ÛŒØ¯ Ø§ÛŒØ¬Ø§Ø¯ Ù…ÛŒâ€ŒØ´ÙˆØ¯</span>
-      </button>
-      
-      <button class="btn lt sc-btn" data-sc="vacant" style="padding:16px;text-align:right;flex-direction:column;align-items:flex-start;gap:4px;height:auto">
-        <b style="font-size:15px">ðŸšª ÙˆØ§Ø­Ø¯ Ø®Ø§Ù„ÛŒ Ù…ÛŒâ€ŒØ´ÙˆØ¯</b>
-        <span style="font-size:12px;color:var(--muted);font-weight:400">Ù‡Ù…Ù‡â€ŒÛŒ Ø­Ø³Ø§Ø¨â€ŒÙ‡Ø§ Ø¢Ø±Ø´ÛŒÙˆ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯</span>
-      </button>
-    </div>
-    
-    <div id="sc-form" style="margin-top:20px"></div>
-  `);
-
-  $$('.sc-btn', m).forEach(btn => {
-    btn.addEventListener('click', () => {
-      $$('.sc-btn', m).forEach(b => b.style.borderColor = 'var(--line)');
-      btn.style.borderColor = 'var(--accent)';
-      renderScenarioForm(btn.dataset.sc, m, u, activeAccounts);
-    });
-  });
+  const hasTenant = activeAccounts.some(a => a.occupancy === 'مستأجر'); const hasOwnerResident = activeAccounts.some(a => a.occupancy === 'مالک ساکن');
+  const m = modal(`<h2>تغییر وضعیت واحد ${fa(u.unit_no)}</h2><p class="sub">حساب‌های قبلی آرشیو می‌شوند (تاریخچه مالی حفظ می‌شود).</p><div class="grid" style="gap:12px">${hasTenant ? `<button class="btn lt sc-btn" data-sc="remove-tenant" style="padding:16px;text-align:right;flex-direction:column;align-items:flex-start;gap:4px;height:auto"><b style="font-size:15px">🔑 مستأجر می‌رود، مالک خودش می‌آید</b><span style="font-size:12px;color:var(--muted);font-weight:400">حساب مستأجر آرشیو، مالک به «مالک ساکن» تغییر می‌کند</span></button>` : ''}${hasOwnerResident ? `<button class="btn lt sc-btn" data-sc="owner-to-absent" style="padding:16px;text-align:right;flex-direction:column;align-items:flex-start;gap:4px;height:auto"><b style="font-size:15px">🏠 مالک ساکن می‌رود، مستأجر می‌آید</b><span style="font-size:12px;color:var(--muted);font-weight:400">مالک ساکن به «مالک غایب»، مستأجر جدید اضافه می‌شود</span></button>` : ''}${hasTenant ? `<button class="btn lt sc-btn" data-sc="replace-tenant" style="padding:16px;text-align:right;flex-direction:column;align-items:flex-start;gap:4px;height:auto"><b style="font-size:15px">👥 تعویض مستأجر</b><span style="font-size:12px;color:var(--muted);font-weight:400">مستأجر قبلی آرشیو، مستأجر جدید اضافه می‌شود</span></button>` : ''}<button class="btn lt sc-btn" data-sc="replace-all" style="padding:16px;text-align:right;flex-direction:column;align-items:flex-start;gap:4px;height:auto"><b style="font-size:15px">👥 تعویض کامل (همه حساب‌ها)</b><span style="font-size:12px;color:var(--muted);font-weight:400">همه‌ی حساب‌های قبلی آرشیو، حساب جدید ایجاد می‌شود</span></button><button class="btn lt sc-btn" data-sc="vacant" style="padding:16px;text-align:right;flex-direction:column;align-items:flex-start;gap:4px;height:auto"><b style="font-size:15px">🚪 واحد خالی می‌شود</b><span style="font-size:12px;color:var(--muted);font-weight:400">همه‌ی حساب‌ها آرشیو می‌شوند</span></button></div><div id="sc-form" style="margin-top:20px"></div>`);
+  $$('.sc-btn', m).forEach(btn => { btn.addEventListener('click', () => { $$('.sc-btn', m).forEach(b => b.style.borderColor = 'var(--line)'); btn.style.borderColor = 'var(--accent)'; renderScenarioForm(btn.dataset.sc, m, u, activeAccounts); }); });
 }
 
 function renderScenarioForm(scenario, m, u, activeAccounts) {
-  const container = $('#sc-form', m);
-  const tenant = activeAccounts.find(a => a.occupancy === 'Ù…Ø³ØªØ£Ø¬Ø±');
-  const owner = activeAccounts.find(a => a.occupancy === 'Ù…Ø§Ù„Ú©');
-  const ownerResident = activeAccounts.find(a => a.occupancy === 'Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù†');
-  
+  const container = $('#sc-form', m); const tenant = activeAccounts.find(a => a.occupancy === 'مستأجر'); const owner = activeAccounts.find(a => a.occupancy === 'مالک'); const ownerResident = activeAccounts.find(a => a.occupancy === 'مالک ساکن');
   if (scenario === 'remove-tenant') {
-    container.innerHTML = `
-      <div class="card" style="background:#fef3c7;margin-bottom:16px;font-size:13px">
-        <b>ðŸ“‹ Ø®Ù„Ø§ØµÙ‡:</b>
-        <ul style="margin:8px 0 0;padding-right:20px">
-          <li>Ø­Ø³Ø§Ø¨ Â«${esc(tenant?.full_name || 'Ù…Ø³ØªØ£Ø¬Ø±')}Â» Ø¢Ø±Ø´ÛŒÙˆ Ù…ÛŒâ€ŒØ´ÙˆØ¯ (Ø¯Ø§Ø¦Ù…ÛŒ)</li>
-          <li>Â«${esc(owner?.full_name || 'Ù…Ø§Ù„Ú©')}Â» Ø¨Ù‡ Â«Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù†Â» ØªØºÛŒÛŒØ± Ù…ÛŒâ€ŒÚ©Ù†Ø¯</li>
-          <li>âœ… Ù‡Ù…Ù‡ ØªØ±Ø§Ú©Ù†Ø´â€ŒÙ‡Ø§ÛŒ Ù‚Ø¨Ù„ÛŒ Ø­ÙØ¸ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯</li>
-        </ul>
-      </div>
-      <button class="btn sf" id="apply-btn">âœ… ØªØ§ÛŒÛŒØ¯ Ùˆ Ø§Ø¹Ù…Ø§Ù„</button>
-    `;
-    
-    $('#apply-btn', container)?.addEventListener('click', async () => {
-      try {
-        if (tenant) await archiveAccount(tenant);
-        if (owner) {
-          await T('app_admin_save_account', {
-            p_id: owner.id,
-            p_unit_no: u.unit_no,
-            p_username: owner.username,
-            p_full_name: owner.full_name,
-            p_phone: owner.phone,
-            p_occupancy: 'Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù†',
-            p_is_primary: true,
-            p_is_active: true,
-            p_new_password: null,
-            p_start_ym: owner.start_ym || 140406,
-          });
-        }
-        m.remove();
-        toast('ØªØºÛŒÛŒØ±Ø§Øª Ø§Ø¹Ù…Ø§Ù„ Ø´Ø¯');
-        go('units');
-      } catch (err) { showErr(err); }
-    });
-  }
-  
-  else if (scenario === 'owner-to-absent') {
-    container.innerHTML = `
-      <div class="card" style="background:#fef3c7;margin-bottom:16px;font-size:13px">
-        <b>ðŸ“‹ Ø®Ù„Ø§ØµÙ‡:</b>
-        <ul style="margin:8px 0 0;padding-right:20px">
-          <li>Â«${esc(ownerResident?.full_name || 'Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù†')}Â» Ø¨Ù‡ Â«Ù…Ø§Ù„Ú©Â» ØªØºÛŒÛŒØ± Ù…ÛŒâ€ŒÚ©Ù†Ø¯</li>
-          <li>Ù…Ø³ØªØ£Ø¬Ø± Ø¬Ø¯ÛŒØ¯ Ø¨Ø§ ÙØ±Ù… Ø²ÛŒØ± Ø§Ø¶Ø§ÙÙ‡ Ù…ÛŒâ€ŒØ´ÙˆØ¯</li>
-        </ul>
-      </div>
-      <form id="sc-f" class="grid g2">
-        <label class="f">Ù†Ø§Ù… Ù…Ø³ØªØ£Ø¬Ø±<input name="tenant_name" required></label>
-        <label class="f">Ù…ÙˆØ¨Ø§ÛŒÙ„<input name="tenant_phone" dir="ltr" required></label>
-        <label class="f">Ù†Ø§Ù… Ú©Ø§Ø±Ø¨Ø±ÛŒ<input name="tenant_username" dir="ltr" required></label>
-        <label class="f">Ø±Ù…Ø² Ø§ÙˆÙ„ÛŒÙ‡<input name="tenant_pass" type="text" required></label>
-        <button class="btn sf" style="grid-column:1/-1" type="submit">âœ… Ø§Ø¹Ù…Ø§Ù„</button>
-      </form>
-    `;
-    
-    $('#sc-f', container).addEventListener('submit', async e => {
-      e.preventDefault();
-      try {
-        if (ownerResident) {
-          await T('app_admin_save_account', {
-            p_id: ownerResident.id,
-            p_unit_no: u.unit_no,
-            p_username: ownerResident.username,
-            p_full_name: ownerResident.full_name,
-            p_phone: ownerResident.phone,
-            p_occupancy: 'Ù…Ø§Ù„Ú©',
-            p_is_primary: false,
-            p_is_active: true,
-            p_new_password: null,
-            p_start_ym: ownerResident.start_ym || 140406,
-          });
-        }
-        await T('app_admin_save_account', {
-          p_id: null,
-          p_unit_no: u.unit_no,
-          p_username: e.target.tenant_username.value,
-          p_full_name: e.target.tenant_name.value,
-          p_phone: e.target.tenant_phone.value,
-          p_occupancy: 'Ù…Ø³ØªØ£Ø¬Ø±',
-          p_is_primary: true,
-          p_is_active: true,
-          p_new_password: e.target.tenant_pass.value,
-          p_start_ym: 140406,
-        });
-        m.remove();
-        toast('ØªØºÛŒÛŒØ±Ø§Øª Ø§Ø¹Ù…Ø§Ù„ Ø´Ø¯');
-        go('units');
-      } catch (err) { showErr(err); }
-    });
-  }
-  
-  else if (scenario === 'replace-tenant') {
-    container.innerHTML = `
-      <div class="card" style="background:#fef3c7;margin-bottom:16px;font-size:13px">
-        <b>ðŸ“‹ Ø®Ù„Ø§ØµÙ‡:</b>
-        <ul style="margin:8px 0 0;padding-right:20px">
-          <li>Ù…Ø³ØªØ£Ø¬Ø± ÙØ¹Ù„ÛŒ Â«${esc(tenant?.full_name || 'â€”')}Â» Ø¢Ø±Ø´ÛŒÙˆ Ù…ÛŒâ€ŒØ´ÙˆØ¯ (Ø¯Ø§Ø¦Ù…ÛŒ)</li>
-          <li>Ù…Ø³ØªØ£Ø¬Ø± Ø¬Ø¯ÛŒØ¯ Ø¨Ø§ ÛŒÙˆØ²Ø±/Ù¾Ø³ Ø¬Ø¯ÛŒØ¯ Ø§Ø¶Ø§ÙÙ‡ Ù…ÛŒâ€ŒØ´ÙˆØ¯</li>
-        </ul>
-      </div>
-      <form id="sc-f" class="grid g2">
-        <label class="f">Ù†Ø§Ù… Ù…Ø³ØªØ£Ø¬Ø± Ø¬Ø¯ÛŒØ¯<input name="tenant_name" required></label>
-        <label class="f">Ù…ÙˆØ¨Ø§ÛŒÙ„<input name="tenant_phone" dir="ltr" required></label>
-        <label class="f">Ù†Ø§Ù… Ú©Ø§Ø±Ø¨Ø±ÛŒ<input name="tenant_username" dir="ltr" required></label>
-        <label class="f">Ø±Ù…Ø² Ø§ÙˆÙ„ÛŒÙ‡<input name="tenant_pass" type="text" required></label>
-        <button class="btn sf" style="grid-column:1/-1" type="submit">âœ… Ø§Ø¹Ù…Ø§Ù„</button>
-      </form>
-    `;
-    
-    $('#sc-f', container).addEventListener('submit', async e => {
-      e.preventDefault();
-      try {
-        if (tenant) await archiveAccount(tenant);
-        await T('app_admin_save_account', {
-          p_id: null,
-          p_unit_no: u.unit_no,
-          p_username: e.target.tenant_username.value,
-          p_full_name: e.target.tenant_name.value,
-          p_phone: e.target.tenant_phone.value,
-          p_occupancy: 'Ù…Ø³ØªØ£Ø¬Ø±',
-          p_is_primary: true,
-          p_is_active: true,
-          p_new_password: e.target.tenant_pass.value,
-          p_start_ym: 140406,
-        });
-        m.remove();
-        toast('Ù…Ø³ØªØ£Ø¬Ø± ØªØ¹ÙˆÛŒØ¶ Ø´Ø¯');
-        go('units');
-      } catch (err) { showErr(err); }
-    });
-  }
-  
-  else if (scenario === 'replace-all') {
-    container.innerHTML = `
-      <div class="card" style="background:#fee2e2;margin-bottom:16px;font-size:13px">
-        <b>âš ï¸ Ù‡Ø´Ø¯Ø§Ø±:</b>
-        <ul style="margin:8px 0 0;padding-right:20px">
-          <li>Ù‡Ù…Ù‡â€ŒÛŒ ${fa(activeAccounts.length)} Ø­Ø³Ø§Ø¨ ÙØ¹Ø§Ù„ Ø¢Ø±Ø´ÛŒÙˆ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯ (Ø¯Ø§Ø¦Ù…ÛŒ)</li>
-          <li>âœ… ØªØ±Ø§Ú©Ù†Ø´â€ŒÙ‡Ø§ÛŒ Ù‚Ø¨Ù„ÛŒ Ø­ÙØ¸ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯</li>
-        </ul>
-      </div>
-      <form id="sc-f" class="grid g2">
-        <label class="f">Ù†Ø§Ù…<input name="name" required></label>
-        <label class="f">Ù…ÙˆØ¨Ø§ÛŒÙ„<input name="phone" dir="ltr" required></label>
-        <label class="f">Ø³Ú©ÙˆÙ†Øª<select name="occupancy">${OCC.map(o => `<option>${o}</option>`).join('')}</select></label>
-        <label class="f">Ù†Ø§Ù… Ú©Ø§Ø±Ø¨Ø±ÛŒ<input name="username" dir="ltr" required></label>
-        <label class="f">Ø±Ù…Ø² Ø§ÙˆÙ„ÛŒÙ‡<input name="pass" type="text" required></label>
-        <button class="btn rd" style="grid-column:1/-1" type="submit">âš ï¸ Ø¢Ø±Ø´ÛŒÙˆ Ù‡Ù…Ù‡ Ùˆ Ø³Ø§Ø®Øª Ø¬Ø¯ÛŒØ¯</button>
-      </form>
-    `;
-    
-    $('#sc-f', container).addEventListener('submit', async e => {
-      e.preventDefault();
-      if (!confirm('Ù…Ø·Ù…Ø¦Ù†ÛŒØ¯ØŸ Ù‡Ù…Ù‡ Ø­Ø³Ø§Ø¨â€ŒÙ‡Ø§ Ø¢Ø±Ø´ÛŒÙˆ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯ (Ø¯Ø§Ø¦Ù…ÛŒ).')) return;
-      try {
-        for (const acc of activeAccounts) await archiveAccount(acc);
-        await T('app_admin_save_account', {
-          p_id: null,
-          p_unit_no: u.unit_no,
-          p_username: e.target.username.value,
-          p_full_name: e.target.name.value,
-          p_phone: e.target.phone.value,
-          p_occupancy: e.target.occupancy.value,
-          p_is_primary: true,
-          p_is_active: true,
-          p_new_password: e.target.pass.value,
-          p_start_ym: 140406,
-        });
-        m.remove();
-        toast('ØªØºÛŒÛŒØ±Ø§Øª Ø§Ø¹Ù…Ø§Ù„ Ø´Ø¯');
-        go('units');
-      } catch (err) { showErr(err); }
-    });
-  }
-  
-  else if (scenario === 'vacant') {
-    container.innerHTML = `
-      <div class="card" style="background:#fee2e2;margin-bottom:16px;font-size:13px">
-        <b>âš ï¸ Ù‡Ù…Ù‡â€ŒÛŒ Ø­Ø³Ø§Ø¨â€ŒÙ‡Ø§ÛŒ Ø§ÛŒÙ† ÙˆØ§Ø­Ø¯ Ø¢Ø±Ø´ÛŒÙˆ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯ (Ø¯Ø§Ø¦Ù…ÛŒ).</b>
-        <p style="margin:8px 0 0">ØªØ±Ø§Ú©Ù†Ø´â€ŒÙ‡Ø§ÛŒ Ù‚Ø¨Ù„ÛŒ Ø­ÙØ¸ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯.</p>
-      </div>
-      <button class="btn rd" id="apply-vacant">ðŸ—‘ï¸ ØªØ§ÛŒÛŒØ¯ Ø®Ø§Ù„ÛŒ Ø´Ø¯Ù†</button>
-    `;
-    
-    $('#apply-vacant', container)?.addEventListener('click', async () => {
-      if (!confirm('Ù…Ø·Ù…Ø¦Ù†ÛŒØ¯ØŸ Ù‡Ù…Ù‡ Ø­Ø³Ø§Ø¨â€ŒÙ‡Ø§ÛŒ Ø§ÛŒÙ† ÙˆØ§Ø­Ø¯ Ø¢Ø±Ø´ÛŒÙˆ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯ (Ø¯Ø§Ø¦Ù…ÛŒ).')) return;
-      try {
-        for (const acc of activeAccounts) await archiveAccount(acc);
-        m.remove();
-        toast('ÙˆØ§Ø­Ø¯ Ø®Ø§Ù„ÛŒ Ø´Ø¯');
-        go('units');
-      } catch (err) { showErr(err); }
-    });
+    container.innerHTML = `<div class="card" style="background:#fef3c7;margin-bottom:16px;font-size:13px"><b>📋 خلاصه:</b><ul style="margin:8px 0 0;padding-right:20px"><li>حساب «${esc(tenant?.full_name || 'مستأجر')}» آرشیو می‌شود (دائمی)</li><li>«${esc(owner?.full_name || 'مالک')}» به «مالک ساکن» تغییر می‌کند</li><li>✅ همه تراکنش‌های قبلی حفظ می‌شوند</li></ul></div><button class="btn sf" id="apply-btn">✅ تایید و اعمال</button>`;
+    $('#apply-btn', container)?.addEventListener('click', async () => { try { if (tenant) await archiveAccount(tenant); if (owner) { await T('app_admin_save_account', { p_id: owner.id, p_unit_no: u.unit_no, p_username: owner.username, p_full_name: owner.full_name, p_phone: owner.phone, p_occupancy: 'مالک ساکن', p_is_primary: true, p_is_active: true, p_new_password: null, p_start_ym: owner.start_ym || 140406 }); } m.remove(); toast('تغییرات اعمال شد'); go('units'); } catch (err) { showErr(err); } });
+  } else if (scenario === 'owner-to-absent') {
+    container.innerHTML = `<div class="card" style="background:#fef3c7;margin-bottom:16px;font-size:13px"><b>📋 خلاصه:</b><ul style="margin:8px 0 0;padding-right:20px"><li>«${esc(ownerResident?.full_name || 'مالک ساکن')}» به «مالک» تغییر می‌کند</li><li>مستأجر جدید با فرم زیر اضافه می‌شود</li></ul></div><form id="sc-f" class="grid g2"><label class="f">نام مستأجر<input name="tenant_name" required></label><label class="f">موبایل<input name="tenant_phone" dir="ltr" required></label><label class="f">نام کاربری<input name="tenant_username" dir="ltr" required></label><label class="f">رمز اولیه<input name="tenant_pass" type="text" required></label><button class="btn sf" style="grid-column:1/-1" type="submit">✅ اعمال</button></form>`;
+    $('#sc-f', container).addEventListener('submit', async e => { e.preventDefault(); try { if (ownerResident) { await T('app_admin_save_account', { p_id: ownerResident.id, p_unit_no: u.unit_no, p_username: ownerResident.username, p_full_name: ownerResident.full_name, p_phone: ownerResident.phone, p_occupancy: 'مالک', p_is_primary: false, p_is_active: true, p_new_password: null, p_start_ym: ownerResident.start_ym || 140406 }); } await T('app_admin_save_account', { p_id: null, p_unit_no: u.unit_no, p_username: e.target.tenant_username.value, p_full_name: e.target.tenant_name.value, p_phone: e.target.tenant_phone.value, p_occupancy: 'مستأجر', p_is_primary: true, p_is_active: true, p_new_password: e.target.tenant_pass.value, p_start_ym: 140406 }); m.remove(); toast('تغییرات اعمال شد'); go('units'); } catch (err) { showErr(err); } });
+  } else if (scenario === 'replace-tenant') {
+    container.innerHTML = `<div class="card" style="background:#fef3c7;margin-bottom:16px;font-size:13px"><b>📋 خلاصه:</b><ul style="margin:8px 0 0;padding-right:20px"><li>مستأجر فعلی «${esc(tenant?.full_name || '—')}» آرشیو می‌شود (دائمی)</li><li>مستأجر جدید با یوزر/پس جدید اضافه می‌شود</li></ul></div><form id="sc-f" class="grid g2"><label class="f">نام مستأجر جدید<input name="tenant_name" required></label><label class="f">موبایل<input name="tenant_phone" dir="ltr" required></label><label class="f">نام کاربری<input name="tenant_username" dir="ltr" required></label><label class="f">رمز اولیه<input name="tenant_pass" type="text" required></label><button class="btn sf" style="grid-column:1/-1" type="submit">✅ اعمال</button></form>`;
+    $('#sc-f', container).addEventListener('submit', async e => { e.preventDefault(); try { if (tenant) await archiveAccount(tenant); await T('app_admin_save_account', { p_id: null, p_unit_no: u.unit_no, p_username: e.target.tenant_username.value, p_full_name: e.target.tenant_name.value, p_phone: e.target.tenant_phone.value, p_occupancy: 'مستأجر', p_is_primary: true, p_is_active: true, p_new_password: e.target.tenant_pass.value, p_start_ym: 140406 }); m.remove(); toast('مستأجر تعویض شد'); go('units'); } catch (err) { showErr(err); } });
+  } else if (scenario === 'replace-all') {
+    container.innerHTML = `<div class="card" style="background:#fee2e2;margin-bottom:16px;font-size:13px"><b>⚠️ هشدار:</b><ul style="margin:8px 0 0;padding-right:20px"><li>همه‌ی ${fa(activeAccounts.length)} حساب فعال آرشیو می‌شوند (دائمی)</li><li>✅ تراکنش‌های قبلی حفظ می‌شوند</li></ul></div><form id="sc-f" class="grid g2"><label class="f">نام<input name="name" required></label><label class="f">موبایل<input name="phone" dir="ltr" required></label><label class="f">سکونت<select name="occupancy">${OCC.map(o => `<option>${o}</option>`).join('')}</select></label><label class="f">نام کاربری<input name="username" dir="ltr" required></label><label class="f">رمز اولیه<input name="pass" type="text" required></label><button class="btn rd" style="grid-column:1/-1" type="submit">⚠️ آرشیو همه و ساخت جدید</button></form>`;
+    $('#sc-f', container).addEventListener('submit', async e => { e.preventDefault(); if (!confirm('مطمئنید؟ همه حساب‌ها آرشیو می‌شوند (دائمی).')) return; try { for (const acc of activeAccounts) await archiveAccount(acc); await T('app_admin_save_account', { p_id: null, p_unit_no: u.unit_no, p_username: e.target.username.value, p_full_name: e.target.name.value, p_phone: e.target.phone.value, p_occupancy: e.target.occupancy.value, p_is_primary: true, p_is_active: true, p_new_password: e.target.pass.value, p_start_ym: 140406 }); m.remove(); toast('تغییرات اعمال شد'); go('units'); } catch (err) { showErr(err); } });
+  } else if (scenario === 'vacant') {
+    container.innerHTML = `<div class="card" style="background:#fee2e2;margin-bottom:16px;font-size:13px"><b>⚠️ همه‌ی حساب‌های این واحد آرشیو می‌شوند (دائمی).</b><p style="margin:8px 0 0">تراکنش‌های قبلی حفظ می‌شوند.</p></div><button class="btn rd" id="apply-vacant">🗑️ تایید خالی شدن</button>`;
+    $('#apply-vacant', container)?.addEventListener('click', async () => { if (!confirm('مطمئنید؟ همه حساب‌های این واحد آرشیو می‌شوند (دائمی).')) return; try { for (const acc of activeAccounts) await archiveAccount(acc); m.remove(); toast('واحد خالی شد'); go('units'); } catch (err) { showErr(err); } });
   }
 }
 
-/* =========================================================
-   19. Rates & Settings
-   ========================================================= */
 async function viewRates(el) {
   const [rates, st] = await Promise.all([T('app_get_rates'), T('app_get_settings')]);
-  const getPayers = arr => !arr ? 'Ù‡Ù…Ù‡' : arr.length === 0 ? 'Ù‡ÛŒÚ†â€ŒÚ©Ø³' : arr.map(o => o.replace('Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù†', 'Ø³Ø§Ú©Ù†')).join('ØŒ ');
-
-  el.innerHTML = `<h1>Ù†Ø±Ø®â€ŒÙ‡Ø§ Ùˆ ØªÙ†Ø¸ÛŒÙ…Ø§Øª</h1>
-    <div class="grid g2">
-      <div>
-        <h2 style="margin-bottom:16px">Ù„ÛŒØ³Øª Ù†Ø±Ø®â€ŒÙ‡Ø§ÛŒ Ø«Ø¨Øª Ø´Ø¯Ù‡</h2>
-        <div id="rates-accordion">
-          ${rates.map(r => `
-            <div class="accordion-item">
-              <div class="accordion-header">
-                <span>ðŸ“… ${MONTHS[r.month - 1]} ${fa(r.year)}</span>
-                <span class="chip ex" style="font-size:11px">Ù…Ø´Ø§Ù‡Ø¯Ù‡ â–¼</span>
-              </div>
-              <div class="accordion-body">
-                <table style="margin-bottom:16px"><tbody>
-                  <tr><td style="border:0"><b>Ø´Ø§Ø±Ú˜:</b> ${money(r.charge)}<br><small style="color:var(--muted)">${getPayers(r.payer_charge)}</small></td>
-                      <td style="border:0"><b>Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ:</b> ${money(r.repair)}<br><small style="color:var(--muted)">${getPayers(r.payer_repair)}</small></td>
-                      <td style="border:0"><b>Ù¾Ø§Ø±Ú©ÛŒÙ†Ú¯:</b> ${money(r.parking)}<br><small style="color:var(--muted)">${getPayers(r.payer_parking)}</small></td></tr>
-                </tbody></table>
-                <div style="display:flex;gap:8px">
-                  <button class="btn lt sm" data-er="${r.year}-${r.month}">ÙˆÛŒØ±Ø§ÛŒØ´</button>
-                  <button class="btn rd sm" data-dr="${r.year}-${r.month}">Ø­Ø°Ù</button>
-                </div>
-              </div>
-            </div>`).join('') || '<p class="sub">Ù‡ÛŒÚ† Ù†Ø±Ø®ÛŒ Ø«Ø¨Øª Ù†Ø´Ø¯Ù‡ Ø§Ø³Øª.</p>'}
-        </div>
-      </div>
-
-      <div class="grid" style="align-content:start">
-        <form id="rf" class="card grid g3">
-          <h2 style="grid-column:1/-1;margin:0">Ø«Ø¨Øª / ÙˆÛŒØ±Ø§ÛŒØ´ Ù†Ø±Ø®</h2>
-          <label class="f">Ø³Ø§Ù„<select id="r-y">${yearOptions(TODAY.y)}</select></label>
-          <label class="f">Ù…Ø§Ù‡<select id="r-m">${monthOptions(TODAY.m)}</select></label>
-          <label class="f">Ø´Ø§Ø±Ú˜<input id="r-c" inputmode="numeric"></label>
-          <div style="grid-column:1/-1;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            Ù¾Ø±Ø¯Ø§Ø®Øªâ€ŒÚ©Ù†Ù†Ø¯Ù‡ Ø´Ø§Ø±Ú˜: ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-pch" checked> ${o.replace('Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù†','Ø³Ø§Ú©Ù†')}</label>`).join('')}
-          </div>
-          <label class="f">Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ<input id="r-r" inputmode="numeric"></label>
-          <div style="grid-column:1/-1;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            Ù¾Ø±Ø¯Ø§Ø®Øªâ€ŒÚ©Ù†Ù†Ø¯Ù‡ Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ: ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-prp" checked> ${o.replace('Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù†','Ø³Ø§Ú©Ù†')}</label>`).join('')}
-          </div>
-          <label class="f">Ù¾Ø§Ø±Ú©ÛŒÙ†Ú¯<input id="r-p" inputmode="numeric"></label>
-          <div style="grid-column:1/-1;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            Ù¾Ø±Ø¯Ø§Ø®Øªâ€ŒÚ©Ù†Ù†Ø¯Ù‡ Ù¾Ø§Ø±Ú©ÛŒÙ†Ú¯: ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-ppk" checked> ${o.replace('Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù†','Ø³Ø§Ú©Ù†')}</label>`).join('')}
-          </div>
-          <label class="f" style="grid-column:1/-1">Ù¾Ø±Ø¯Ø§Ø®Øªâ€ŒÚ©Ù†Ù†Ø¯Ù‡ Ø¢Ø¨/Ú¯Ø§Ø²</label>
-          <div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-pu" checked> ${o.replace('Ù…Ø§Ù„Ú© Ø³Ø§Ú©Ù†','Ø³Ø§Ú©Ù†')}</label>`).join('')}
-          </div>
-          <div style="grid-column:1/-1"><button class="btn sf" type="submit">Ø°Ø®ÛŒØ±Ù‡ Ù†Ø±Ø®</button></div>
-        </form>
-
-        <form id="sf" class="card grid g3">
-          <h2 style="grid-column:1/-1;margin:0">ØªÙ†Ø¸ÛŒÙ…Ø§Øª Ú©Ù„ÛŒ</h2>
-          <label class="f" style="grid-column:1/-1">Ù†Ø§Ù… Ø³Ø§Ø®ØªÙ…Ø§Ù†<input id="s-n" value="${esc(st.building_name || '')}"></label>
-          <label class="f">Ù…ÙˆØ¬ÙˆØ¯ÛŒ Ø§ÙˆÙ„ÛŒÙ‡ ØµÙ†Ø¯ÙˆÙ‚<input id="s-o" inputmode="numeric" value="${fmt(st.opening_balance)}"></label>
-          <label class="f">Ø´Ø±ÙˆØ¹ Ù…Ø­Ø§Ø³Ø¨Ù‡<input id="s-s" dir="ltr" value="${String(st.start_ym || '').slice(0,4)}/${String(st.start_ym || '').slice(4)}"></label>
-          <div style="align-self:end"><button class="btn" type="submit">Ø°Ø®ÛŒØ±Ù‡ ØªÙ†Ø¸ÛŒÙ…Ø§Øª</button></div>
-        </form>
-      </div>
-    </div>`;
-
-  $('#rates-accordion')?.addEventListener('click', e => {
-    if (e.target.closest('.accordion-header')) e.target.closest('.accordion-header')?.nextElementSibling?.classList.toggle('open');
-  });
-
+  const getPayers = arr => !arr ? 'همه' : arr.length === 0 ? 'هیچ‌کس' : arr.map(o => o.replace('مالک ساکن', 'ساکن')).join('، ');
+  el.innerHTML = `<h1>نرخ‌ها و تنظیمات</h1><div class="grid g2"><div><h2 style="margin-bottom:16px">لیست نرخ‌های ثبت شده</h2><div id="rates-accordion">${rates.map(r => `<div class="accordion-item"><div class="accordion-header"><span>📅 ${MONTHS[r.month - 1]} ${fa(r.year)}</span><span class="chip ex" style="font-size:11px">مشاهده ▼</span></div><div class="accordion-body"><table style="margin-bottom:16px"><tbody><tr><td style="border:0"><b>شارژ:</b> ${money(r.charge)}<br><small style="color:var(--muted)">${getPayers(r.payer_charge)}</small></td><td style="border:0"><b>بازسازی:</b> ${money(r.repair)}<br><small style="color:var(--muted)">${getPayers(r.payer_repair)}</small></td><td style="border:0"><b>پارکینگ:</b> ${money(r.parking)}<br><small style="color:var(--muted)">${getPayers(r.payer_parking)}</small></td></tr></tbody></table><div style="display:flex;gap:8px"><button class="btn lt sm" data-er="${r.year}-${r.month}">ویرایش</button><button class="btn rd sm" data-dr="${r.year}-${r.month}">حذف</button></div></div></div>`).join('') || '<p class="sub">هیچ نرخی ثبت نشده است.</p>'}</div></div><div class="grid" style="align-content:start"><form id="rf" class="card grid g3"><h2 style="grid-column:1/-1;margin:0">ثبت / ویرایش نرخ</h2><label class="f">سال<select id="r-y">${yearOptions(TODAY.y)}</select></label><label class="f">ماه<select id="r-m">${monthOptions(TODAY.m)}</select></label><label class="f">شارژ<input id="r-c" inputmode="numeric"></label><div style="grid-column:1/-1;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap">پرداخت‌کننده شارژ: ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-pch" checked> ${o.replace('مالک ساکن','ساکن')}</label>`).join('')}</div><label class="f">بازسازی<input id="r-r" inputmode="numeric"></label><div style="grid-column:1/-1;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap">پرداخت‌کننده بازسازی: ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-prp" checked> ${o.replace('مالک ساکن','ساکن')}</label>`).join('')}</div><label class="f">پارکینگ<input id="r-p" inputmode="numeric"></label><div style="grid-column:1/-1;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap">پرداخت‌کننده پارکینگ: ${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-ppk" checked> ${o.replace('مالک ساکن','ساکن')}</label>`).join('')}</div><label class="f" style="grid-column:1/-1">پرداخت‌کننده آب/گاز</label><div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${OCC.map(o => `<label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" value="${o}" class="r-pu" checked> ${o.replace('مالک ساکن','ساکن')}</label>`).join('')}</div><div style="grid-column:1/-1"><button class="btn sf" type="submit">ذخیره نرخ</button></div></form><form id="sf" class="card grid g3"><h2 style="grid-column:1/-1;margin:0">تنظیمات کلی</h2><label class="f" style="grid-column:1/-1">نام ساختمان<input id="s-n" value="${esc(st.building_name || '')}"></label><label class="f">موجودی اولیه صندوق<input id="s-o" inputmode="numeric" value="${fmt(st.opening_balance)}"></label><label class="f">شروع محاسبه<input id="s-s" dir="ltr" value="${String(st.start_ym || '').slice(0,4)}/${String(st.start_ym || '').slice(4)}"></label><div style="align-self:end"><button class="btn" type="submit">ذخیره تنظیمات</button></div></form></div></div>`;
+  $('#rates-accordion')?.addEventListener('click', e => { if (e.target.closest('.accordion-header')) e.target.closest('.accordion-header')?.nextElementSibling?.classList.toggle('open'); });
   attachNumericInput('#r-c', '#r-r', '#r-p', '#s-o');
-
-  $$('[data-er]').forEach(b => b.addEventListener('click', () => {
-    const [y, mo] = b.dataset.er.split('-').map(Number);
-    const r = rates.find(x => x.year === y && x.month === mo);
-    if (!r) return;
-    $('#r-y').value = y;
-    $('#r-m').value = mo;
-    $('#r-c').value = fmt(r.charge);
-    $('#r-r').value = fmt(r.repair);
-    $('#r-p').value = fmt(r.parking);
-    $$('.r-pch').forEach(cb => cb.checked = (r.payer_charge || OCC).includes(cb.value));
-    $$('.r-prp').forEach(cb => cb.checked = (r.payer_repair || OCC).includes(cb.value));
-    $$('.r-ppk').forEach(cb => cb.checked = (r.payer_parking || OCC).includes(cb.value));
-    $$('.r-pu').forEach(cb => cb.checked = (r.payer_water || OCC).includes(cb.value));
-    $('#rf')?.scrollIntoView({ behavior: 'smooth' });
-  }));
-
-  $$('[data-dr]').forEach(b => b.addEventListener('click', async () => {
-    if (!confirm('Ø­Ø°Ù Ø´ÙˆØ¯ØŸ')) return;
-    const [y, mo] = b.dataset.dr.split('-').map(Number);
-    try { await T('app_admin_delete_rate', { p_year: y, p_month: mo }); go('rates'); }
-    catch (e) { showErr(e); }
-  }));
-
-  $('#rf')?.addEventListener('submit', async e => {
-    e.preventDefault();
-    const getChecked = cls => $$('.' + cls).filter(x => x.checked).map(x => x.value);
-    try {
-      const y = +$('#r-y').value;
-      const m = +$('#r-m').value;
-      const charge = toNum($('#r-c').value);
-      const repair = toNum($('#r-r').value);
-      const parking = toNum($('#r-p').value);
-
-      await T('app_admin_save_rate', {
-        p_year: y,
-        p_month: m,
-        p_charge: charge,
-        p_repair: repair,
-        p_parking: parking,
-        p_payer_charge: getChecked('r-pch'),
-        p_payer_repair: getChecked('r-prp'),
-        p_payer_parking: getChecked('r-ppk'),
-        p_payer_water: getChecked('r-pu'),
-        p_payer_gas: getChecked('r-pu'),
-      });
-      
-      notifyBale(`ðŸ“Š Ù†Ø±Ø®â€ŒÙ‡Ø§ÛŒ Ù…Ø§Ù‡ ${MONTHS[m-1]} ${y} Ø«Ø¨Øª/ÙˆÛŒØ±Ø§ÛŒØ´ Ø´Ø¯:\n\nðŸ”¹ Ø´Ø§Ø±Ú˜: ${fmt(charge)} ØªÙˆÙ…Ø§Ù†\nðŸ”¹ Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ: ${fmt(repair)} ØªÙˆÙ…Ø§Ù†\nðŸ”¹ Ù¾Ø§Ø±Ú©ÛŒÙ†Ú¯: ${fmt(parking)} ØªÙˆÙ…Ø§Ù†`);
-      
-      toast('Ø°Ø®ÛŒØ±Ù‡ Ø´Ø¯ Ùˆ Ø¨Ù‡ Ø¨Ù„Ù‡ Ø§Ø±Ø³Ø§Ù„ Ú¯Ø±Ø¯ÛŒØ¯'); 
-      go('rates');
-    } catch (err) { showErr(err); }
-  });
-
-  $('#sf')?.addEventListener('submit', async e => {
-    e.preventDefault();
-    const s = toNum($('#s-s').value.replace('/', ''));
-    try {
-      await T('app_admin_save_settings', {
-        p_building_name: $('#s-n').value,
-        p_opening_balance: toNum($('#s-o').value),
-        p_start_ym: s,
-      });
-      toast('Ø°Ø®ÛŒØ±Ù‡ Ø´Ø¯'); renderShell();
-    } catch (err) { showErr(err); }
-  });
+  $$('[data-er]').forEach(b => b.addEventListener('click', () => { const [y, mo] = b.dataset.er.split('-').map(Number); const r = rates.find(x => x.year === y && x.month === mo); if (!r) return; $('#r-y').value = y; $('#r-m').value = mo; $('#r-c').value = fmt(r.charge); $('#r-r').value = fmt(r.repair); $('#r-p').value = fmt(r.parking); $$('.r-pch').forEach(cb => cb.checked = (r.payer_charge || OCC).includes(cb.value)); $$('.r-prp').forEach(cb => cb.checked = (r.payer_repair || OCC).includes(cb.value)); $$('.r-ppk').forEach(cb => cb.checked = (r.payer_parking || OCC).includes(cb.value)); $$('.r-pu').forEach(cb => cb.checked = (r.payer_water || OCC).includes(cb.value)); $('#rf')?.scrollIntoView({ behavior: 'smooth' }); }));
+  $$('[data-dr]').forEach(b => b.addEventListener('click', async () => { if (!confirm('حذف شود؟')) return; const [y, mo] = b.dataset.dr.split('-').map(Number); try { await T('app_admin_delete_rate', { p_year: y, p_month: mo }); go('rates'); } catch (e) { showErr(e); } }));
+  $('#rf')?.addEventListener('submit', async e => { e.preventDefault(); const getChecked = cls => $$('.' + cls).filter(x => x.checked).map(x => x.value); try { const y = +$('#r-y').value; const m = +$('#r-m').value; const charge = toNum($('#r-c').value); const repair = toNum($('#r-r').value); const parking = toNum($('#r-p').value); await T('app_admin_save_rate', { p_year: y, p_month: m, p_charge: charge, p_repair: repair, p_parking: parking, p_payer_charge: getChecked('r-pch'), p_payer_repair: getChecked('r-prp'), p_payer_parking: getChecked('r-ppk'), p_payer_water: getChecked('r-pu'), p_payer_gas: getChecked('r-pu') }); notifyBale(`📊 نرخ‌های ماه ${MONTHS[m-1]} ${y} ثبت/ویرایش شد:\n\n🔹 شارژ: ${fmt(charge)} تومان\n🔹 بازسازی: ${fmt(repair)} تومان\n🔹 پارکینگ: ${fmt(parking)} تومان`); toast('ذخیره شد و به بله ارسال گردید'); go('rates'); } catch (err) { showErr(err); } });
+  $('#sf')?.addEventListener('submit', async e => { e.preventDefault(); const s = toNum($('#s-s').value.replace('/', '')); try { await T('app_admin_save_settings', { p_building_name: $('#s-n').value, p_opening_balance: toNum($('#s-o').value), p_start_ym: s }); toast('ذخیره شد'); renderShell(); } catch (err) { showErr(err); } });
 }
 
-/* =========================================================
-   20. Activity
-   ========================================================= */
 async function viewActivity(el) {
   const logs = await T('app_admin_get_activity_logs');
   const today = new Date().toDateString();
-  const todayLogins = logs.filter(l => l.action === 'ÙˆØ±ÙˆØ¯' && new Date(l.created_at).toDateString() === today).length;
-  el.innerHTML = `<h1>Ú¯Ø²Ø§Ø±Ø´ ÙØ¹Ø§Ù„ÛŒØªâ€ŒÙ‡Ø§</h1><p class="sub">Ø¢Ø®Ø±ÛŒÙ† Ø±ÙˆÛŒØ¯Ø§Ø¯Ù‡Ø§ÛŒ Ø«Ø¨Øª Ø´Ø¯Ù‡</p>
-    <div class="grid g3" style="margin-bottom:20px">
-      <div class="card" style="background:var(--accent);color:#fff"><small>ÙˆØ±ÙˆØ¯Ù‡Ø§ÛŒ Ø§Ù…Ø±ÙˆØ²</small><div style="font-size:28px;font-weight:900">${fa(todayLogins)} Ù†ÙØ±</div></div>
-      <div class="card"><small>Ú©Ù„ ÙØ¹Ø§Ù„ÛŒØªâ€ŒÙ‡Ø§</small><div style="font-size:28px;font-weight:900">${fa(logs.length)} Ù…ÙˆØ±Ø¯</div></div>
-    </div>
-    <div class="tbl-wrap"><table><thead><tr>
-      <th>Ú©Ø§Ø±Ø¨Ø±</th><th>ÙˆØ§Ø­Ø¯</th><th>Ù†ÙˆØ¹ ÙØ¹Ø§Ù„ÛŒØª</th><th>Ø¬Ø²Ø¦ÛŒØ§Øª</th><th>Ø²Ù…Ø§Ù†</th>
-    </tr></thead><tbody>
-      ${logs.map(l => `<tr>
-        <td><b>${esc(l.full_name || 'Ù†Ø§Ø´Ù†Ø§Ø³')}</b></td>
-        <td>${l.unit_no ? 'ÙˆØ§Ø­Ø¯ ' + fa(l.unit_no) : 'â€”'}</td>
-        <td><span class="chip ${l.action.includes('ÙˆØ±ÙˆØ¯') ? 'ok' : 'ex'}">${esc(l.action)}</span></td>
-        <td>${esc(l.details || 'â€”')}</td>
-        <td dir="ltr" style="text-align:right;font-size:12px">${new Date(l.created_at).toLocaleString('fa-IR')}</td>
-      </tr>`).join('') || '<tr><td colspan="5" style="text-align:center">Ù…ÙˆØ±Ø¯ÛŒ Ù†ÛŒØ³Øª</td></tr>'}
-    </tbody></table></div>`;
+  const todayLogins = logs.filter(l => l.action === 'ورود' && new Date(l.created_at).toDateString() === today).length;
+  el.innerHTML = `<h1>گزارش فعالیت‌ها</h1><p class="sub">آخرین رویدادهای ثبت شده</p><div class="grid g3" style="margin-bottom:20px"><div class="card" style="background:var(--accent);color:#fff"><small>ورودهای امروز</small><div style="font-size:28px;font-weight:900">${fa(todayLogins)} نفر</div></div><div class="card"><small>کل فعالیت‌ها</small><div style="font-size:28px;font-weight:900">${fa(logs.length)} مورد</div></div></div><div class="tbl-wrap"><table><thead><tr><th>کاربر</th><th>واحد</th><th>نوع فعالیت</th><th>جزئیات</th><th>زمان</th></tr></thead><tbody>${logs.map(l => `<tr><td><b>${esc(l.full_name || 'ناشناس')}</b></td><td>${l.unit_no ? 'واحد ' + fa(l.unit_no) : '—'}</td><td><span class="chip ${l.action.includes('ورود') ? 'ok' : 'ex'}">${esc(l.action)}</span></td><td>${esc(l.details || '—')}</td><td dir="ltr" style="text-align:right;font-size:12px">${new Date(l.created_at).toLocaleString('fa-IR')}</td></tr>`).join('') || '<tr><td colspan="5" style="text-align:center">موردی نیست</td></tr>'}</tbody></table></div>`;
 }
 
-/* =========================================================
-   21. Profile
-   ========================================================= */
 async function viewProfile(el) {
   const a = S.me;
-  el.innerHTML = `${mustChangeBanner()}
-    <h1>Ù¾Ø±ÙˆÙØ§ÛŒÙ„</h1>
-    <p class="sub">ÙˆØ§Ø­Ø¯ ${fa(a.unit_no)} Â· ${esc(a.occupancy || '')}</p>
-    <form id="pf2" class="card grid g2" style="max-width:760px">
-      <label class="f">Ù†Ø§Ù…<input id="p-n" value="${esc(a.full_name || '')}"></label>
-      <label class="f">Ø´Ù…Ø§Ø±Ù‡ Ù…ÙˆØ¨Ø§ÛŒÙ„<input id="p-ph" dir="ltr" value="${esc(a.phone || '')}"></label>
-      <label class="f" style="grid-column:1/-1">Ø§ÛŒÙ…ÛŒÙ„<input id="p-e" dir="ltr" type="email" value="${esc(a.email || '')}"></label>
-      <h2 style="grid-column:1/-1;margin:12px 0 0">Ù†Ø§Ù… Ú©Ø§Ø±Ø¨Ø±ÛŒ Ùˆ Ø±Ù…Ø²</h2>
-      <label class="f">Ù†Ø§Ù… Ú©Ø§Ø±Ø¨Ø±ÛŒ<input id="p-u" dir="ltr" value="${esc(a.username || '')}"></label>
-      <label class="f">Ø±Ù…Ø² ÙØ¹Ù„ÛŒ<input id="p-c" dir="ltr" type="password"></label>
-      <label class="f">Ø±Ù…Ø² Ø¬Ø¯ÛŒØ¯<input id="p-np" dir="ltr" type="password"></label>
-      <label class="f">ØªÚ©Ø±Ø§Ø± Ø±Ù…Ø²<input id="p-np2" dir="ltr" type="password"></label>
-      <div style="grid-column:1/-1"><button class="btn sf">Ø°Ø®ÛŒØ±Ù‡</button></div>
-    </form>`;
+  el.innerHTML = `${mustChangeBanner()}<h1>پروفایل</h1><p class="sub">واحد ${fa(a.unit_no)} · ${esc(a.occupancy || '')}</p><form id="pf2" class="card grid g2" style="max-width:760px"><label class="f">نام<input id="p-n" value="${esc(a.full_name || '')}"></label><label class="f">شماره موبایل<input id="p-ph" dir="ltr" value="${esc(a.phone || '')}"></label><label class="f" style="grid-column:1/-1">ایمیل<input id="p-e" dir="ltr" type="email" value="${esc(a.email || '')}"></label><h2 style="grid-column:1/-1;margin:12px 0 0">نام کاربری و رمز</h2><label class="f">نام کاربری<input id="p-u" dir="ltr" value="${esc(a.username || '')}"></label><label class="f">رمز فعلی<input id="p-c" dir="ltr" type="password"></label><label class="f">رمز جدید<input id="p-np" dir="ltr" type="password"></label><label class="f">تکرار رمز<input id="p-np2" dir="ltr" type="password"></label><div style="grid-column:1/-1"><button class="btn sf">ذخیره</button></div></form>`;
   $('#go-profile')?.addEventListener('click', e => e.preventDefault());
-  $('#pf2').addEventListener('submit', async e => {
-    e.preventDefault();
-    if ($('#p-np').value !== $('#p-np2').value) { toast('ØªÚ©Ø±Ø§Ø± Ø±Ù…Ø² ÛŒÚ©Ø³Ø§Ù† Ù†ÛŒØ³Øª', true); return; }
-    try {
-      S.me = await T('app_update_profile', {
-        p_full_name: $('#p-n').value,
-        p_phone: $('#p-ph').value,
-        p_email: $('#p-e').value,
-        p_username: $('#p-u').value,
-        p_current_password: $('#p-c').value || null,
-        p_new_password: $('#p-np').value || null,
-      });
-      sessionStorage.setItem('bm_me', JSON.stringify(S.me));
-      toast('Ø°Ø®ÛŒØ±Ù‡ Ø´Ø¯'); renderShell();
-    } catch (err) { showErr(err); }
-  });
+  $('#pf2').addEventListener('submit', async e => { e.preventDefault(); if ($('#p-np').value !== $('#p-np2').value) { toast('تکرار رمز یکسان نیست', true); return; } try { S.me = await T('app_update_profile', { p_full_name: $('#p-n').value, p_phone: $('#p-ph').value, p_email: $('#p-e').value, p_username: $('#p-u').value, p_current_password: $('#p-c').value || null, p_new_password: $('#p-np').value || null }); sessionStorage.setItem('bm_me', JSON.stringify(S.me)); toast('ذخیره شد'); renderShell(); } catch (err) { showErr(err); } });
 }
 
-/* =========================================================
-   22. Boot
-   ========================================================= */
-window.addEventListener('online', () => toast('Ø§ØªØµØ§Ù„ Ø§ÛŒÙ†ØªØ±Ù†Øª Ø¨Ø±Ù‚Ø±Ø§Ø± Ø´Ø¯'));
-window.addEventListener('offline', () => toast('Ø§ØªØµØ§Ù„ Ø§ÛŒÙ†ØªØ±Ù†Øª Ù‚Ø·Ø¹ Ø´Ø¯', true));
-/* =========================================================
-   22. Back Navigation â€” Double Back to Exit
-   ---------------------------------------------------------
-   Ø³ÛŒØ§Ø³Øª:
-   1) Ø¯Ø§Ø®Ù„ Ù‡Ø± ØµÙØ­Ù‡ ØºÛŒØ± Ø§Ø² Ø¯Ø§Ø´Ø¨ÙˆØ±Ø¯:
-      Back => Ø¯Ø§Ø´Ø¨ÙˆØ±Ø¯
-   2) Ø±ÙˆÛŒ Ø¯Ø§Ø´Ø¨ÙˆØ±Ø¯:
-      Back Ø§ÙˆÙ„ => Ù¾ÛŒØ§Ù… Â«Ø¯ÙˆØ¨Ø§Ø±Ù‡ Ø¨Ø²Ù†ÛŒØ¯Â»
-      Back Ø¯ÙˆÙ… Ø­Ø¯Ø§Ú©Ø«Ø± ØªØ§ 2 Ø«Ø§Ù†ÛŒÙ‡ => Ø®Ø±ÙˆØ¬ Ø§Ø² ØµÙØ­Ù‡/Ø¨Ø±Ù†Ø§Ù…Ù‡
-   3) Back Ø§ÙˆÙ„ Ù‡Ø±Ú¯Ø² Ù†Ø¨Ø§ÛŒØ¯ Ø§Ø¬Ø§Ø²Ù‡ Ø¹Ø¨ÙˆØ± Ø¨Ù‡ History Ù‚Ø¨Ù„ÛŒ Ù…Ø±ÙˆØ±Ú¯Ø± Ø±Ø§ Ø¨Ø¯Ù‡Ø¯.
-   ========================================================= */
-
+window.addEventListener('online', () => toast('اتصال اینترنت برقرار شد'));
+window.addEventListener('offline', () => toast('اتصال اینترنت قطع شد', true));
 const BACK_EXIT_WINDOW_MS = 2000;
+let backPressCount = 0; let backPressTimer = null; let appHistoryReady = false;
 
-let backPressCount = 0;
-let backPressTimer = null;
-let appHistoryReady = false;
-
-function resetBackPress() {
-  backPressCount = 0;
-
-  if (backPressTimer) {
-    clearTimeout(backPressTimer);
-    backPressTimer = null;
-  }
-}
-
-/*
- * History Guard
- *
- * Ù‡Ù…ÛŒØ´Ù‡ ÛŒÚ© Entry Ù…Ø­Ø§ÙØ¸ Ø¬Ù„ÙˆÛŒ Entry ÙØ¹Ù„ÛŒ Ø¨Ø±Ù†Ø§Ù…Ù‡ Ù†Ú¯Ù‡ Ù…ÛŒâ€ŒØ¯Ø§Ø±ÛŒÙ….
- * Ø¨Ù†Ø§Ø¨Ø±Ø§ÛŒÙ† Back Ø§ÙˆÙ„ ÙÙ‚Ø· popstate Ø§ÛŒØ¬Ø§Ø¯ Ù…ÛŒâ€ŒÚ©Ù†Ø¯ Ùˆ Ø¨Ù‡ Ø³Ø§ÛŒØª/ØµÙØ­Ù‡
- * Ù‚Ø¨Ù„ÛŒ Ù…Ø±ÙˆØ±Ú¯Ø± Ø¹Ø¨ÙˆØ± Ù†Ù…ÛŒâ€ŒÚ©Ù†Ø¯.
- */
+function resetBackPress() { backPressCount = 0; if (backPressTimer) { clearTimeout(backPressTimer); backPressTimer = null; } }
 function ensureAppHistory() {
   const current = history.state;
-
   if (!current?.app) {
-    history.replaceState(
-      { app: true, view: S.view || 'dash', root: true },
-      '',
-      '#app'
-    );
-
-    history.pushState(
-      { app: true, view: S.view || 'dash', guard: true },
-      '',
-      '#app'
-    );
+    history.replaceState({ app: true, view: S.view || 'dash', root: true }, '', '#app');
+    history.pushState({ app: true, view: S.view || 'dash', guard: true }, '', '#app');
   } else if (!current.guard) {
-    history.pushState(
-      {
-        ...current,
-        app: true,
-        view: S.view || current.view || 'dash',
-        guard: true
-      },
-      '',
-      '#app'
-    );
+    history.pushState({ ...current, app: true, view: S.view || current.view || 'dash', guard: true }, '', '#app');
   }
-
   appHistoryReady = true;
 }
-
-function rearmHistoryGuard() {
-  history.pushState(
-    {
-      app: true,
-      view: S.view || 'dash',
-      guard: true
-    },
-    '',
-    '#app'
-  );
-}
+function rearmHistoryGuard() { history.pushState({ app: true, view: S.view || 'dash', guard: true }, '', '#app'); }
 
 function handleBackNavigation() {
-  /*
-   * Ù…Ù‡Ù…:
-   * Ø§ÛŒÙ† Ø´Ø±Ø· Ù†Ø¨Ø§ÛŒØ¯ Ø¨Ø± Ø§Ø³Ø§Ø³ S.me Ø¨Ø§Ø´Ø¯.
-   * Ø§Ú¯Ø± S.me Ù‡Ù†ÙˆØ² Ø¨Ù‡â€ŒØµÙˆØ±Øª async Ø¢Ù…Ø§Ø¯Ù‡ Ù†Ø´Ø¯Ù‡ Ø¨Ø§Ø´Ø¯ØŒ Back Ø§ÙˆÙ„
-   * Ù†Ø¨Ø§ÛŒØ¯ Ø¨Ø§Ø¹Ø« Ø®Ø±ÙˆØ¬ Ù…Ø³ØªÙ‚ÛŒÙ… Ù…Ø±ÙˆØ±Ú¯Ø± Ø´ÙˆØ¯.
-   */
-  if (!appHistoryReady) {
-    ensureAppHistory();
-    return;
-  }
-
-  /*
-   * Ø§Ú¯Ø± ØµÙØ­Ù‡â€ŒØ§ÛŒ Ø¯Ø§Ø®Ù„ÛŒ Ø¨Ø§Ø² Ø§Ø³ØªØŒ Back ÙÙ‚Ø· Ø¨Ù‡ Ø¯Ø§Ø´Ø¨ÙˆØ±Ø¯ Ù…ÛŒâ€ŒØ±ÙˆØ¯.
-   * Ø¯Ø± Ø§ÛŒÙ† Ø­Ø§Ù„Øª Ø§ØµÙ„Ø§Ù‹ ÙˆØ§Ø±Ø¯ Ù…Ù†Ø·Ù‚ Double Back Ù†Ù…ÛŒâ€ŒØ´ÙˆÛŒÙ….
-   */
+  if (!appHistoryReady) { ensureAppHistory(); return; }
   if (S.me && S.view !== 'dash') {
-    resetBackPress();
-
-    go('dash', true);
-
-    /*
-     * Entry ÙØ¹Ù„ÛŒ Ø±Ø§ Ø¨Ù‡ Guard Ø¯Ø§Ø´Ø¨ÙˆØ±Ø¯ ØªØ¨Ø¯ÛŒÙ„ Ù…ÛŒâ€ŒÚ©Ù†ÛŒÙ….
-     * Ø§ÛŒÙ† Ú©Ø§Ø± Ø¬Ù„ÙˆÛŒ Ø²Ù†Ø¬ÛŒØ±Ù‡ Ø´Ø¯Ù† History ØµÙØ­Ø§Øª Ø¯Ø§Ø®Ù„ÛŒ Ø±Ø§ Ù…ÛŒâ€ŒÚ¯ÛŒØ±Ø¯.
-     */
-    history.replaceState(
-      {
-        app: true,
-        view: 'dash',
-        guard: true
-      },
-      '',
-      '#app'
-    );
-
-    return;
+    resetBackPress(); go('dash', true);
+    history.replaceState({ app: true, view: 'dash', guard: true }, '', '#app'); return;
   }
-
-  /*
-   * Ø§Ú¯Ø± Ù‡Ù†ÙˆØ² Ú©Ø§Ø±Ø¨Ø± Ù„Ø§Ú¯ÛŒÙ† Ø±Ø§ Ú©Ø§Ù…Ù„ Ù†Ú©Ø±Ø¯Ù‡ØŒ ÙÙ‚Ø· Guard Ø±Ø§ Ø¯ÙˆØ¨Ø§Ø±Ù‡ ÙØ¹Ø§Ù„ Ú©Ù†.
-   * Back Ø§ÙˆÙ„ Ù†Ø¨Ø§ÛŒØ¯ Ø¨Ø§Ø¹Ø« Ø®Ø±ÙˆØ¬ Ù†Ø§Ø®ÙˆØ§Ø³ØªÙ‡ Ø§Ø² ØµÙØ­Ù‡ Ø¨Ø±Ù†Ø§Ù…Ù‡ Ø´ÙˆØ¯.
-   */
-  if (!S.me) {
-    resetBackPress();
-    rearmHistoryGuard();
-    return;
-  }
-
-  /*
-   * Dashboard â€” Back Ø§ÙˆÙ„
-   */
+  if (!S.me) { resetBackPress(); rearmHistoryGuard(); return; }
   if (backPressCount === 0) {
-    backPressCount = 1;
-
-    toast('Ø¨Ø±Ø§ÛŒ Ø®Ø±ÙˆØ¬ØŒ Ø¯ÙˆØ¨Ø§Ø±Ù‡ Ø¯Ú©Ù…Ù‡ Ø¨Ø§Ø²Ú¯Ø´Øª Ø±Ø§ Ø¨Ø²Ù†ÛŒØ¯', true);
-
-    clearTimeout(backPressTimer);
-
-    backPressTimer = setTimeout(() => {
-      backPressCount = 0;
-      backPressTimer = null;
-    }, BACK_EXIT_WINDOW_MS);
-
-    /*
-     * Ø¨Ø¹Ø¯ Ø§Ø² popstate Ø¯ÙˆØ¨Ø§Ø±Ù‡ ÛŒÚ© Guard Ù…ÛŒâ€ŒØ³Ø§Ø²ÛŒÙ….
-     * Ø¨Ù†Ø§Ø¨Ø±Ø§ÛŒÙ† Back Ø§ÙˆÙ„ Ù‡ÛŒÚ†â€ŒÙˆÙ‚Øª Ø¨Ù‡ ØµÙØ­Ù‡ Ù‚Ø¨Ù„ÛŒ Ù…Ø±ÙˆØ±Ú¯Ø± Ù†Ù…ÛŒâ€ŒØ±Ø³Ø¯.
-     */
-    rearmHistoryGuard();
-
-    return;
+    backPressCount = 1; toast('برای خروج، دوباره دکمه بازگشت را بزنید', true); clearTimeout(backPressTimer);
+    backPressTimer = setTimeout(() => { backPressCount = 0; backPressTimer = null; }, BACK_EXIT_WINDOW_MS);
+    rearmHistoryGuard(); return;
   }
-
-  /*
-   * Dashboard â€” Back Ø¯ÙˆÙ… Ø¯Ø± Ø¨Ø§Ø²Ù‡ 2 Ø«Ø§Ù†ÛŒÙ‡
-   */
-  resetBackPress();
-
-  /*
-   * Ø§ÛŒÙ†Ø¬Ø§ Ø¹Ù…Ø¯Ø§Ù‹ logout Ù†Ù…ÛŒâ€ŒÚ©Ù†ÛŒÙ… Ùˆ sessionStorage Ø±Ø§ Ù¾Ø§Ú© Ù†Ù…ÛŒâ€ŒÚ©Ù†ÛŒÙ….
-   * Ø®Ø±ÙˆØ¬ ÙÙ‚Ø· Ø§Ø² History Ø¨Ø±Ù†Ø§Ù…Ù‡ Ø§Ø³Øª.
-   *
-   * Ú†ÙˆÙ† Back Ø§ÙˆÙ„ ÛŒÚ© Guard Ø¬Ø¯ÛŒØ¯ Ø³Ø§Ø®ØªÙ‡ØŒ Back Ø¯ÙˆÙ… Ø§Ú©Ù†ÙˆÙ† Ø§Ø²
-   * Ù…Ø±Ø² Ø¨Ø±Ù†Ø§Ù…Ù‡ Ø¹Ø¨ÙˆØ± Ù…ÛŒâ€ŒÚ©Ù†Ø¯.
-   */
-  history.back();
+  resetBackPress(); history.back();
 }
 
 window.addEventListener('popstate', handleBackNavigation);
-
-/*
- * Ø±Ø§Ù‡â€ŒØ§Ù†Ø¯Ø§Ø²ÛŒ History Guard ÙÙ‚Ø· ÛŒÚ© Ø¨Ø§Ø±.
- * Ø§Ú¯Ø± hash Ù‚Ø¨Ù„ÛŒ Ù…Ø±Ø¨ÙˆØ· Ø¨Ù‡ Ø¨Ø±Ù†Ø§Ù…Ù‡ Ø¨Ø§Ø´Ø¯ØŒ Ù‡Ù…Ø§Ù† Ø³Ø§Ø®ØªØ§Ø± Ø­ÙØ¸ Ù…ÛŒâ€ŒØ´ÙˆØ¯.
- */
 ensureAppHistory();
-
-/*
- * ÙˆÙ‚ØªÛŒ Ø¨Ø±Ù†Ø§Ù…Ù‡ Ø¨Ù‡ Ù¾Ø³â€ŒØ²Ù…ÛŒÙ†Ù‡ Ù…ÛŒâ€ŒØ±ÙˆØ¯ØŒ Ø´Ù…Ø§Ø±Ù†Ø¯Ù‡ Double Back Ù…Ù†Ù‚Ø¶ÛŒ Ø´ÙˆØ¯.
- * Ø§ÛŒÙ† Ú©Ø§Ø± Ù…Ø§Ù†Ø¹ Ù…ÛŒâ€ŒØ´ÙˆØ¯ Back Ø§ÙˆÙ„ Ù‚Ø¨Ù„ Ø§Ø² Ø®Ø±ÙˆØ¬ Ùˆ Back Ø¯ÙˆÙ… Ø¨Ø¹Ø¯ Ø§Ø²
- * Ø¨Ø±Ú¯Ø´Øª Ø§Ø² ÛŒÚ© Ø¨Ø±Ù†Ø§Ù…Ù‡ Ø¯ÛŒÚ¯Ø± Ø¨Ù‡â€ŒØ¹Ù†ÙˆØ§Ù† ÛŒÚ© Ø¬ÙØª Ù…Ø­Ø³ÙˆØ¨ Ø´ÙˆÙ†Ø¯.
- */
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') {
-    resetBackPress();
-  }
-});
-
-// Ø¨Ø³ØªÙ† Ù…Ù†ÙˆÛŒ Ø§ØµÙ„ÛŒ Ø¨Ø§ Ú©Ù„ÛŒÚ© Ø¨ÛŒØ±ÙˆÙ† Ø§Ø² Ø¢Ù† â€” ÙÙ‚Ø· ÛŒÚ© listener Ø³Ø±Ø§Ø³Ø±ÛŒ
-document.addEventListener('click', e => {
-  if (!e.target.closest('.menu-dropdown')) {
-    $('#main-menu')?.classList.remove('show');
-  }
-});
-
-// ÙˆÙ‚ØªÛŒ Ø¨Ø±Ù†Ø§Ù…Ù‡ Ø¨Ù‡ Ù¾Ø³â€ŒØ²Ù…ÛŒÙ†Ù‡ Ù…ÛŒâ€ŒØ±ÙˆØ¯ØŒ Double Back Ø§Ø² Ø­Ø§Ù„Øª Ù†ÛŒÙ…Ù‡â€ŒÚ©Ø§Ø±Ù‡ Ø®Ø§Ø±Ø¬ Ø´ÙˆØ¯.
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') {
-    resetBackPress();
-  }
-});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { resetBackPress(); } });
+document.addEventListener('click', e => { if (!e.target.closest('.menu-dropdown')) { $('#main-menu')?.classList.remove('show'); } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { resetBackPress(); } });
 if (S.token) renderShell(); else renderLogin();
 </script>
 </body>
