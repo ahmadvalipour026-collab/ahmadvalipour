@@ -1167,482 +1167,162 @@ function exportCsv(rows) {
    17. Report
    ========================================================= */
 async function viewReport(el) {
-  const rep = await T('app_report', {
-    p_year: S.y,
-    p_month: S.m
-  });
-
+  const rep = await T('app_report', { p_year: S.y, p_month: S.m });
+  
   el.innerHTML = `
-    <div style="
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:20px;
-      gap:12px;
-      flex-wrap:wrap;
-    ">
-      
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; flex-wrap:wrap; width:100%; box-sizing:border-box;">
       <div>
-        <h1 style="margin:0;">
-          گزارش ${rep.month_name} ${fa(rep.year)}
-        </h1>
+        <h1 style="margin:0; line-height:1.5;">گزارش ${rep.month_name} ${fa(rep.year)}</h1>
       </div>
-
-      <div style="
-        display:flex;
-        align-items:center;
-        gap:8px;
-        flex-wrap:wrap;
-      ">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         ${periodPicker()}
-
-        <button class="btn sf no-print" id="bale-btn">
-          ارسال به بله 📤
-        </button>
-
-        <button class="btn lt no-print" id="pr-btn">
-          چاپ
-        </button>
+        <button class="btn sf no-print" id="bale-btn">ارسال به بله 📤</button>
+        <button class="btn lt no-print" id="pr-btn">چاپ</button>
       </div>
     </div>
 
-    ${
-      rep.missing_rates?.length
-        ? `
-          <div class="card" style="
-            background:#fee2e2;
-            color:#991b1b;
-            margin-bottom:20px;
-          ">
-            نرخ ماه‌های
-            ${rep.missing_rates.map(fa).join('، ')}
-            تعریف نشده.
-          </div>
-        `
-        : ''
-    }
+    ${rep.missing_rates?.length ? `
+      <div class="card" style="background:#fee2e2; color:#991b1b; margin-bottom:20px;">
+        نرخ ماه‌های ${rep.missing_rates.map(fa).join('، ')} تعریف نشده.
+      </div>
+    ` : ''}
 
-    <!-- =====================================================
-         جدول گزارش
-         ===================================================== -->
-    <div
-      class="tbl-wrap"
-      style="
-        border-radius:8px;
-        overflow-x:auto;
-        overflow-y:hidden;
-        border:1px solid #333;
-        padding:0;
-        background:#fff;
-        width:100%;
-        box-sizing:border-box;
-      "
-    >
-
-      <table
-        style="
-          width:max-content;
-          min-width:100%;
-          border-collapse:collapse;
-          font-size:20px;
-          font-weight:bold;
-          text-align:center;
-          direction:rtl;
-          border:2px solid #000;
-          table-layout:auto;
-        "
-      >
-
-        <!--
-          عرض حداقل ستون‌ها
-          مقدار واقعی در صورت نیاز بر اساس محتوا
-          توسط مرورگر افزایش پیدا می‌کند.
-        -->
+    <!-- جدول گزارش -->
+    <div class="tbl-wrap" style="border-radius:8px; overflow-x:auto; overflow-y:visible; -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y; border:1px solid #333; padding:0; background:#fff; width:100%; max-width:100%; box-sizing:border-box; position:relative;">
+      <table style="width:max-content; min-width:100%; border-collapse:collapse; font-size:20px; font-weight:bold; text-align:center; direction:rtl; border:2px solid #000; table-layout:auto;">
+        
         <colgroup>
-          <col style="min-width:105px;">
-          <col style="min-width:145px;">
-          <col style="min-width:145px;">
-          <col style="min-width:145px;">
-          <col style="min-width:155px;">
-          <col style="min-width:165px;">
-          <col style="min-width:190px;">
+          <col style="min-width:105px;"> <!-- واحد -->
+          <col style="min-width:145px;"> <!-- شارژ -->
+          <col style="min-width:145px;"> <!-- آب -->
+          <col style="min-width:145px;"> <!-- گاز -->
+          <col style="min-width:155px;"> <!-- بازسازی -->
+          <col style="min-width:165px;"> <!-- بدهی قبلی -->
+          <col style="min-width:190px;"> <!-- جمع -->
         </colgroup>
 
         <thead>
-
-          <!-- عنوان گزارش -->
           <tr>
-            <th
-              colspan="7"
-              style="
-                background-color:#7A9CBE;
-                color:white;
-                padding:10px 12px;
-                font-size:22px;
-                font-weight:bold;
-                border:1px solid #333;
-                text-align:center;
-                white-space:nowrap;
-              "
-            >
-              گزارش ${rep.month_name} ماه -
-              ${fa(rep.year)}/${String(rep.month).padStart(2, '0')}
+            <th colspan="7" style="background-color:#7A9CBE; color:white; padding:10px 12px; font-size:22px; font-weight:bold; border:1px solid #333; text-align:center; white-space:nowrap;">
+              گزارش ${rep.month_name} ماه - ${fa(rep.year)}/${String(rep.month).padStart(2, '0')}
             </th>
           </tr>
-
-          <!-- عنوان ستون‌ها -->
           <tr>
-
-            <th style="
-              background-color:#D9E1F2;
-              border:1px solid #333;
-              padding:7px 10px;
-              font-weight:bold;
-              white-space:nowrap;
-              color:#000;
-              font-size:18px;
-              text-align:center;
-            ">
-              واحد
-            </th>
-
-            <th style="
-              background-color:#D9E1F2;
-              border:1px solid #333;
-              padding:7px 10px;
-              font-weight:bold;
-              white-space:nowrap;
-              color:#000;
-              font-size:18px;
-              text-align:center;
-            ">
-              شارژ
-            </th>
-
-            <th style="
-              background-color:#D9E1F2;
-              border:1px solid #333;
-              padding:7px 10px;
-              font-weight:bold;
-              white-space:nowrap;
-              color:#000;
-              font-size:18px;
-              text-align:center;
-            ">
-              قبض آب
-            </th>
-
-            <th style="
-              background-color:#D9E1F2;
-              border:1px solid #333;
-              padding:7px 10px;
-              font-weight:bold;
-              white-space:nowrap;
-              color:#000;
-              font-size:18px;
-              text-align:center;
-            ">
-              قبض گاز
-            </th>
-
-            <th style="
-              background-color:#D9E1F2;
-              border:1px solid #333;
-              padding:7px 10px;
-              font-weight:bold;
-              white-space:nowrap;
-              color:#000;
-              font-size:18px;
-              text-align:center;
-            ">
-              بازسازی
-            </th>
-
-            <th style="
-              background-color:#D9E1F2;
-              border:1px solid #333;
-              padding:7px 10px;
-              font-weight:bold;
-              white-space:nowrap;
-              color:#000;
-              font-size:18px;
-              text-align:center;
-            ">
-              بدهی قبلی
-            </th>
-
-            <th style="
-              background-color:#D9E1F2;
-              border:1px solid #333;
-              padding:7px 10px;
-              font-weight:bold;
-              white-space:nowrap;
-              color:#000;
-              font-size:18px;
-              text-align:center;
-            ">
-              جمع مبلغ<br>
-              قابل پرداخت
-            </th>
-
+            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">واحد</th>
+            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">شارژ</th>
+            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">قبض آب</th>
+            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">قبض گاز</th>
+            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">بازسازی</th>
+            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">بدهی قبلی</th>
+            <th style="background-color:#D9E1F2; border:1px solid #333; padding:7px 10px; font-weight:bold; white-space:nowrap; color:#000; font-size:18px; text-align:center;">جمع مبلغ<br>قابل پرداخت</th>
           </tr>
         </thead>
-
         <tbody>
+          ${rep.rows?.length ? rep.rows.map(r => {
+            let rowBg = '#ffffff';
+            if (r.remaining <= 0) rowBg = '#00B050'; // سبز
+            else if (r.prev_debt > 0) rowBg = '#FFC000'; // زرد
 
-          ${
-            rep.rows?.length
-              ? rep.rows.map(r => {
-
-                  let rowBg = '#ffffff';
-
-                  // پرداخت کامل
-                  if (r.remaining <= 0) {
-                    rowBg = '#00B050';
-                  }
-
-                  // دارای بدهی قبلی
-                  else if (r.prev_debt > 0) {
-                    rowBg = '#FFC000';
-                  }
-
-                  return `
-                    <tr
-                      style="
-                        background-color:${rowBg};
-                        color:#000000;
-                        font-size:30px;
-                      "
-                    >
-
-                      <!-- واحد -->
-                      <td style="
-                        border:1px solid #333;
-                        padding:6px 10px;
-                        font-weight:bold;
-                        white-space:nowrap;
-                        text-align:center;
-                        vertical-align:middle;
-                      ">
-                        واحد ${fa(r.unit_no)}
-
-                        <div style="
-                          font-size:12px;
-                          font-weight:normal;
-                          color:#000;
-                          margin-top:2px;
-                          line-height:1.2;
-                        ">
-                          ${esc(r.occupancy || '')}
-                        </div>
-                      </td>
-
-                      <!-- شارژ -->
-                      <td style="
-                        border:1px solid #333;
-                        padding:6px 10px;
-                        white-space:nowrap;
-                        text-align:center;
-                        vertical-align:middle;
-                      ">
-                        ${fmt(r.charge)}
-                      </td>
-
-                      <!-- آب -->
-                      <td style="
-                        border:1px solid #333;
-                        padding:6px 10px;
-                        white-space:nowrap;
-                        text-align:center;
-                        vertical-align:middle;
-                      ">
-                        ${fmt(r.water)}
-                      </td>
-
-                      <!-- گاز -->
-                      <td style="
-                        border:1px solid #333;
-                        padding:6px 10px;
-                        white-space:nowrap;
-                        text-align:center;
-                        vertical-align:middle;
-                      ">
-                        ${fmt(r.gas)}
-                      </td>
-
-                      <!-- بازسازی -->
-                      <td style="
-                        border:1px solid #333;
-                        padding:6px 10px;
-                        white-space:nowrap;
-                        text-align:center;
-                        vertical-align:middle;
-                      ">
-                        ${fmt(r.repair)}
-                      </td>
-
-                      <!-- بدهی قبلی -->
-                      <td style="
-                        border:1px solid #333;
-                        padding:6px 10px;
-                        white-space:nowrap;
-                        text-align:center;
-                        vertical-align:middle;
-                      ">
-                        ${fmt(r.prev_debt)}
-                      </td>
-
-                      <!-- جمع قابل پرداخت -->
-                      <td style="
-                        border:1px solid #333;
-                        padding:6px 10px;
-                        font-weight:bold;
-                        white-space:nowrap;
-                        text-align:center;
-                        vertical-align:middle;
-                      ">
-                        ${fmt(r.remaining)}
-                      </td>
-
-                    </tr>
-                  `;
-
-                }).join('')
-              : `
-                <tr>
-                  <td
-                    colspan="7"
-                    style="
-                      border:1px solid #333;
-                      padding:20px;
-                      font-size:20px;
-                      text-align:center;
-                    "
-                  >
-                    اطلاعاتی برای این دوره وجود ندارد.
-                  </td>
-                </tr>
-              `
-          }
-
+            return `
+              <tr style="background-color:${rowBg}; color:#000000; font-size:30px;">
+                <td style="border:1px solid #333; padding:6px 10px; font-weight:bold; white-space:nowrap; text-align:center; vertical-align:middle;">
+                  واحد ${fa(r.unit_no)}
+                  <div style="font-size:12px; font-weight:normal; color:#000; margin-top:2px; line-height:1.2;">${esc(r.occupancy || '')}</div>
+                </td>
+                <td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.charge)}</td>
+                <td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.water)}</td>
+                <td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.gas)}</td>
+                <td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.repair)}</td>
+                <td style="border:1px solid #333; padding:6px 10px; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.prev_debt)}</td>
+                <td style="border:1px solid #333; padding:6px 10px; font-weight:bold; white-space:nowrap; text-align:center; vertical-align:middle;">${fmt(r.remaining)}</td>
+              </tr>
+            `;
+          }).join('') : `
+            <tr>
+              <td colspan="7" style="border:1px solid #333; padding:20px; font-size:20px; text-align:center;">اطلاعاتی برای این دوره وجود ندارد.</td>
+            </tr>
+          `}
         </tbody>
       </table>
     </div>
   `;
 
-  /* =========================================================
-     انتخاب دوره
-     ========================================================= */
   bindPeriod(() => go('report'));
-
 
   /* =========================================================
      چاپ گزارش
      ========================================================= */
   $('#pr-btn')?.addEventListener('click', () => {
-
     const tableElement = $('.tbl-wrap');
-
     if (!tableElement) return;
 
     const oldWidth = tableElement.style.width;
-    const oldOverflow = tableElement.style.overflow;
+    const oldOverflowX = tableElement.style.overflowX;
+    const oldOverflowY = tableElement.style.overflowY;
 
-    /*
-      برای چاپ، جدول فضای کافی برای تمام ستون‌ها داشته باشد.
-    */
     tableElement.style.width = '1400px';
-    tableElement.style.overflow = 'visible';
+    tableElement.style.overflowX = 'visible';
+    tableElement.style.overflowY = 'visible';
 
     window.print();
 
     setTimeout(() => {
       tableElement.style.width = oldWidth;
-      tableElement.style.overflow = oldOverflow;
+      tableElement.style.overflowX = oldOverflowX;
+      tableElement.style.overflowY = oldOverflowY;
     }, 1000);
   });
-
 
   /* =========================================================
      ارسال گزارش به بله
      ========================================================= */
   $('#bale-btn')?.addEventListener('click', async () => {
-
     const btn = $('#bale-btn');
-
     if (!btn) return;
 
     const oldText = btn.textContent;
-
     btn.textContent = 'در حال ساخت عکس...';
     btn.disabled = true;
 
     try {
-
       const tableElement = $('.tbl-wrap');
+      if (!tableElement) throw new Error('جدول گزارش پیدا نشد.');
 
-      if (!tableElement) {
-        throw new Error('جدول گزارش پیدا نشد.');
-      }
-
-      /* وضعیت فعلی جدول */
-      const originalOverflow = tableElement.style.overflow;
+      const originalOverflowX = tableElement.style.overflowX;
+      const originalOverflowY = tableElement.style.overflowY;
       const originalMaxHeight = tableElement.style.maxHeight;
       const originalWidth = tableElement.style.width;
 
-      /*
-        برای گرفتن عکس، اسکرول و محدودیت ارتفاع حذف می‌شود.
-      */
-      tableElement.style.overflow = 'visible';
+      tableElement.style.overflowX = 'visible';
+      tableElement.style.overflowY = 'visible';
       tableElement.style.maxHeight = 'none';
-
-      /*
-        عرض ثابت مناسب برای خروجی تصویر.
-        با توجه به عرض ستون‌ها انتخاب شده.
-      */
       tableElement.style.width = '1400px';
 
-      const canvas = await html2canvas(tableElement, {
-        scale: 2,
+      const canvas = await html2canvas(tableElement, { 
+        scale: 2, 
         backgroundColor: '#ffffff',
-        windowWidth: 1400,
+        windowWidth: 1400, 
         width: 1400,
         useCORS: true
       });
 
-      /* برگرداندن وضعیت اصلی */
-      tableElement.style.overflow = originalOverflow;
+      tableElement.style.overflowX = originalOverflowX;
+      tableElement.style.overflowY = originalOverflowY;
       tableElement.style.maxHeight = originalMaxHeight;
       tableElement.style.width = originalWidth;
 
-      /*
-        کیفیت JPEG
-        0.90 حجم مناسب‌تری نسبت به 0.95 دارد
-        و برای ارسال در پیام‌رسان کافی است.
-      */
-      const base64Image = canvas.toDataURL(
-        'image/jpeg',
-        0.90
-      );
+      const base64Image = canvas.toDataURL('image/jpeg', 0.90);
 
       btn.textContent = 'در حال ارسال به بله...';
-
-      await notifyBale(
-        `📊 گزارش ماهانه ${rep.month_name} ${fa(rep.year)}\n${S.building}`,
-        base64Image
-      );
-
+      
+      await notifyBale(`📊 گزارش ماهانه ${rep.month_name} ${fa(rep.year)}\n${S.building}`, base64Image);
+      
       toast('گزارش با موفقیت به گروه بله ارسال شد');
-
     } catch (e) {
-
       showErr(e);
-
     } finally {
-
       btn.textContent = oldText;
       btn.disabled = false;
-
     }
   });
 }
