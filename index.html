@@ -849,22 +849,138 @@ async function viewAnnouncements(el) {
 }
 
 async function viewRequests(el) {
-  const list = await T('app_get_requests'); const admin = S.me.is_admin;
-  const residentForm = !admin ? `<form id="rf2" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)"><h2 style="grid-column:1/-1;margin:0">ثبت درخواست جدید</h2><label class="f">موضوع<select id="rq-type"><option>درخواست تعمیرات</option><option>انتقاد و پیشنهاد</option></select></label><label class="f" style="grid-column:1/-1">توضیحات<textarea id="rq-desc" rows="3" required></textarea></label><div style="grid-column:1/-1"><button class="btn">ارسال به مدیر</button></div></form>` : '';
-  el.innerHTML = `<h1>${admin ? 'درخواست‌ها' : 'ارتباط با مدیر'}</h1><p class="sub">${admin ? 'درخواست‌های ساکنین' : 'ثبت درخواست تعمیرات، انتقادات'}</p>${residentForm}<div class="grid g2">${list.map(r => `<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap"><h2 style="margin:0">${esc(r.type)}</h2><span class="chip ${r.status === 'done' ? 'ok' : 'pd'}">${r.status === 'done' ? 'بررسی شد' : 'در حال بررسی'}</span></div><p class="sub" style="font-size:12px;margin:0 0 8px">${esc(r.full_name || '')} ${r.unit_no ? '· واحد ' + fa(r.unit_no) : ''}</p><p style="white-space:pre-wrap;margin:0 0 16px">${esc(r.description)}</p>${admin && r.status !== 'done' ? `<button class="btn lt sm" data-ok="${r.id}">علامت‌گذاری به عنوان بررسی شده</button>` : ''}</div>`).join('') || '<div class="card sub">موردی وجود ندارد.</div>'}</div>`;
+  const list = await T('app_get_requests');
+  const admin = S.me.is_admin;
+
+  // تابع کمکی برای نمایش وضعیت
+  const statusChip = s => {
+    if (s === 'done')       return '<span class="chip ok">✅ انجام شد</span>';
+    if (s === 'reviewing')  return '<span class="chip pd">🔄 در حال بررسی</span>';
+    return '<span class="chip ex">⏳ جدید</span>';
+  };
+
+  // فرم ثبت درخواست برای ساکنین
+  const residentForm = !admin ? `
+    <form id="rf2" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)">
+      <h2 style="grid-column:1/-1;margin:0">ثبت درخواست جدید</h2>
+      <label class="f">موضوع
+        <select id="rq-type">
+          <option>درخواست تعمیرات</option>
+          <option>انتقاد و پیشنهاد</option>
+        </select>
+      </label>
+      <label class="f" style="grid-column:1/-1">توضیحات
+        <textarea id="rq-desc" rows="3" required></textarea>
+      </label>
+      <div style="grid-column:1/-1"><button class="btn">ارسال به مدیر</button></div>
+    </form>` : '';
+
+  // قالب اصلی صفحه
+  el.innerHTML = `
+    <h1>${admin ? 'درخواست‌ها' : 'ارتباط با مدیر'}</h1>
+    <p class="sub">${admin ? 'درخواست‌های ساکنین — پاسخ دهید و وضعیت را مشخص کنید' : 'ثبت درخواست تعمیرات، انتقادات'}</p>
+    ${residentForm}
+    <div class="grid g2">
+      ${list.map(r => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+            <h2 style="margin:0">${esc(r.type)}</h2>
+            ${statusChip(r.status)}
+          </div>
+          <p class="sub" style="font-size:12px;margin:0 0 8px">
+            ${esc(r.full_name || '')} ${r.unit_no ? '· واحد ' + fa(r.unit_no) : ''}
+          </p>
+          <p style="white-space:pre-wrap;margin:0 0 12px">${esc(r.description)}</p>
+          
+          <!-- باکس نمایش پاسخ مدیر -->
+          ${r.admin_reply ? `
+            <div style="background:var(--bg);border-right:3px solid var(--peach);padding:10px 14px;border-radius:10px;margin-bottom:12px">
+              <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">
+                پاسخ مدیر ${r.replied_at ? '· ' + new Date(r.replied_at).toLocaleString('fa-IR') : ''}
+              </div>
+              <div style="white-space:pre-wrap">${esc(r.admin_reply)}</div>
+            </div>` : ''}
+            
+          <!-- دکمه پاسخ برای مدیر -->
+          ${admin ? `
+            <button class="btn sf sm" data-reply="${r.id}">
+              ${r.admin_reply ? 'ویرایش پاسخ' : 'پاسخ دادن'}
+            </button>` : ''}
+        </div>`).join('') || '<div class="card sub">موردی وجود ندارد.</div>'}
+    </div>`;
+
+  // ثبت درخواست جدید توسط ساکن
   if (!admin) {
     $('#rf2')?.addEventListener('submit', async e => {
       e.preventDefault();
       try {
-        const type = $('#rq-type').value; const desc = $('#rq-desc').value;
+        const type = $('#rq-type').value;
+        const desc = $('#rq-desc').value;
         await T('app_submit_request', { p_type: type, p_description: desc });
         notifyBale(`🔔 درخواست جدید از واحد ${S.me.unit_no}:\n\n🔹 نوع: ${type}\n📝 توضیحات: ${desc}`);
         toast('ثبت شد'); go('requests');
       } catch (err) { showErr(err); }
     });
-  } else { $$('[data-ok]').forEach(b => b.addEventListener('click', async () => { try { await T('app_admin_update_request', { p_id: +b.dataset.ok, p_status: 'done' }); toast('تغییر کرد'); go('requests'); } catch (e) { showErr(e); } })); }
-}
+    return;
+  }
 
+  // اتصال دکمه‌های پاسخ برای مدیر
+  $$('[data-reply]').forEach(b => b.addEventListener('click', () => {
+    const req = list.find(x => x.id == b.dataset.reply);
+    if (req) replyModal(req);
+  }));
+}
+function replyModal(r) {
+  const m = modal(`
+    <h2>پاسخ به درخواست واحد ${fa(r.unit_no || '—')}</h2>
+    <p class="sub">${esc(r.full_name || '')} · ${esc(r.type)}</p>
+
+    <div class="card" style="background:var(--bg);margin-bottom:16px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">متن درخواست:</div>
+      <div style="white-space:pre-wrap">${esc(r.description)}</div>
+    </div>
+
+    <form id="rp-form" class="grid" style="gap:14px">
+      <label class="f">وضعیت
+        <select id="rp-status">
+          <option value="reviewing" ${r.status === 'reviewing' ? 'selected' : ''}>در حال بررسی</option>
+          <option value="done" ${r.status === 'done' ? 'selected' : ''}>انجام شد</option>
+        </select>
+      </label>
+      <label class="f">توضیحات پاسخ
+        <textarea id="rp-text" rows="4" placeholder="توضیح مدیر برای ساکن..." required>${esc(r.admin_reply || '')}</textarea>
+      </label>
+      <button class="btn sf" type="submit">ثبت پاسخ و ارسال به بله</button>
+    </form>
+  `);
+
+  $('#rp-form', m).addEventListener('submit', async e => {
+    e.preventDefault();
+    const status = $('#rp-status', m).value;
+    const reply = $('#rp-text', m).value.trim();
+    if (!reply) { toast('توضیحات را وارد کنید', true); return; }
+
+    try {
+      // ارسال به دیتابیس
+      await T('app_admin_reply_request', {
+        p_id: r.id, p_status: status, p_reply: reply,
+      });
+
+      // ارسال به ربات بله
+      const statusLabel = status === 'done' ? '✅ انجام شد' : '🔄 در حال بررسی';
+      notifyBale(
+        `📩 پاسخ به درخواست واحد ${r.unit_no}\n\n` +
+        `🔹 نوع: ${r.type}\n` +
+        `📌 وضعیت: ${statusLabel}\n\n` +
+        `💬 پاسخ مدیر:\n${reply}`
+      );
+
+      m.remove();
+      toast('پاسخ ثبت و به بله ارسال شد');
+      go('requests');
+    } catch (err) { showErr(err); }
+  });
+}
 function payModal(r) {
   const m = modal(`<h2>ثبت پرداخت</h2><p class="sub">اطمینان حاصل کنید تصویر فیش یا رسید واضح باشد.</p><form id="pf" class="grid g2"><label class="f">بابت<select id="pf-c">${Object.entries(CATS).sort(([a],[b]) => (a==='bill'?-1:b==='bill'?1:0)).map(([k,v]) => `<option value="${k}">${esc(v)}</option>`).join('')}</select></label><label class="f">مبلغ (تومان)<input id="pf-a" inputmode="numeric" required value="${r && r.remaining > 0 ? fmt(r.remaining) : ''}"></label><label class="f">ماه<select id="pf-m">${monthOptions(S.m)}</select></label><label class="f">سال<select id="pf-y">${yearOptions(S.y)}</select></label><label class="f">تاریخ واریز<input id="pf-d" dir="ltr" value="${TODAY.y}/${String(TODAY.m).padStart(2,'0')}/${String(TODAY.d).padStart(2,'0')}"></label><label class="f">کد پیگیری<input id="pf-r" dir="ltr"></label><label class="f" style="grid-column:1/-1">بارگذاری تصویر فیش (اختیاری)<input id="pf-img" type="file" accept="image/*"></label><label class="f" style="grid-column:1/-1">توضیحات<input id="pf-n"></label><button class="btn sf" style="grid-column:1/-1">ارسال برای تایید</button></form>`);
   attachNumericInputIn(m, '#pf-a');
