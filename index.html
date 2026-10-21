@@ -1163,7 +1163,7 @@ function exportCsv(rows) {
   a.download = 'Transactions.csv';
   a.click();
 }
-/* =========================================================
+  /* =========================================================
    17. Report
    ========================================================= */
 async function viewReport(el) {
@@ -1272,128 +1272,129 @@ async function viewReport(el) {
       tableElement.style.overflowY = oldOverflowY;
     }, 1000);
   });
-/* =========================================================
-   ارسال تصویر گزارش به بله - اصلاح ابعاد تصویر
-   ========================================================= */
-$('#bale-btn')?.addEventListener('click', async () => {
 
-  const btn = $('#bale-btn');
-  if (!btn) return;
+  /* =========================================================
+     ارسال تصویر گزارش به بله - اصلاح ابعاد تصویر
+     ========================================================= */
+  $('#bale-btn')?.addEventListener('click', async () => {
+    const btn = $('#bale-btn');
+    if (!btn) return;
 
-  const oldText = btn.textContent;
-  btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.disabled = true;
 
-  let table = null;
-  let originalStyles = null;
+    let table = null;
+    let originalStyles = null;
 
-  try {
-    btn.textContent = 'در حال آماده‌سازی تصویر...';
+    try {
+      btn.textContent = 'در حال آماده‌سازی تصویر...';
 
-    const wrapper = el.querySelector('.tbl-wrap');
-    table = wrapper?.querySelector('table');
-
-    if (!wrapper || !table) {
-      throw new Error('جدول گزارش پیدا نشد.');
-    }
-
-    // ذخیره استایل‌های فعلی
-    originalStyles = {
-      wrapperWidth: wrapper.style.width,
-      wrapperMaxWidth: wrapper.style.maxWidth,
-      wrapperOverflowX: wrapper.style.overflowX,
-      wrapperOverflowY: wrapper.style.overflowY,
-      tableWidth: table.style.width,
-      tableMinWidth: table.style.minWidth
-    };
-
-    /*
-     * اندازه واقعی جدول؛ بدون عرض ثابت 1400 پیکسل
-     */
-    table.style.width = 'max-content';
-    table.style.minWidth = '0';
-
-    wrapper.style.width = 'max-content';
-    wrapper.style.maxWidth = 'none';
-    wrapper.style.overflowX = 'visible';
-    wrapper.style.overflowY = 'visible';
-
-    // اجازه بده مرورگر ابعاد جدید را محاسبه کند
-    await new Promise(resolve =>
-      requestAnimationFrame(() =>
-        requestAnimationFrame(resolve)
-      )
-    );
-
-    const tableWidth = Math.ceil(
-      Math.max(table.scrollWidth, table.getBoundingClientRect().width)
-    );
-
-    const tableHeight = Math.ceil(
-      Math.max(table.scrollHeight, table.getBoundingClientRect().height)
-    );
-
-    if (!tableWidth || !tableHeight) {
-      throw new Error('ابعاد جدول قابل محاسبه نیست.');
-    }
-
-    btn.textContent = 'در حال ساخت تصویر...';
-
-    /*
-     * عکس مستقیماً از خود جدول گرفته می‌شود؛
-     * بنابراین فضای سفید کانتینر حذف خواهد شد.
-     */
-    const canvas = await html2canvas(table, {
-      backgroundColor: '#ffffff',
-      scale: 2,
-      width: tableWidth,
-      height: tableHeight,
-      windowWidth: tableWidth,
-      windowHeight: tableHeight,
-      scrollX: 0,
-      scrollY: 0,
-      useCORS: true,
-      logging: false
-    });
-
-    // تبدیل تصویر به JPEG با حجم مناسب
-    const base64Image = canvas.toDataURL(
-      'image/jpeg',
-      0.88
-    );
-
-    btn.textContent = 'در حال ارسال به بله...';
-
-    await notifyBale(
-      `📊 گزارش ماهانه ${rep.month_name} ${fa(rep.year)}\n${S.building}`,
-      base64Image
-    );
-
-    toast('گزارش با موفقیت به گروه بله ارسال شد');
-
-  } catch (e) {
-    showErr(e);
-
-  } finally {
-
-    // بازگرداندن تمام استایل‌ها، حتی در صورت بروز خطا
-    if (table && originalStyles) {
       const wrapper = el.querySelector('.tbl-wrap');
+      table = wrapper?.querySelector('table');
 
-      table.style.width = originalStyles.tableWidth;
-      table.style.minWidth = originalStyles.tableMinWidth;
-
-      if (wrapper) {
-        wrapper.style.width = originalStyles.wrapperWidth;
-        wrapper.style.maxWidth = originalStyles.wrapperMaxWidth;
-        wrapper.style.overflowX = originalStyles.wrapperOverflowX;
-        wrapper.style.overflowY = originalStyles.wrapperOverflowY;
+      if (!wrapper || !table) {
+        throw new Error('جدول گزارش پیدا نشد.');
       }
-    }
 
-    btn.textContent = oldText;
-    btn.disabled = false;
-  }
-});
+      // ذخیره استایل‌های فعلی
+      originalStyles = {
+        wrapperWidth: wrapper.style.width,
+        wrapperMaxWidth: wrapper.style.maxWidth,
+        wrapperOverflowX: wrapper.style.overflowX,
+        wrapperOverflowY: wrapper.style.overflowY,
+        tableWidth: table.style.width,
+        tableMinWidth: table.style.minWidth
+      };
+
+      /*
+       * اندازه واقعی جدول؛ بدون عرض ثابت 1400 پیکسل
+       */
+      table.style.width = 'max-content';
+      table.style.minWidth = '0';
+
+      wrapper.style.width = 'max-content';
+      wrapper.style.maxWidth = 'none';
+      wrapper.style.overflowX = 'visible';
+      wrapper.style.overflowY = 'visible';
+
+      // اجازه بده مرورگر ابعاد جدید را محاسبه کند
+      await new Promise(resolve =>
+        requestAnimationFrame(() =>
+          requestAnimationFrame(resolve)
+        )
+      );
+
+      const tableWidth = Math.ceil(
+        Math.max(table.scrollWidth, table.getBoundingClientRect().width)
+      );
+
+      const tableHeight = Math.ceil(
+        Math.max(table.scrollHeight, table.getBoundingClientRect().height)
+      );
+
+      if (!tableWidth || !tableHeight) {
+        throw new Error('ابعاد جدول قابل محاسبه نیست.');
+      }
+
+      btn.textContent = 'در حال ساخت تصویر...';
+
+      /*
+       * عکس مستقیماً از خود جدول گرفته می‌شود؛
+       * بنابراین فضای سفید کانتینر حذف خواهد شد.
+       */
+      const canvas = await html2canvas(table, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        width: tableWidth,
+        height: tableHeight,
+        windowWidth: tableWidth,
+        windowHeight: tableHeight,
+        scrollX: 0,
+        scrollY: 0,
+        useCORS: true,
+        logging: false
+      });
+
+      // تبدیل تصویر به JPEG با حجم مناسب
+      const base64Image = canvas.toDataURL(
+        'image/jpeg',
+        0.88
+      );
+
+      btn.textContent = 'در حال ارسال به بله...';
+
+      await notifyBale(
+        `📊 گزارش ماهانه ${rep.month_name} ${fa(rep.year)}\n${S.building}`,
+        base64Image
+      );
+
+      toast('گزارش با موفقیت به گروه بله ارسال شد');
+
+    } catch (e) {
+      showErr(e);
+
+    } finally {
+
+      // بازگرداندن تمام استایل‌ها، حتی در صورت بروز خطا
+      if (table && originalStyles) {
+        const wrapper = el.querySelector('.tbl-wrap');
+
+        table.style.width = originalStyles.tableWidth;
+        table.style.minWidth = originalStyles.tableMinWidth;
+
+        if (wrapper) {
+          wrapper.style.width = originalStyles.wrapperWidth;
+          wrapper.style.maxWidth = originalStyles.wrapperMaxWidth;
+          wrapper.style.overflowX = originalStyles.wrapperOverflowX;
+          wrapper.style.overflowY = originalStyles.wrapperOverflowY;
+        }
+      }
+
+      btn.textContent = oldText;
+      btn.disabled = false;
+    }
+  });
+} 
 /* =========================================================
    18. Units (admin) — با آرشیو و تغییر وضعیت
    ========================================================= */
