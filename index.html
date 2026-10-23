@@ -994,13 +994,10 @@ function replyModal(r) {
       go('requests');
     } catch (err) { showErr(err); }
   });
-}
-async function payModal(targetUnitNo = null) {
+}async function payModal(targetUnitNo = null) {
   const isAdmin = S.me.is_admin;
-  // اگر مدیر است و واحد انتخاب نکرده، واحد پیش‌فرض رو می‌ذاریم 1 (یا واحد کلیک شده)
   let selectedUnit = isAdmin ? (targetUnitNo || 1) : S.me.unit_no;
 
-  // تابعی برای گرفتن بدهی‌های واحد انتخاب شده
   const fetchDebts = async (unitNo) => {
     if (isAdmin) {
       return await T('app_get_unit_debts_for_admin', { p_unit_no: unitNo, p_today_ym: S.y * 100 + S.m });
@@ -1011,7 +1008,6 @@ async function payModal(targetUnitNo = null) {
 
   let debts = await fetchDebts(selectedUnit);
 
-  // ساخت گزینه‌های انتخاب واحد برای مدیر
   const unitSelectHtml = isAdmin ? `
     <label class="f" style="margin-bottom:16px;">انتخاب واحد
       <select id="pm-unit-select">
@@ -1026,23 +1022,18 @@ async function payModal(targetUnitNo = null) {
     
     ${unitSelectHtml}
 
-    <!-- دکمه‌های انتخاب نوع پرداخت -->
     <div style="display:flex; gap:8px; margin-bottom:20px;">
       <button type="button" class="btn sf" id="tab-debts" style="flex:1;">پرداخت بر اساس بدهی</button>
       <button type="button" class="btn lt" id="tab-custom" style="flex:1;">پرداخت مبلغ دلخواه</button>
     </div>
 
-    <!-- بخش پرداخت بر اساس بدهی (تیک‌ها) -->
     <div id="sec-debts"></div>
-
-    <!-- بخش پرداخت مبلغ دلخواه -->
     <div id="sec-custom" class="hidden">
       <div class="card" style="margin-bottom:16px; padding:16px; background:var(--bg)">
         <p style="margin:0; font-size:13px; color:var(--muted); text-align:center;">سیستم به صورت خودکار مبلغ شما را از قدیمی‌ترین بدهی کسر می‌کند.</p>
       </div>
     </div>
 
-    <!-- فرم مشترک -->
     <form id="pf" class="grid g2">
       <label class="f" style="grid-column:1/-1">مبلغ کل (تومان)<input id="pf-a" inputmode="numeric" readonly style="background:var(--bg);font-weight:900;font-size:20px;text-align:center;color:var(--navy)"></label>
       <label class="f hidden" id="wrap-custom-amount" style="grid-column:1/-1; margin-top:8px;">مبلغ دلخواه خود را وارد کنید
@@ -1058,13 +1049,12 @@ async function payModal(targetUnitNo = null) {
 
   let currentTab = 'debts';
 
-  // تابع برای رندر کردن تیک‌های بدهی
   const renderDebts = (debtList) => {
     const container = $('#sec-debts', m);
     if (debtList && debtList.length > 0) {
       container.innerHTML = `
         <div class="card" style="margin-bottom:16px; padding:12px; background:var(--bg)">
-          <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--ink)">لیست بدهی‌ها (مبلغ هر ردیف را می‌توانید ویرایش کنید):</h3>
+          <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--ink)">لیست بدهی‌ها:</h3>
           ${debtList.map((d) => `
             <div class="debt-row" style="display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px dashed var(--line)">
               <input type="checkbox" class="debt-check" value="${d.ym}" data-category="${d.category}" data-original="${d.amount}" checked style="width:18px;height:18px;accent-color:var(--navy)">
@@ -1081,7 +1071,6 @@ async function payModal(targetUnitNo = null) {
     updateTotalDebts();
   };
 
-  // اتصال رویدادها به تیک‌ها و اینپوت‌های مبلغ
   const bindDebtEvents = () => {
     $$('.debt-amount', m).forEach(inp => {
       inp.addEventListener('input', e => {
@@ -1110,10 +1099,8 @@ async function payModal(targetUnitNo = null) {
     $('#pf-a', m).value = fmt(total);
   };
 
-  // رندر اولیه
   renderDebts(debts);
 
-  // تغییر تب‌ها
   $('#tab-debts', m).addEventListener('click', () => {
     currentTab = 'debts';
     $('#tab-debts', m).className = 'btn sf'; $('#tab-debts', m).style.flex = '1';
@@ -1134,13 +1121,11 @@ async function payModal(targetUnitNo = null) {
     $('#pf-a', m).value = '0';
   });
 
-  // اتصال اینپوت مبلغ دلخواه
   attachNumericInputIn(m, '#pf-custom');
   $('#pf-custom', m).addEventListener('input', (e) => {
     $('#pf-a', m).value = e.target.value;
   });
 
-  // تغییر واحد توسط مدیر (آپدیت خودکار لیست بدهی‌ها)
   if (isAdmin) {
     $('#pm-unit-select', m).addEventListener('change', async (e) => {
       selectedUnit = +e.target.value;
@@ -1149,7 +1134,6 @@ async function payModal(targetUnitNo = null) {
     });
   }
 
-  // ثبت نهایی فرم
   $('#pf', m).addEventListener('submit', async e => {
     e.preventDefault();
     const fileInput = $('#pf-img', m);
@@ -1167,26 +1151,15 @@ async function payModal(targetUnitNo = null) {
           const amtInp = $('.debt-amount', row);
           const amount = toNum(amtInp.value);
           if (cb.checked && amount > 0) {
-            selectedDebts.push({ 
-              ym: cb.value, 
-              category: cb.dataset.category, 
-              amount: amount,
-              original_amount: toNum(cb.dataset.original) // 👈 مبلغ اصلی بدهی
-            });
+            selectedDebts.push({ ym: cb.value, category: cb.dataset.category, amount: amount });
           }
         });
 
         if (selectedDebts.length === 0) { toast('لطفاً حداقل یک بدهی را انتخاب کنید', true); return; }
 
-        let totalPaid = 0;
-        let totalOriginalDebt = 0;
-
         for (const debt of selectedDebts) {
           const year = Math.floor(debt.ym / 100);
           const month = debt.ym % 100;
-          totalPaid += debt.amount;
-          totalOriginalDebt += debt.original_amount;
-
           await T('app_submit_payment', {
             p_year: year, p_month: month, p_category: debt.category, p_amount: debt.amount,
             p_ref_code: $('#pf-r', m).value, p_note: `پرداخت ${debt.category} ${MONTHS[month - 1]} ${year}`,
@@ -1194,17 +1167,24 @@ async function payModal(targetUnitNo = null) {
             p_target_unit: isAdmin ? selectedUnit : null
           });
         }
+        notifyBale(`💸 پرداخت جدید (بر اساس بدهی):\n\n👤 واحد ${selectedUnit} - ${S.me.full_name}\n💰 مبلغ: ${fmt(totalAmount)} تومان`);
 
-        // 👈 اگر مبلغ پرداختی بیشتر از بدهی بود، مبلغ اضافه رو به عنوان بستانکاری ثبت کن
-        if (totalPaid > totalOriginalDebt) {
-          const extra = totalPaid - totalOriginalDebt;
-          await T('app_submit_payment', {
-            p_year: S.y, p_month: S.m, p_category: 'charge', p_amount: extra,
-            p_ref_code: $('#pf-r', m).value, p_note: `بستانکاری - پرداخت مازاد`,
-            p_pay_date: $('#pf-d', m).value, p_receipt_image: base64Image,
-            p_target_unit: isAdmin ? selectedUnit : null
-          });
-        }
+      } else {
+        const res = await T('app_process_payment_fifo', {
+          p_total_amount: totalAmount, p_pay_date: $('#pf-d', m).value, p_ref_code: $('#pf-r', m).value,
+          p_note: $('#pf-n', m).value, p_receipt_image: base64Image,
+          p_target_unit: isAdmin ? selectedUnit : null
+        });
+        if (!res.ok) throw new Error(res.error);
+        notifyBale(`💸 پرداخت جدید (مبلغ دلخواه):\n\n👤 واحد ${selectedUnit} - ${S.me.full_name}\n💰 مبلغ: ${fmt(totalAmount)} تومان`);
+      }
+
+      m.remove();
+      toast('پرداخت با موفقیت ثبت شد و منتظر تایید است');
+      go(S.view);
+    } catch (err) { showErr(err); }
+  });
+}
 
         notifyBale(`💸 پرداخت جدید (بر اساس بدهی):\n\n👤 واحد ${selectedUnit} - ${S.me.full_name}\n💰 مبلغ: ${fmt(totalPaid)} تومان`);
       }async function viewPay(el) {
