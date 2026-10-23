@@ -1167,43 +1167,47 @@ async function payModal(targetUnitNo = null) {
           const amtInp = $('.debt-amount', row);
           const amount = toNum(amtInp.value);
           if (cb.checked && amount > 0) {
-            selectedDebts.push({ ym: cb.value, category: cb.dataset.category, amount: amount });
+            selectedDebts.push({ 
+              ym: cb.value, 
+              category: cb.dataset.category, 
+              amount: amount,
+              original_amount: toNum(cb.dataset.original) // 👈 مبلغ اصلی بدهی
+            });
           }
         });
 
         if (selectedDebts.length === 0) { toast('لطفاً حداقل یک بدهی را انتخاب کنید', true); return; }
 
+        let totalPaid = 0;
+        let totalOriginalDebt = 0;
+
         for (const debt of selectedDebts) {
           const year = Math.floor(debt.ym / 100);
           const month = debt.ym % 100;
+          totalPaid += debt.amount;
+          totalOriginalDebt += debt.original_amount;
+
           await T('app_submit_payment', {
             p_year: year, p_month: month, p_category: debt.category, p_amount: debt.amount,
             p_ref_code: $('#pf-r', m).value, p_note: `پرداخت ${debt.category} ${MONTHS[month - 1]} ${year}`,
             p_pay_date: $('#pf-d', m).value, p_receipt_image: base64Image,
-            p_target_unit: isAdmin ? selectedUnit : null // 👈 ارسال واحد هدف برای مدیر
+            p_target_unit: isAdmin ? selectedUnit : null
           });
         }
-        notifyBale(`💸 پرداخت جدید (بر اساس بدهی):\n\n👤 واحد ${selectedUnit} - ${S.me.full_name}\n💰 مبلغ: ${fmt(totalAmount)} تومان`);
 
-      } else {
-        // حالت مبلغ دلخواه (FIFO)
-        // برای مدیر، باید تابع FIFO رو با واحد هدف صدا بزنیم
-        const res = await T('app_process_payment_fifo', {
-          p_total_amount: totalAmount, p_pay_date: $('#pf-d', m).value, p_ref_code: $('#pf-r', m).value,
-          p_note: $('#pf-n', m).value, p_receipt_image: base64Image,
-          p_target_unit: isAdmin ? selectedUnit : null // 👈 ارسال واحد هدف برای مدیر
-        });
-        if (!res.ok) throw new Error(res.error);
-        notifyBale(`💸 پرداخت جدید (مبلغ دلخواه):\n\n👤 واحد ${selectedUnit} - ${S.me.full_name}\n💰 مبلغ: ${fmt(totalAmount)} تومان\n✅ از قدیمی‌ترین بدهی کسر شد.`);
-      }
+        // 👈 اگر مبلغ پرداختی بیشتر از بدهی بود، مبلغ اضافه رو به عنوان بستانکاری ثبت کن
+        if (totalPaid > totalOriginalDebt) {
+          const extra = totalPaid - totalOriginalDebt;
+          await T('app_submit_payment', {
+            p_year: S.y, p_month: S.m, p_category: 'charge', p_amount: extra,
+            p_ref_code: $('#pf-r', m).value, p_note: `بستانکاری - پرداخت مازاد`,
+            p_pay_date: $('#pf-d', m).value, p_receipt_image: base64Image,
+            p_target_unit: isAdmin ? selectedUnit : null
+          });
+        }
 
-      m.remove();
-      toast('پرداخت با موفقیت ثبت شد و منتظر تایید است');
-      go(S.view);
-    } catch (err) { showErr(err); }
-  });
-}
-async function viewPay(el) {
+        notifyBale(`💸 پرداخت جدید (بر اساس بدهی):\n\n👤 واحد ${selectedUnit} - ${S.me.full_name}\n💰 مبلغ: ${fmt(totalPaid)} تومان`);
+      }async function viewPay(el) {
   const admin = S.me.is_admin; const list = await T('app_get_payment_requests'); const pending = list.filter(p => p.status === 'pending');
   el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap"><div><h1>${admin ? 'بررسی پرداخت‌ها' : 'پرداخت بدهی'}</h1><p class="sub" style="margin:0">${admin ? 'پرداخت‌های منتظر تایید شما' : 'پرداخت خود را ثبت کنید.'}</p></div><button class="btn sf" id="np">ثبت پرداخت جدید</button></div>${admin ? `<h2>منتظر تایید (${fa(pending.length)})</h2>${reqTable(pending, true)}<h2 style="margin-top:28px">سابقه</h2>${reqTable(list.filter(p => p.status !== 'pending'), true)}` : reqTable(list, false)}`;
   $('#np').addEventListener('click', async () => { let r = null; if (!admin) { const rep = await T('app_report', { p_year: S.y, p_month: S.m }); r = rep.rows[0]; } payModal(r); });
