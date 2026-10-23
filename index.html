@@ -982,95 +982,48 @@ function replyModal(r) {
   });
 }
 async function payModal(r) {
-  // گرفتن لیست بدهی‌های تفکیک شده
-  const today_ym = S.y * 100 + S.m;
-  const debts = await T('app_get_user_debts', { p_today_ym: today_ym });
-
-  let debtHtml = '';
-  if (debts && debts.length > 0) {
-    debtHtml = `
-      <div class="card" style="margin-bottom:16px; padding:12px; background:var(--bg)">
-        <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--ink)">لیست بدهی‌ها (جهت پرداخت تیک بزنید):</h3>
-        ${debts.map(d => `
-          <label style="display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px dashed var(--line); cursor:pointer">
-            <input type="checkbox" class="debt-check" value="${d.ym}" data-category="${d.category}" data-amount="${d.amount}" checked style="width:18px;height:18px;accent-color:var(--navy)">
-            <span style="flex:1; font-weight:bold">${d.category_name} ${d.month_name} ${fa(d.year)}</span>
-            <b style="color:var(--danger)">${fmt(d.amount)} تومان</b>
-          </label>
-        `).join('')}
-      </div>
-    `;
-  } else {
-    debtHtml = `<div class="card" style="background:#e3f6ea;color:#15803d;margin-bottom:16px;padding:16px;text-align:center;font-weight:bold;">شما هیچ بدهی معوقی ندارید. ✅</div>`;
-  }
-
   const m = modal(`
-    <h2>ثبت پرداخت بدهی</h2>
-    <p class="sub">مواردی که قصد پرداخت آن‌ها را دارید انتخاب کنید.</p>
-    ${debtHtml}
+    <h2>پرداخت مبلغ دلخواه</h2>
+    <p class="sub">سیستم به صورت خودکار مبلغ شما را از قدیمی‌ترین بدهی کسر می‌کند.</p>
+    
     <form id="pf" class="grid g2">
-      <label class="f" style="grid-column:1/-1">مبلغ کل انتخاب شده (تومان)<input id="pf-a" inputmode="numeric" readonly style="background:var(--bg);font-weight:900;font-size:20px;text-align:center;color:var(--navy)"></label>
+      <label class="f" style="grid-column:1/-1">مبلغ پرداختی (تومان)<input id="pf-a" inputmode="numeric" required placeholder="مثلاً 5,000,000" style="font-weight:900;font-size:20px;text-align:center;"></label>
       <label class="f">کد پیگیری<input id="pf-r" dir="ltr"></label>
       <label class="f">تاریخ واریز<input id="pf-d" dir="ltr" value="${TODAY.y}/${String(TODAY.m).padStart(2,'0')}/${String(TODAY.d).padStart(2,'0')}"></label>
       <label class="f" style="grid-column:1/-1">بارگذاری تصویر فیش (اختیاری)<input id="pf-img" type="file" accept="image/*"></label>
       <label class="f" style="grid-column:1/-1">توضیحات<input id="pf-n"></label>
-      <button class="btn sf" style="grid-column:1/-1" ${!debts || debts.length === 0 ? 'disabled' : ''}>ثبت پرداخت برای موارد انتخاب شده</button>
+      <button class="btn sf" style="grid-column:1/-1">پرداخت و تسویه خودکار</button>
     </form>
   `);
 
-  const updateTotal = () => {
-    let total = 0;
-    $$('.debt-check', m).forEach(cb => {
-      if (cb.checked) total += Number(cb.dataset.amount);
-    });
-    $('#pf-a', m).value = fmt(total);
-  };
-
-  $$('.debt-check', m).forEach(cb => cb.addEventListener('change', updateTotal));
-  updateTotal();
+  attachNumericInputIn(m, '#pf-a'); // این تابع مبلغ رو با کاما فرمت می‌کنه
 
   $('#pf', m).addEventListener('submit', async e => {
     e.preventDefault();
     const fileInput = $('#pf-img', m);
     let base64Image = null;
     if (fileInput.files.length > 0) base64Image = await compressImage(fileInput.files[0]);
+    
+    const amount = toNum($('#pf-a', m).value);
+    if (amount <= 0) { toast('مبلغ را وارد کنید', true); return; }
 
     try {
-      const selectedDebts = [];
-      $$('.debt-check', m).forEach(cb => {
-        if (cb.checked) {
-          selectedDebts.push({ ym: cb.value, category: cb.dataset.category, amount: Number(cb.dataset.amount) });
-        }
+      // صدا زدن تابع جدید دیتابیس
+      const res = await T('app_process_payment_fifo', {
+        p_total_amount: amount,
+        p_pay_date: $('#pf-d', m).value,
+        p_ref_code: $('#pf-r', m).value,
+        p_note: $('#pf-n', m).value,
+        p_receipt_image: base64Image
       });
 
-      if (selectedDebts.length === 0) {
-        toast('لطفاً حداقل یک بدهی را انتخاب کنید', true);
-        return;
-      }
+      if (!res.ok) throw new Error(res.error);
 
-      let totalPaid = 0;
-      for (const debt of selectedDebts) {
-        const year = Math.floor(debt.ym / 100);
-        const month = debt.ym % 100;
-        totalPaid += debt.amount;
-
-        // ثبت جداگانه هر آیتم در تراکنش‌ها
-        await T('app_submit_payment', {
-          p_year: year,
-          p_month: month,
-          p_category: debt.category,
-          p_amount: debt.amount,
-          p_ref_code: $('#pf-r', m).value,
-          p_note: `پرداخت ${debt.category === 'charge' ? 'شارژ' : debt.category === 'water' ? 'آب' : debt.category === 'gas' ? 'گاز' : debt.category === 'repair' ? 'بازسازی' : 'پارکینگ'} ${MONTHS[month - 1]} ${year} ${$('#pf-n', m).value ? '- ' + $('#pf-n', m).value : ''}`,
-          p_pay_date: $('#pf-d', m).value,
-          p_receipt_image: base64Image,
-        });
-      }
-
-      notifyBale(`💸 پرداخت جدید ثبت شد (منتظر تایید):\n\n👤 واحد ${S.me.unit_no} - ${S.me.full_name}\n💰 مبلغ کل: ${fmt(totalPaid)} تومان\n📅 برای ${selectedDebts.length} آیتم`);
+      // پیام به بله
+      notifyBale(`💸 پرداخت جدید ثبت شد:\n\n👤 واحد ${S.me.unit_no} - ${S.me.full_name}\n💰 مبلغ: ${fmt(amount)} تومان\n✅ از قدیمی‌ترین بدهی کسر شد.`);
 
       m.remove();
-      toast('پرداخت با موفقیت ثبت شد و منتظر تایید است');
+      toast(`پرداخت ${fmt(amount)} تومانی با موفقیت از بدهی‌ها کسر شد`);
       go(S.view);
     } catch (err) { showErr(err); }
   });
