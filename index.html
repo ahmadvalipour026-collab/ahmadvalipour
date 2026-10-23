@@ -1190,20 +1190,168 @@ async function viewTx(el) {
 }
 
 function txModal(t, units) {
-  const isNew = !t; t = t || { year: TODAY.y, month: TODAY.m, day: TODAY.d, unit_no: null, tx_type: 'درآمد', category: 'charge', location: '', description: '', amount: '', occupancy: '' };
-  const m = modal(`<h2>${isNew ? 'ثبت تراکنش جدید' : 'ویرایش تراکنش'}</h2><form id="tf" class="grid g3"><label class="f">نوع<select id="t-type"><option value="درآمد" ${t.tx_type === 'درآمد' ? 'selected' : ''}>درآمد</option><option value="هزینه" ${t.tx_type === 'هزینه' ? 'selected' : ''}>هزینه</option></select></label><label class="f">واحد<select id="t-unit">${unitOptions(t.unit_no ?? 0, true)}</select></label><label class="f">دسته<select id="t-cat">${Object.entries(CATS).filter(([k]) => k !== 'bill').map(([k,v]) => `<option value="${k}" ${t.category === k ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></label><label class="f">سکونت<select id="t-occ">${OCC.map(o => `<option ${t.occupancy === o ? 'selected' : ''}>${o}</option>`).join('')}</select></label><label class="f">سال<select id="t-y">${yearOptions(t.year)}</select></label><label class="f">ماه<select id="t-m">${monthOptions(t.month)}</select></label><label class="f">روز<input id="t-d" type="number" min="1" max="31" value="${t.day || 1}"></label><label class="f">محل<input id="t-loc" value="${esc(t.location || '')}"></label><label class="f">شرح<input id="t-desc" value="${esc(t.description || '')}"></label><label class="f" style="grid-column:1/-1">مبلغ (تومان)<input id="t-amt" inputmode="numeric" required value="${t.amount ? fmt(t.amount) : ''}"></label><div style="grid-column:1/-1"><button class="btn sf" type="submit">${isNew ? 'ثبت' : 'ذخیره'}</button></div></form>`);
+  const isNew = !t; 
+  t = t || { year: TODAY.y, month: TODAY.m, day: TODAY.d, unit_no: null, tx_type: 'درآمد', category: 'water', location: '', description: '', amount: '', occupancy: '' };
+
+  // نگاشت دسته‌بندی‌ها به فارسی
+  const CATS = { 
+    water:'قبض آب', gas:'قبض گاز', electric:'قبض برق', 
+    parking:'اجاره پارکینگ', repair:'دریافت بازسازی', charge:'شارژ ماهیانه', other:'سایر',
+    cleaning:'نظافت', service:'سرویس آسانسور', repair_pay:'هزینه تعمیرات', building_repair:'هزینه بازسازی', fixed_cost:'هزینه‌های ثابت', payment:'پرداخت‌ها'
+  };
+
+  const m = modal(`
+    <h2>${isNew ? 'ثبت تراکنش جدید' : 'ویرایش تراکنش'}</h2>
+    
+    <form id="tf" class="grid g2" style="gap:16px">
+      
+      <!-- نوع تراکنش -->
+      <label class="f">نوع
+        <select id="t-type">
+          <option value="درآمد" ${t.tx_type === 'درآمد' ? 'selected' : ''}>درآمد (دریافت)</option>
+          <option value="هزینه" ${t.tx_type === 'هزینه' ? 'selected' : ''}>هزینه (پرداخت)</option>
+        </select>
+      </label>
+
+      <!-- واحد / ساختمان -->
+      <label class="f">واحد
+        <select id="t-unit">${unitOptions(t.unit_no ?? 0, true)}</select>
+      </label>
+
+      <!-- پرداخت‌کننده (فقط برای درآمد) -->
+      <label class="f" id="wrap-payer">پرداخت‌کننده
+        <select id="t-occ">
+          <option value="">-- انتخاب کنید --</option>
+          <option value="مالک ساکن" ${t.occupancy === 'مالک ساکن' ? 'selected' : ''}>مالک ساکن</option>
+          <option value="مالک" ${t.occupancy === 'مالک' ? 'selected' : ''}>مالک</option>
+          <option value="مستأجر" ${t.occupancy === 'مستأجر' ? 'selected' : ''}>مستأجر</option>
+        </select>
+      </label>
+
+      <!-- محل -->
+      <label class="f">محل (اختیاری)
+        <input id="t-loc" value="${esc(t.location || '')}" placeholder="مثلاً بلوک A">
+      </label>
+
+      <!-- شرح -->
+      <label class="f" style="grid-column:1/-1">شرح / دسته‌بندی
+        <select id="t-cat">
+          <optgroup label="درآمدها" id="opt-in">
+            <option value="water" ${t.category === 'water' ? 'selected' : ''}>قبض آب</option>
+            <option value="gas" ${t.category === 'gas' ? 'selected' : ''}>قبض گاز</option>
+            <option value="electric" ${t.category === 'electric' ? 'selected' : ''}>قبض برق</option>
+            <option value="parking" ${t.category === 'parking' ? 'selected' : ''}>اجاره پارکینگ</option>
+            <option value="repair" ${t.category === 'repair' ? 'selected' : ''}>دریافت بازسازی</option>
+            <option value="charge" ${t.category === 'charge' ? 'selected' : ''}>شارژ ماهیانه</option>
+            <option value="other" ${t.category === 'other' ? 'selected' : ''}>سایر (درآمد)</option>
+          </optgroup>
+          <optgroup label="هزینه‌ها" id="opt-out">
+            <option value="cleaning" ${t.category === 'cleaning' ? 'selected' : ''}>نظافت</option>
+            <option value="service" ${t.category === 'service' ? 'selected' : ''}>سرویس آسانسور</option>
+            <option value="building_repair" ${t.category === 'building_repair' ? 'selected' : ''}>هزینه بازسازی</option>
+            <option value="fixed_cost" ${t.category === 'fixed_cost' ? 'selected' : ''}>هزینه‌های ثابت</option>
+            <option value="repair_pay" ${t.category === 'repair_pay' ? 'selected' : ''}>هزینه تعمیرات</option>
+            <option value="payment" ${t.category === 'payment' ? 'selected' : ''}>پرداخت‌ها</option>
+            <option value="other" ${t.category === 'other' ? 'selected' : ''}>سایر (هزینه)</option>
+          </optgroup>
+        </select>
+      </label>
+
+      <!-- توضیحات -->
+      <label class="f" style="grid-column:1/-1">توضیحات
+        <input id="t-desc" value="${esc(t.description || '')}" placeholder="توضیح جزئیات...">
+      </label>
+
+      <!-- مبلغ -->
+      <label class="f" style="grid-column:1/-1">مبلغ (تومان)
+        <input id="t-amt" inputmode="numeric" required value="${t.amount ? fmt(t.amount) : ''}">
+      </label>
+
+      <!-- تاریخ -->
+      <label class="f">سال
+        <select id="t-y">${yearOptions(t.year)}</select>
+      </label>
+      <label class="f">ماه
+        <select id="t-m">${monthOptions(t.month)}</select>
+      </label>
+      <label class="f">روز
+        <input id="t-d" type="number" min="1" max="31" value="${t.day || 1}">
+      </label>
+
+      <div style="grid-column:1/-1; margin-top:8px;">
+        <button class="btn sf" type="submit" style="width:100%;">${isNew ? 'ثبت تراکنش' : 'ذخیره تغییرات'}</button>
+      </div>
+    </form>
+  `);
+
+  // فرمت مبلغ
   attachNumericInputIn(m, '#t-amt');
+
+  // منطق مخفی/نمایان کردن فیلد پرداخت‌کننده و دسته‌بندی بر اساس نوع تراکنش
+  const typeSelect = $('#t-type', m);
+  const payerWrap = $('#wrap-payer', m);
+  const optIn = $('#opt-in', m);
+  const optOut = $('#opt-out', m);
+
+  const updateFormUI = () => {
+    if (typeSelect.value === 'درآمد') {
+      payerWrap.style.display = 'flex';
+      optIn.style.display = '';
+      optOut.style.display = 'none';
+      // اگر دسته‌بندی فعلی از نوع هزینه بود، به پیش‌فرض تغییر بده
+      if (['cleaning','service','building_repair','fixed_cost','repair_pay','payment'].includes($('#t-cat', m).value)) {
+        $('#t-cat', m).value = 'charge';
+      }
+    } else {
+      payerWrap.style.display = 'none';
+      $('#t-occ', m).value = ''; // پاک کردن مقدار
+      optIn.style.display = 'none';
+      optOut.style.display = '';
+      if (['water','gas','electric','parking','repair','charge'].includes($('#t-cat', m).value)) {
+        $('#t-cat', m).value = 'cleaning';
+      }
+    }
+  };
+
+  typeSelect.addEventListener('change', updateFormUI);
+  updateFormUI(); // اجرای اولیه
+
+  // ثبت فرم
   $('#tf', m).addEventListener('submit', async e => {
     e.preventDefault();
+    
     try {
-      const txType = $('#t-type', m).value; const unitNo = +$('#t-unit', m).value || null; const amount = toNum($('#t-amt', m).value); const desc = $('#t-desc', m).value || CATS[$('#t-cat', m).value];
-      await T('app_admin_save_transaction', { p_id: isNew ? null : t.id, p_year: +$('#t-y', m).value, p_month: +$('#t-m', m).value, p_day: +$('#t-d', m).value || 1, p_unit_no: unitNo, p_tx_type: txType, p_category: $('#t-cat', m).value, p_location: $('#t-loc', m).value, p_description: $('#t-desc', m).value, p_amount: amount, p_occupancy: $('#t-occ', m).value, p_force: false });
-      notifyBale(`📝 تراکنش جدید ثبت شد:\n\n🔹 نوع: ${txType}\n🏢 واحد: ${unitNo ? 'واحد ' + unitNo : 'ساختمان'}\n💰 مبلغ: ${fmt(amount)} تومان\n📄 شرح: ${desc || '—'}`);
-      m.remove(); toast('ثبت شد'); go('tx');
+      const txType = $('#t-type', m).value;
+      const unitNo = +$('#t-unit', m).value || null;
+      const amount = toNum($('#t-amt', m).value);
+      const desc = $('#t-desc', m).value;
+      const category = $('#t-cat', m).value;
+
+      if (!amount) { toast('مبلغ را وارد کنید', true); return; }
+
+      await T('app_admin_save_transaction', {
+        p_id: isNew ? null : t.id,
+        p_year: +$('#t-y', m).value,
+        p_month: +$('#t-m', m).value,
+        p_day: +$('#t-d', m).value || 1,
+        p_unit_no: unitNo,
+        p_tx_type: txType,
+        p_category: category,
+        p_location: $('#t-loc', m).value,
+        p_description: desc,
+        p_amount: amount,
+        p_occupancy: $('#t-occ', m).value,
+        p_force: false,
+      });
+
+      notifyBale(`${isNew ? '📝 تراکنش جدید' : '✏️ ویرایش تراکنش'}:\n\n🔹 نوع: ${txType}\n🏢 واحد: ${unitNo ? 'واحد ' + unitNo : 'ساختمان'}\n💰 مبلغ: ${fmt(amount)} تومان\n📄 بابت: ${CATS[category] || category}`);
+
+      m.remove(); 
+      toast(isNew ? 'ثبت شد' : 'ویرایش شد'); 
+      go('tx');
     } catch (e) { showErr(e); }
   });
 }
-
 function exportCsv(rows) {
   const sep = ';'; const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const head = ['تاریخ', 'سال', 'ماه', 'واحد', 'نوع', 'محل', 'شرح', 'مبلغ', 'نوع سکونت'];
