@@ -982,7 +982,7 @@ function replyModal(r) {
   });
 }
 async function payModal(r) {
-  // گرفتن لیست بدهی‌های معوق
+  // گرفتن لیست بدهی‌های تفکیک شده
   const today_ym = S.y * 100 + S.m;
   const debts = await T('app_get_user_debts', { p_today_ym: today_ym });
 
@@ -993,8 +993,8 @@ async function payModal(r) {
         <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--ink)">لیست بدهی‌ها (جهت پرداخت تیک بزنید):</h3>
         ${debts.map(d => `
           <label style="display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px dashed var(--line); cursor:pointer">
-            <input type="checkbox" class="debt-check" value="${d.ym}" data-amount="${d.amount}" checked style="width:18px;height:18px;accent-color:var(--navy)">
-            <span style="flex:1; font-weight:bold">شارژ ${d.month_name} ${fa(d.year)}</span>
+            <input type="checkbox" class="debt-check" value="${d.ym}" data-category="${d.category}" data-amount="${d.amount}" checked style="width:18px;height:18px;accent-color:var(--navy)">
+            <span style="flex:1; font-weight:bold">${d.category_name} ${d.month_name} ${fa(d.year)}</span>
             <b style="color:var(--danger)">${fmt(d.amount)} تومان</b>
           </label>
         `).join('')}
@@ -1018,7 +1018,6 @@ async function payModal(r) {
     </form>
   `);
 
-  // تابع محاسبه مجموع مبالغ تیک خورده
   const updateTotal = () => {
     let total = 0;
     $$('.debt-check', m).forEach(cb => {
@@ -1027,9 +1026,8 @@ async function payModal(r) {
     $('#pf-a', m).value = fmt(total);
   };
 
-  // وقتی تیک‌ها تغییر کردند، مبلغ کل آپدیت بشه
   $$('.debt-check', m).forEach(cb => cb.addEventListener('change', updateTotal));
-  updateTotal(); // اجرای اولیه
+  updateTotal();
 
   $('#pf', m).addEventListener('submit', async e => {
     e.preventDefault();
@@ -1041,7 +1039,7 @@ async function payModal(r) {
       const selectedDebts = [];
       $$('.debt-check', m).forEach(cb => {
         if (cb.checked) {
-          selectedDebts.push({ ym: cb.value, amount: Number(cb.dataset.amount) });
+          selectedDebts.push({ ym: cb.value, category: cb.dataset.category, amount: Number(cb.dataset.amount) });
         }
       });
 
@@ -1050,26 +1048,26 @@ async function payModal(r) {
         return;
       }
 
-      // ثبت هر ماه به صورت جداگانه در دیتابیس
       let totalPaid = 0;
       for (const debt of selectedDebts) {
         const year = Math.floor(debt.ym / 100);
         const month = debt.ym % 100;
         totalPaid += debt.amount;
 
+        // ثبت جداگانه هر آیتم در تراکنش‌ها
         await T('app_submit_payment', {
           p_year: year,
           p_month: month,
-          p_category: 'charge',
+          p_category: debt.category,
           p_amount: debt.amount,
           p_ref_code: $('#pf-r', m).value,
-          p_note: `پرداخت بدهی ${MONTHS[month - 1]} ${year} ${$('#pf-n', m).value ? '- ' + $('#pf-n', m).value : ''}`,
+          p_note: `پرداخت ${debt.category === 'charge' ? 'شارژ' : debt.category === 'water' ? 'آب' : debt.category === 'gas' ? 'گاز' : debt.category === 'repair' ? 'بازسازی' : 'پارکینگ'} ${MONTHS[month - 1]} ${year} ${$('#pf-n', m).value ? '- ' + $('#pf-n', m).value : ''}`,
           p_pay_date: $('#pf-d', m).value,
           p_receipt_image: base64Image,
         });
       }
 
-      notifyBale(`💸 پرداخت جدید ثبت شد (منتظر تایید):\n\n👤 واحد ${S.me.unit_no} - ${S.me.full_name}\n💰 مبلغ کل: ${fmt(totalPaid)} تومان\n📅 برای ${selectedDebts.length} ماه`);
+      notifyBale(`💸 پرداخت جدید ثبت شد (منتظر تایید):\n\n👤 واحد ${S.me.unit_no} - ${S.me.full_name}\n💰 مبلغ کل: ${fmt(totalPaid)} تومان\n📅 برای ${selectedDebts.length} آیتم`);
 
       m.remove();
       toast('پرداخت با موفقیت ثبت شد و منتظر تایید است');
@@ -1077,7 +1075,6 @@ async function payModal(r) {
     } catch (err) { showErr(err); }
   });
 }
-
 async function viewPay(el) {
   const admin = S.me.is_admin; const list = await T('app_get_payment_requests'); const pending = list.filter(p => p.status === 'pending');
   el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap"><div><h1>${admin ? 'بررسی پرداخت‌ها' : 'پرداخت بدهی'}</h1><p class="sub" style="margin:0">${admin ? 'پرداخت‌های منتظر تایید شما' : 'پرداخت خود را ثبت کنید.'}</p></div><button class="btn sf" id="np">ثبت پرداخت جدید</button></div>${admin ? `<h2>منتظر تایید (${fa(pending.length)})</h2>${reqTable(pending, true)}<h2 style="margin-top:28px">سابقه</h2>${reqTable(list.filter(p => p.status !== 'pending'), true)}` : reqTable(list, false)}`;
