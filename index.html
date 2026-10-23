@@ -1029,6 +1029,11 @@ async function viewTx(el) {
   ['#f-y', '#f-m', '#f-u', '#f-t'].forEach(s => $(s)?.addEventListener('change', upd));
   $('#tx-csv')?.addEventListener('click', () => exportCsv(rows)); if (!admin) return;
   $('#tx-new')?.addEventListener('click', () => txModal(null, units));
+    // دکمه ویرایش تراکنش
+  $$('[data-edit]').forEach(b => b.addEventListener('click', () => {
+    const tx = rows.find(t => t.id == b.dataset.edit);
+    if (tx) txModal(tx, units);
+  }));
   $$('[data-dl]').forEach(b => b.addEventListener('click', async () => { if (!confirm('حذف شود؟')) return; try { await T('app_admin_delete_transaction', { p_id: +b.dataset.dl }); toast('حذف شد'); go('tx'); } catch (e) { showErr(e); } }));
 }
 
