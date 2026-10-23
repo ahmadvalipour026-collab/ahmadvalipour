@@ -981,17 +981,99 @@ function replyModal(r) {
     } catch (err) { showErr(err); }
   });
 }
-function payModal(r) {
-  const m = modal(`<h2>ثبت پرداخت</h2><p class="sub">اطمینان حاصل کنید تصویر فیش یا رسید واضح باشد.</p><form id="pf" class="grid g2"><label class="f">بابت<select id="pf-c">${Object.entries(CATS).sort(([a],[b]) => (a==='bill'?-1:b==='bill'?1:0)).map(([k,v]) => `<option value="${k}">${esc(v)}</option>`).join('')}</select></label><label class="f">مبلغ (تومان)<input id="pf-a" inputmode="numeric" required value="${r && r.remaining > 0 ? fmt(r.remaining) : ''}"></label><label class="f">ماه<select id="pf-m">${monthOptions(S.m)}</select></label><label class="f">سال<select id="pf-y">${yearOptions(S.y)}</select></label><label class="f">تاریخ واریز<input id="pf-d" dir="ltr" value="${TODAY.y}/${String(TODAY.m).padStart(2,'0')}/${String(TODAY.d).padStart(2,'0')}"></label><label class="f">کد پیگیری<input id="pf-r" dir="ltr"></label><label class="f" style="grid-column:1/-1">بارگذاری تصویر فیش (اختیاری)<input id="pf-img" type="file" accept="image/*"></label><label class="f" style="grid-column:1/-1">توضیحات<input id="pf-n"></label><button class="btn sf" style="grid-column:1/-1">ارسال برای تایید</button></form>`);
-  attachNumericInputIn(m, '#pf-a');
+async function payModal(r) {
+  // گرفتن لیست بدهی‌های معوق
+  const today_ym = S.y * 100 + S.m;
+  const debts = await T('app_get_user_debts', { p_today_ym: today_ym });
+
+  let debtHtml = '';
+  if (debts && debts.length > 0) {
+    debtHtml = `
+      <div class="card" style="margin-bottom:16px; padding:12px; background:var(--bg)">
+        <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--ink)">لیست بدهی‌ها (جهت پرداخت تیک بزنید):</h3>
+        ${debts.map(d => `
+          <label style="display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px dashed var(--line); cursor:pointer">
+            <input type="checkbox" class="debt-check" value="${d.ym}" data-amount="${d.amount}" checked style="width:18px;height:18px;accent-color:var(--navy)">
+            <span style="flex:1; font-weight:bold">شارژ ${d.month_name} ${fa(d.year)}</span>
+            <b style="color:var(--danger)">${fmt(d.amount)} تومان</b>
+          </label>
+        `).join('')}
+      </div>
+    `;
+  } else {
+    debtHtml = `<div class="card" style="background:#e3f6ea;color:#15803d;margin-bottom:16px;padding:16px;text-align:center;font-weight:bold;">شما هیچ بدهی معوقی ندارید. ✅</div>`;
+  }
+
+  const m = modal(`
+    <h2>ثبت پرداخت بدهی</h2>
+    <p class="sub">مواردی که قصد پرداخت آن‌ها را دارید انتخاب کنید.</p>
+    ${debtHtml}
+    <form id="pf" class="grid g2">
+      <label class="f" style="grid-column:1/-1">مبلغ کل انتخاب شده (تومان)<input id="pf-a" inputmode="numeric" readonly style="background:var(--bg);font-weight:900;font-size:20px;text-align:center;color:var(--navy)"></label>
+      <label class="f">کد پیگیری<input id="pf-r" dir="ltr"></label>
+      <label class="f">تاریخ واریز<input id="pf-d" dir="ltr" value="${TODAY.y}/${String(TODAY.m).padStart(2,'0')}/${String(TODAY.d).padStart(2,'0')}"></label>
+      <label class="f" style="grid-column:1/-1">بارگذاری تصویر فیش (اختیاری)<input id="pf-img" type="file" accept="image/*"></label>
+      <label class="f" style="grid-column:1/-1">توضیحات<input id="pf-n"></label>
+      <button class="btn sf" style="grid-column:1/-1" ${!debts || debts.length === 0 ? 'disabled' : ''}>ثبت پرداخت برای موارد انتخاب شده</button>
+    </form>
+  `);
+
+  // تابع محاسبه مجموع مبالغ تیک خورده
+  const updateTotal = () => {
+    let total = 0;
+    $$('.debt-check', m).forEach(cb => {
+      if (cb.checked) total += Number(cb.dataset.amount);
+    });
+    $('#pf-a', m).value = fmt(total);
+  };
+
+  // وقتی تیک‌ها تغییر کردند، مبلغ کل آپدیت بشه
+  $$('.debt-check', m).forEach(cb => cb.addEventListener('change', updateTotal));
+  updateTotal(); // اجرای اولیه
+
   $('#pf', m).addEventListener('submit', async e => {
-    e.preventDefault(); const fileInput = $('#pf-img', m); let base64Image = null;
+    e.preventDefault();
+    const fileInput = $('#pf-img', m);
+    let base64Image = null;
     if (fileInput.files.length > 0) base64Image = await compressImage(fileInput.files[0]);
+
     try {
-      const category = $('#pf-c', m).value; const amount = toNum($('#pf-a', m).value);
-      await T('app_submit_payment', { p_year: +$('#pf-y', m).value, p_month: +$('#pf-m', m).value, p_category: category, p_amount: amount, p_ref_code: $('#pf-r', m).value, p_note: $('#pf-n', m).value, p_pay_date: $('#pf-d', m).value, p_receipt_image: base64Image });
-      notifyBale(`💸 پرداخت جدید ثبت شد (منتظر تایید):\n\n👤 واحد ${S.me.unit_no} - ${S.me.full_name}\n💰 بابت: ${CATS[category] || category}\n📅 ماه: ${MONTHS[S.m-1]} ${S.y}\n🔢 مبلغ: ${fmt(amount)} تومان`);
-      m.remove(); toast('پرداخت ثبت شد و منتظر تایید است'); go(S.view);
+      const selectedDebts = [];
+      $$('.debt-check', m).forEach(cb => {
+        if (cb.checked) {
+          selectedDebts.push({ ym: cb.value, amount: Number(cb.dataset.amount) });
+        }
+      });
+
+      if (selectedDebts.length === 0) {
+        toast('لطفاً حداقل یک بدهی را انتخاب کنید', true);
+        return;
+      }
+
+      // ثبت هر ماه به صورت جداگانه در دیتابیس
+      let totalPaid = 0;
+      for (const debt of selectedDebts) {
+        const year = Math.floor(debt.ym / 100);
+        const month = debt.ym % 100;
+        totalPaid += debt.amount;
+
+        await T('app_submit_payment', {
+          p_year: year,
+          p_month: month,
+          p_category: 'charge',
+          p_amount: debt.amount,
+          p_ref_code: $('#pf-r', m).value,
+          p_note: `پرداخت بدهی ${MONTHS[month - 1]} ${year} ${$('#pf-n', m).value ? '- ' + $('#pf-n', m).value : ''}`,
+          p_pay_date: $('#pf-d', m).value,
+          p_receipt_image: base64Image,
+        });
+      }
+
+      notifyBale(`💸 پرداخت جدید ثبت شد (منتظر تایید):\n\n👤 واحد ${S.me.unit_no} - ${S.me.full_name}\n💰 مبلغ کل: ${fmt(totalPaid)} تومان\n📅 برای ${selectedDebts.length} ماه`);
+
+      m.remove();
+      toast('پرداخت با موفقیت ثبت شد و منتظر تایید است');
+      go(S.view);
     } catch (err) { showErr(err); }
   });
 }
