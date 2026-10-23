@@ -997,21 +997,19 @@ function replyModal(r) {
 }
 async function payModal(targetUnitNo = null) {
   const isAdmin = S.me.is_admin;
-  // اگر مدیر است و واحد انتخاب نکرده، واحد پیش‌فرض رو می‌ذاریم 1 (یا هیچی)
+  // اگر مدیر است و واحد انتخاب نکرده، واحد پیش‌فرض رو می‌ذاریم 1 (یا واحد کلیک شده)
   let selectedUnit = isAdmin ? (targetUnitNo || 1) : S.me.unit_no;
 
   // تابعی برای گرفتن بدهی‌های واحد انتخاب شده
   const fetchDebts = async (unitNo) => {
     if (isAdmin) {
-      // برای مدیر، باید از یه تابع جدید استفاده کنیم که بدهی هر واحد رو بده
       return await T('app_get_unit_debts_for_admin', { p_unit_no: unitNo, p_today_ym: S.y * 100 + S.m });
     } else {
-      // برای ساکن، از تابع قبلی
       return await T('app_get_user_debts', { p_today_ym: S.y * 100 + S.m });
     }
   };
 
-  const debts = await fetchDebts(selectedUnit);
+  let debts = await fetchDebts(selectedUnit);
 
   // ساخت گزینه‌های انتخاب واحد برای مدیر
   const unitSelectHtml = isAdmin ? `
@@ -1022,42 +1020,29 @@ async function payModal(targetUnitNo = null) {
     </label>
   ` : '';
 
-  let debtHtml = '';
-  if (debts && debts.length > 0) {
-    debtHtml = `
-      <div class="card" style="margin-bottom:16px; padding:12px; background:var(--bg)">
-        <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--ink)">لیست بدهی‌ها (مبلغ هر ردیف را می‌توانید ویرایش کنید):</h3>
-        ${debts.map((d) => `
-          <div class="debt-row" style="display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px dashed var(--line)">
-            <input type="checkbox" class="debt-check" value="${d.ym}" data-category="${d.category}" data-original="${d.amount}" checked style="width:18px;height:18px;accent-color:var(--navy)">
-            <span style="flex:1; font-weight:bold">${d.category_name} ${d.month_name} ${fa(d.year)}</span>
-            <input type="text" class="debt-amount" value="${fmt(d.amount)}" style="width:120px; text-align:left; direction:rtl; padding:6px 10px; min-height:36px; font-weight:bold;">
-          </div>
-        `).join('')}
-      </div>
-    `;
-  } else {
-    debtHtml = `<div class="card" style="background:#e3f6ea;color:#15803d;margin-bottom:16px;padding:16px;text-align:center;font-weight:bold;">این واحد هیچ بدهی معوقی ندارد. ✅</div>`;
-  }
-
   const m = modal(`
     <h2>ثبت پرداخت</h2>
     <p class="sub">${isAdmin ? 'برای هر واحدی که بخواهید می‌توانید پرداخت ثبت کنید.' : 'نحوه پرداخت خود را انتخاب کنید.'}</p>
     
     ${unitSelectHtml}
 
+    <!-- دکمه‌های انتخاب نوع پرداخت -->
     <div style="display:flex; gap:8px; margin-bottom:20px;">
       <button type="button" class="btn sf" id="tab-debts" style="flex:1;">پرداخت بر اساس بدهی</button>
       <button type="button" class="btn lt" id="tab-custom" style="flex:1;">پرداخت مبلغ دلخواه</button>
     </div>
 
-    <div id="sec-debts">${debtHtml}</div>
+    <!-- بخش پرداخت بر اساس بدهی (تیک‌ها) -->
+    <div id="sec-debts"></div>
+
+    <!-- بخش پرداخت مبلغ دلخواه -->
     <div id="sec-custom" class="hidden">
       <div class="card" style="margin-bottom:16px; padding:16px; background:var(--bg)">
         <p style="margin:0; font-size:13px; color:var(--muted); text-align:center;">سیستم به صورت خودکار مبلغ شما را از قدیمی‌ترین بدهی کسر می‌کند.</p>
       </div>
     </div>
 
+    <!-- فرم مشترک -->
     <form id="pf" class="grid g2">
       <label class="f" style="grid-column:1/-1">مبلغ کل (تومان)<input id="pf-a" inputmode="numeric" readonly style="background:var(--bg);font-weight:900;font-size:20px;text-align:center;color:var(--navy)"></label>
       <label class="f hidden" id="wrap-custom-amount" style="grid-column:1/-1; margin-top:8px;">مبلغ دلخواه خود را وارد کنید
@@ -1073,37 +1058,150 @@ async function payModal(targetUnitNo = null) {
 
   let currentTab = 'debts';
 
-  // تغییر واحد توسط مدیر
+  // تابع برای رندر کردن تیک‌های بدهی
+  const renderDebts = (debtList) => {
+    const container = $('#sec-debts', m);
+    if (debtList && debtList.length > 0) {
+      container.innerHTML = `
+        <div class="card" style="margin-bottom:16px; padding:12px; background:var(--bg)">
+          <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--ink)">لیست بدهی‌ها (مبلغ هر ردیف را می‌توانید ویرایش کنید):</h3>
+          ${debtList.map((d) => `
+            <div class="debt-row" style="display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px dashed var(--line)">
+              <input type="checkbox" class="debt-check" value="${d.ym}" data-category="${d.category}" data-original="${d.amount}" checked style="width:18px;height:18px;accent-color:var(--navy)">
+              <span style="flex:1; font-weight:bold">${d.category_name} ${d.month_name} ${fa(d.year)}</span>
+              <input type="text" class="debt-amount" value="${fmt(d.amount)}" style="width:120px; text-align:left; direction:rtl; padding:6px 10px; min-height:36px; font-weight:bold;">
+            </div>
+          `).join('')}
+        </div>
+      `;
+      bindDebtEvents();
+    } else {
+      container.innerHTML = `<div class="card" style="background:#e3f6ea;color:#15803d;margin-bottom:16px;padding:16px;text-align:center;font-weight:bold;">این واحد هیچ بدهی معوقی ندارد. ✅</div>`;
+    }
+    updateTotalDebts();
+  };
+
+  // اتصال رویدادها به تیک‌ها و اینپوت‌های مبلغ
+  const bindDebtEvents = () => {
+    $$('.debt-amount', m).forEach(inp => {
+      inp.addEventListener('input', e => {
+        const n = toNum(e.target.value); e.target.value = n ? fmt(n) : '';
+        updateTotalDebts();
+      });
+    });
+
+    $$('.debt-check', m).forEach(cb => cb.addEventListener('change', (e) => {
+      const row = e.target.closest('.debt-row');
+      const amtInp = $('.debt-amount', row);
+      if (e.target.checked) amtInp.value = fmt(cb.dataset.original);
+      else amtInp.value = '0';
+      updateTotalDebts();
+    }));
+  };
+
+  const updateTotalDebts = () => {
+    if (currentTab !== 'debts') return;
+    let total = 0;
+    $$('.debt-row', m).forEach(row => {
+      const cb = $('.debt-check', row);
+      const amtInp = $('.debt-amount', row);
+      if (cb.checked) total += toNum(amtInp.value);
+    });
+    $('#pf-a', m).value = fmt(total);
+  };
+
+  // رندر اولیه
+  renderDebts(debts);
+
+  // تغییر تب‌ها
+  $('#tab-debts', m).addEventListener('click', () => {
+    currentTab = 'debts';
+    $('#tab-debts', m).className = 'btn sf'; $('#tab-debts', m).style.flex = '1';
+    $('#tab-custom', m).className = 'btn lt'; $('#tab-custom', m).style.flex = '1';
+    $('#sec-debts', m).classList.remove('hidden');
+    $('#sec-custom', m).classList.add('hidden');
+    $('#wrap-custom-amount', m).classList.add('hidden');
+    updateTotalDebts();
+  });
+
+  $('#tab-custom', m).addEventListener('click', () => {
+    currentTab = 'custom';
+    $('#tab-custom', m).className = 'btn sf'; $('#tab-custom', m).style.flex = '1';
+    $('#tab-debts', m).className = 'btn lt'; $('#tab-debts', m).style.flex = '1';
+    $('#sec-custom', m).classList.remove('hidden');
+    $('#sec-debts', m).classList.add('hidden');
+    $('#wrap-custom-amount', m).classList.remove('hidden');
+    $('#pf-a', m).value = '0';
+  });
+
+  // اتصال اینپوت مبلغ دلخواه
+  attachNumericInputIn(m, '#pf-custom');
+  $('#pf-custom', m).addEventListener('input', (e) => {
+    $('#pf-a', m).value = e.target.value;
+  });
+
+  // تغییر واحد توسط مدیر (آپدیت خودکار لیست بدهی‌ها)
   if (isAdmin) {
     $('#pm-unit-select', m).addEventListener('change', async (e) => {
       selectedUnit = +e.target.value;
-      const newDebts = await fetchDebts(selectedUnit);
-      // آپدیت لیست بدهی‌ها در DOM
-      const debtContainer = $('#sec-debts', m);
-      if (newDebts && newDebts.length > 0) {
-        debtContainer.innerHTML = `
-          <div class="card" style="margin-bottom:16px; padding:12px; background:var(--bg)">
-            <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--ink)">لیست بدهی‌ها:</h3>
-            ${newDebts.map((d) => `
-              <div class="debt-row" style="display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px dashed var(--line)">
-                <input type="checkbox" class="debt-check" value="${d.ym}" data-category="${d.category}" data-original="${d.amount}" checked style="width:18px;height:18px;accent-color:var(--navy)">
-                <span style="flex:1; font-weight:bold">${d.category_name} ${d.month_name} ${fa(d.year)}</span>
-                <input type="text" class="debt-amount" value="${fmt(d.amount)}" style="width:120px; text-align:left; direction:rtl; padding:6px 10px; min-height:36px; font-weight:bold;">
-              </div>
-            `).join('')}
-          </div>
-        `;
-        bindDebtEvents(m);
-      } else {
-        debtContainer.innerHTML = `<div class="card" style="background:#e3f6ea;color:#15803d;margin-bottom:16px;padding:16px;text-align:center;font-weight:bold;">این واحد هیچ بدهی معوقی ندارد. ✅</div>`;
-      }
-      updateTotalDebts();
+      debts = await fetchDebts(selectedUnit);
+      renderDebts(debts);
     });
   }
 
-  // ... (ادامه توابع تغییر تب، محاسبه مبلغ و ثبت فرم دقیقاً مثل کد قبلی)
-  // این بخش را از کد قبلی خودت که در پیام قبل فرستادم کپی کن
-  // ...
+  // ثبت نهایی فرم
+  $('#pf', m).addEventListener('submit', async e => {
+    e.preventDefault();
+    const fileInput = $('#pf-img', m);
+    let base64Image = null;
+    if (fileInput.files.length > 0) base64Image = await compressImage(fileInput.files[0]);
+
+    try {
+      const totalAmount = toNum($('#pf-a', m).value);
+      if (totalAmount <= 0) { toast('مبلغ باید بیشتر از صفر باشد', true); return; }
+
+      if (currentTab === 'debts') {
+        const selectedDebts = [];
+        $$('.debt-row', m).forEach(row => {
+          const cb = $('.debt-check', row);
+          const amtInp = $('.debt-amount', row);
+          const amount = toNum(amtInp.value);
+          if (cb.checked && amount > 0) {
+            selectedDebts.push({ ym: cb.value, category: cb.dataset.category, amount: amount });
+          }
+        });
+
+        if (selectedDebts.length === 0) { toast('لطفاً حداقل یک بدهی را انتخاب کنید', true); return; }
+
+        for (const debt of selectedDebts) {
+          const year = Math.floor(debt.ym / 100);
+          const month = debt.ym % 100;
+          await T('app_submit_payment', {
+            p_year: year, p_month: month, p_category: debt.category, p_amount: debt.amount,
+            p_ref_code: $('#pf-r', m).value, p_note: `پرداخت ${debt.category} ${MONTHS[month - 1]} ${year}`,
+            p_pay_date: $('#pf-d', m).value, p_receipt_image: base64Image,
+            p_target_unit: isAdmin ? selectedUnit : null // 👈 ارسال واحد هدف برای مدیر
+          });
+        }
+        notifyBale(`💸 پرداخت جدید (بر اساس بدهی):\n\n👤 واحد ${selectedUnit} - ${S.me.full_name}\n💰 مبلغ: ${fmt(totalAmount)} تومان`);
+
+      } else {
+        // حالت مبلغ دلخواه (FIFO)
+        // برای مدیر، باید تابع FIFO رو با واحد هدف صدا بزنیم
+        const res = await T('app_process_payment_fifo', {
+          p_total_amount: totalAmount, p_pay_date: $('#pf-d', m).value, p_ref_code: $('#pf-r', m).value,
+          p_note: $('#pf-n', m).value, p_receipt_image: base64Image,
+          p_target_unit: isAdmin ? selectedUnit : null // 👈 ارسال واحد هدف برای مدیر
+        });
+        if (!res.ok) throw new Error(res.error);
+        notifyBale(`💸 پرداخت جدید (مبلغ دلخواه):\n\n👤 واحد ${selectedUnit} - ${S.me.full_name}\n💰 مبلغ: ${fmt(totalAmount)} تومان\n✅ از قدیمی‌ترین بدهی کسر شد.`);
+      }
+
+      m.remove();
+      toast('پرداخت با موفقیت ثبت شد و منتظر تایید است');
+      go(S.view);
+    } catch (err) { showErr(err); }
+  });
 }
 async function viewPay(el) {
   const admin = S.me.is_admin; const list = await T('app_get_payment_requests'); const pending = list.filter(p => p.status === 'pending');
