@@ -218,53 +218,6 @@ tr:hover td{background:var(--bg)}
 .bnav-diamond > span{transform:rotate(-45deg);display:grid;place-items:center;color:var(--peach)}
 .bnav-diamond svg{width:30px;height:30px}
 .bnav-diamond.bump{animation:pop .5s var(--ease)}
-
-/* Dashboard: unit payment/debt and scroll-driven payment fragments */
-.animated-unit{min-width:0;overflow:hidden}
-.unit-finance{display:flex;flex-direction:column;gap:7px;width:100%;margin-top:10px}
-.unit-paid,.unit-debt{display:flex;flex-direction:column;gap:2px;width:100%;padding:7px 4px;border-radius:11px;text-align:center;font-size:11px;line-height:1.6}
-.unit-paid{background:#c9f2d8;color:#176b3a}
-.unit-debt{background:#ffd6d6;color:#a51d1d}
-.unit-paid strong,.unit-debt strong{font-size:clamp(11px,2.7vw,14px);font-weight:900;overflow-wrap:anywhere}
-.unit-settled{font-weight:800;color:#16803d}
-.fly-payment.fly-debt{background:#ffd6d6;color:#a51d1d}
-.fly-payment{position:fixed;z-index:55;pointer-events:none;background:#c9f2d8;color:#176b3a;border-radius:11px;padding:7px 9px;font-size:12px;font-weight:900;white-space:nowrap;box-shadow:0 5px 18px #0002;will-change:transform,opacity}
-@media(prefers-reduced-motion:reduce){.fly-payment{display:none!important}}
-
-/* Compact dashboard, four unit tiles per row */
-html{overflow-y:auto!important;overflow-x:hidden;overscroll-behavior-y:auto!important;height:auto!important}
-body{overflow-y:visible!important;overflow-x:hidden;overscroll-behavior-y:auto!important;height:auto!important;min-height:100vh;touch-action:pan-y!important}
-#app,main#view{height:auto!important;max-height:none!important;overflow-y:visible!important;touch-action:pan-y!important}
-.dashboard-money-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.dashboard-money-grid > .bank-card:first-child{grid-column:1 / -1;min-height:0}
-.dashboard-money-grid > .bank-card:not(:first-child){grid-column:auto}
-.dashboard-money-grid .bank-card{padding:12px 11px;border-radius:14px;min-width:0;box-shadow:0 5px 13px rgba(45,52,99,.16)}
-.dashboard-money-grid .bank-card b{font-size:12px!important}
-.dashboard-money-grid .bank-card .bc-row{margin-top:4px!important;font-size:10px;gap:4px}
-.dashboard-money-grid .bank-card .bc-amt{font-size:clamp(12px,2.6vw,21px);overflow-wrap:anywhere;line-height:1.6}
-.dashboard-money-grid .bank-card .pill{font-size:10px;padding:4px 7px;border-radius:9px}
-.dashboard-money-grid .bank-card .eye{width:25px;height:25px;flex-shrink:0}
-.dashboard-detail-grid{grid-template-columns:minmax(0,1fr)}
-.dashboard-units-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
-#building-map{padding:12px 8px}
-#building-map .win{padding:9px 2px;border-radius:10px;min-width:0;min-height:92px;gap:2px;box-shadow:0 2px 7px rgba(0,0,0,.06)}
-#building-map .win>span{font-size:10px!important;max-width:100%;overflow-wrap:anywhere;line-height:1.45;text-align:center}
-#building-map .unit-finance{margin-top:4px;gap:4px}
-#building-map .unit-paid,#building-map .unit-debt{padding:4px 2px;border-radius:6px;font-size:9px;line-height:1.35}
-#building-map .unit-paid strong,#building-map .unit-debt strong{font-size:10px;overflow-wrap:anywhere;line-height:1.4}
-#building-map .unit-settled{font-size:10px}
-@media(max-width:420px){
- .dashboard-money-grid{gap:7px}
- .dashboard-money-grid .bank-card{padding:9px 6px;border-radius:11px}
- .dashboard-money-grid .bank-card b{font-size:10px!important}
- .dashboard-money-grid .bank-card .bc-amt{font-size:12px}
- .dashboard-money-grid .bank-card .bc-row{font-size:9px}
- .dashboard-money-grid .bank-card .pill{font-size:9px;padding:3px 5px}
- .dashboard-units-grid{gap:5px!important}
- #building-map .win>span{font-size:9px!important}
- #building-map .unit-paid strong,#building-map .unit-debt strong{font-size:9px}
-}
-
 </style>
 </head>
 <body>
@@ -342,9 +295,14 @@ async function notifyBale(msg, imageBase64 = null) {
   try {
     const payload = { text: msg };
     if (imageBase64) payload.image = imageBase64;
-    await sb.functions.invoke('send-bale', { body: payload });
+    const { error } = await sb.functions.invoke('send-bale', { body: payload });
+    if (error) throw error;
     console.log('✅ Bale: پیام با موفقیت ارسال شد');
-  } catch(e) { console.warn('❌ Bale: ارسال پیام ناموفق بود:', e); }
+    return true;
+  } catch(e) {
+    console.warn('❌ Bale: ارسال پیام ناموفق بود:', e);
+    return false;
+  }
 }
 
 const S = {
@@ -694,7 +652,7 @@ function renderShellHeaderState() {
     $('span', dia).innerHTML = (LINE_ICONS[key] || ico(key));
     dia.classList.remove('bump'); void dia.offsetWidth; dia.classList.add('bump');
   }
-  window.scrollTo(0, 0);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function showConnectionError() {
@@ -787,78 +745,6 @@ function reqTable(list, admin) {
   </tbody></table></div>`;
 }
 
-
-// Scroll-controlled visual only: does not change payments, balances or database.
-let cleanupPaymentScroll = null;
-function setupPaymentScrollAnimation(root, unitMap) {
-  if (cleanupPaymentScroll) { cleanupPaymentScroll(); cleanupPaymentScroll = null; }
-  const map = root.querySelector('#building-map');
-  const incomeSource = root.querySelector('#monthly-income-card');
-  const debtSource = root.querySelector('#overdue-debt-card');
-  if (!map || !incomeSource || !debtSource) return;
-
-  const entries = [...root.querySelectorAll('.animated-unit')].flatMap(unit => {
-    const data = unitMap[Number(unit.dataset.u)];
-    if (!data) return [];
-    return [
-      { source: incomeSource, target: unit.querySelector('.unit-paid'), amount: Number(data.paid_this_month), kind: 'paid' },
-      { source: debtSource, target: unit.querySelector('.unit-debt'), amount: Number(data.remaining), kind: 'debt' }
-    ].filter(x => x.target && Number.isFinite(x.amount) && x.amount > 0);
-  });
-  if (!entries.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  const chips = entries.map(({ amount, kind }) => {
-    const chip = document.createElement('div');
-    chip.className = 'fly-payment' + (kind === 'debt' ? ' fly-debt' : '');
-    chip.textContent = fmt(amount) + ' تومان';
-    chip.style.display = 'none';
-    document.body.appendChild(chip);
-    return chip;
-  });
-  let raf = 0;
-  const clamp = x => Math.max(0, Math.min(1, x));
-  const cleanup = () => {
-    window.removeEventListener('scroll', schedule);
-    window.removeEventListener('resize', schedule);
-    if (raf) cancelAnimationFrame(raf);
-    chips.forEach(c => c.remove());
-    entries.forEach(x => { x.target.style.opacity = ''; });
-    if (cleanupPaymentScroll === cleanup) cleanupPaymentScroll = null;
-  };
-  const update = () => {
-    raf = 0;
-    if (!root.isConnected || S.view !== 'dash') { cleanup(); return; }
-    const mr = map.getBoundingClientRect();
-    const viewport = window.innerHeight;
-    const progress = clamp((viewport * .85 - mr.top) / Math.max(180, viewport * .55));
-    entries.forEach(({ source, target, kind }, i) => {
-      const chip = chips[i];
-      const src = source.getBoundingClientRect();
-      const t = target.getBoundingClientRect();
-      // Keep red and green flights visually staggered but tied to scrolling.
-      const stagger = entries.length > 1 ? i / (entries.length - 1) * .30 : 0;
-      const p = clamp((progress - stagger) / .70);
-      target.style.opacity = p >= .99 ? '1' : '0';
-      if (p <= 0 || p >= .99) { chip.style.display = 'none'; return; }
-      chip.style.display = 'block';
-      const x0 = src.left + src.width / 2;
-      const y0 = src.top + src.height / 2;
-      const x1 = t.left + t.width / 2;
-      const y1 = t.top + t.height / 2;
-      const ease = p * p * (3 - 2 * p);
-      chip.style.left = (x0 + (x1 - x0) * ease) + 'px';
-      chip.style.top = (y0 + (y1 - y0) * ease - (kind === 'debt' ? -18 : 22) * Math.sin(Math.PI * p)) + 'px';
-      chip.style.transform = `translate(-50%,-50%) scale(${.78 + .22 * ease})`;
-      chip.style.opacity = String(Math.min(1, p * 8, (1 - p) * 8));
-    });
-  };
-  const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
-  cleanupPaymentScroll = cleanup;
-  window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', schedule);
-  schedule();
-}
-
 async function viewDash(el) {
   const rep = await T('app_report', { p_year: S.y, p_month: S.m });
   const missing = rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">مبالغ شارژ/بازسازی برای این ماه‌ها تعریف نشده: ${rep.missing_rates.map(fa).join('، ')}</div>` : '';
@@ -887,17 +773,12 @@ async function viewDash(el) {
   const rows = rep.rows || [];
   const unitMap = {};
   rows.forEach(r => {
-    if (r.unit_no == null) return;
-    if (!unitMap[r.unit_no]) unitMap[r.unit_no] = { unit_no: r.unit_no, remaining: 0, current_due: 0, paid_this_month: 0, accounts: [], display_name: '' };
-    const u = unitMap[r.unit_no];
-    u.remaining += Number(r.remaining) || 0;
-    u.current_due += Number(r.current_due) || 0;
-    u.paid_this_month += Number(r.paid_this_month) || 0;
-    u.accounts.push(r);
-    if (!u.display_name && r.full_name) u.display_name = r.full_name;
+    if (!unitMap[r.unit_no]) unitMap[r.unit_no] = { unit_no: r.unit_no, remaining: 0, current_due: 0, accounts: [], display_name: '' };
+    unitMap[r.unit_no].remaining += r.remaining; unitMap[r.unit_no].current_due += r.current_due; unitMap[r.unit_no].accounts.push(r);
+    if (!unitMap[r.unit_no].display_name && r.full_name) unitMap[r.unit_no].display_name = r.full_name;
   });
   const mapUnits = []; for (let i = 1; i <= 10; i++) { mapUnits.push(unitMap[i] || { unit_no: i, remaining: 0, current_due: 0, accounts: [], display_name: '-' }); }
-  const floors = []; const orderedUnits = [...mapUnits].reverse(); for (let i = 0; i < orderedUnits.length; i += 4) floors.push(orderedUnits.slice(i, i + 4));
+  const floors = []; for (let u = 9; u >= 1; u -= 2) { floors.push([mapUnits.find(x => x.unit_no === u), mapUnits.find(x => x.unit_no === u + 1)]); }
   const totalDebt = mapUnits.reduce((s, r) => s + Math.max(0, r.remaining), 0);
   const winBg = r => r.remaining <= 0 ? '#e9f8ef' : r.remaining > r.current_due ? '#fdeeee' : '#fff4e8';
 
@@ -910,38 +791,30 @@ async function viewDash(el) {
     ${mustChangeBanner()}
     <div><div class="sec-title">دسترسی سریع</div>
       <div class="quick">${[['units','واحدها'],['pay','تایید پرداخت'],['announcements','اعلانات'],['rates','نرخ‌ها']].map(([k,l]) => `<button class="tile" data-go="${k}">${ico(k)}${k==='pay' && +fund.pending_payments ? `<i class="badge">${fa(fund.pending_payments)}</i>` : ''}<span>${l}</span></button>`).join('')}</div></div>
-    <div class="grid dashboard-money-grid" style="margin:14px 0 12px">
+    <div class="grid g3" style="margin:20px 0 8px">
       <div class="bank-card"><i class="shine"></i>
         <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:15px">صندوق ساختمان</b><span style="color:#ffd27a;font-size:20px">★</span></div>
         <div class="bc-row"><span>موجودی فعلی (تومان)</span></div>
         <div class="bc-row" style="margin-top:4px;justify-content:flex-start"><button class="eye" type="button">${EYE}</button><span class="bc-amt" data-count="${fund.balance}">${fmt(fund.balance)}</span></div>
         <div class="bc-row" style="margin-top:14px"><span></span><button class="pill" type="button" data-go="tx">گردش حساب</button></div>
       </div>
-      <div class="bank-card soft" id="monthly-income-card"><i class="shine"></i>
+      <div class="bank-card soft"><i class="shine"></i>
         <b style="font-size:15px">درآمد این ماه</b>
         <div class="bc-row"><span>تومان</span></div>
         <div class="bc-amt" data-count="${fund.month_income ?? fund.month_expense}" style="margin-top:4px">${fmt(fund.month_income ?? fund.month_expense)}</div>
         <div class="bc-row" style="margin-top:14px"><span></span><button class="pill" type="button" data-go="report">گزارش ماه</button></div>
       </div>
-      <div class="bank-card peach" id="overdue-debt-card"><i class="shine"></i>
+      <div class="bank-card peach"><i class="shine"></i>
         <b style="font-size:15px">مطالبات معوق</b>
         <div class="bc-row" style="color:#fff"><span>تومان</span></div>
         <div class="bc-amt" data-count="${totalDebt}" style="margin-top:4px">${fmt(totalDebt)}</div>
         <div class="bc-row" style="margin-top:14px"><span></span><button class="pill" type="button" data-go="units">مشاهده واحدها</button></div>
       </div>
     </div>
-    <div class="grid dashboard-detail-grid">
-      <div class="card" id="building-map"><h2>نقشه ساختمان</h2>
-        <div class="dashboard-units-grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:12px">
-          ${floors.map(fl => fl.map(r => r ? `<button class="win animated-unit" data-u="${r.unit_no}" style="background:${winBg(r)}">
-            <span style="font-size:11px;font-weight:700;color:#555">واحد ${fa(r.unit_no)}</span>
-            <span style="font-size:11px;font-weight:900;color:#111">${esc(r.display_name)}</span>
-            <div class="unit-finance">
-              ${r.paid_this_month > 0 ? `<div class="unit-paid"><span>پرداختی این ماه</span><strong>${fmt(r.paid_this_month)} تومان</strong></div>` : ''}
-              ${r.remaining > 0 ? `<div class="unit-debt"><span>بدهی باقی‌مانده</span><strong>${fmt(r.remaining)} تومان</strong></div>` : ''}
-              ${r.remaining <= 0 && r.paid_this_month <= 0 ? `<div class="unit-settled">تسویه</div>` : ''}
-            </div>
-          </button>` : '').join('')).join('')}
+    <div class="grid g2">
+      <div class="card"><h2>نقشه ساختمان</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px">
+          ${floors.map(fl => fl.map(r => r ? `<button class="win" data-u="${r.unit_no}" style="background:${winBg(r)}"><span style="font-size:14px;font-weight:700;color:#555">واحد ${fa(r.unit_no)}</span><span style="font-size:16px;font-weight:900;color:#111">${esc(r.display_name)}</span><span style="font-size:14px;font-weight:700;margin-top:8px;color:#222">${r.remaining <= 0 ? 'تسویه' : fmt(r.remaining) + ' تومان'}</span></button>` : '').join('')).join('')}
         </div>
       </div>
       <div class="grid" style="align-content:start">
@@ -953,7 +826,6 @@ async function viewDash(el) {
   bindPeriod(() => go('dash'));
   $$('[data-go]', el).forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
   countUp(el); bindEyes(el);
-  setupPaymentScrollAnimation(el, unitMap);
   $('#go-pay')?.addEventListener('click', () => go('pay'));
   $('#go-profile')?.addEventListener('click', e => { e.preventDefault(); go('profile'); });
   $$('.win', el).forEach(b => b.addEventListener('click', () => {
@@ -982,7 +854,7 @@ $('#m-pay', m)?.addEventListener('click', () => {
 async function viewAnnouncements(el) {
   const list = await T('app_get_announcements');
   const adminForm = S.me.is_admin ? `<form id="af" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)"><h2 style="grid-column:1/-1;margin:0">ارسال اعلان جدید</h2><label class="f">عنوان<input id="a-title" required></label><label class="f">نوع<select id="a-type"><option value="general">اطلاعیه عمومی</option><option value="meeting">دعوت به جلسه</option></select></label><label class="f" style="grid-column:1/-1">متن کامل<textarea id="a-content" rows="3" required></textarea></label><div style="grid-column:1/-1"><button class="btn">ثبت اعلان</button></div></form>` : '';
-  el.innerHTML = `<h1>اعلانات ساختمان</h1><p class="sub">اطلاعیه‌ها و دعوت‌نامه‌ها</p>${adminForm}<div class="grid g2">${list.map(a => `<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap"><h2 style="margin:0">${esc(a.title)}</h2><span class="chip ${a.type === 'meeting' ? 'pd' : 'ex'}">${a.type === 'meeting' ? 'جلسه' : 'اطلاعیه'}</span></div><p style="white-space:pre-wrap;margin:0 0 16px">${esc(a.content)}</p><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span style="font-size:12px;color:var(--muted)">${new Date(a.created_at).toLocaleDateString('fa-IR')}</span>${S.me.is_admin ? `<button class="btn rd sm" data-del="${a.id}">حذف</button>` : ''}</div></div>`).join('') || '<div class="card sub">هیچ اعلانی وجود ندارد.</div>'}</div>`;
+  el.innerHTML = `<h1>اعلانات ساختمان</h1><p class="sub">اطلاعیه‌ها و دعوت‌نامه‌ها</p>${adminForm}<div class="grid g2">${list.map(a => `<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap"><h2 style="margin:0">${esc(a.title)}</h2><span class="chip ${a.type === 'meeting' ? 'pd' : 'ex'}">${a.type === 'meeting' ? 'جلسه' : (a.type === 'resident_message' ? 'پیام گروهی ساکن' : 'اطلاعیه')}</span></div><p style="white-space:pre-wrap;margin:0 0 16px">${esc(a.content)}</p><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span style="font-size:12px;color:var(--muted)">${new Date(a.created_at).toLocaleDateString('fa-IR')}</span>${S.me.is_admin ? `<button class="btn rd sm" data-del="${a.id}">حذف</button>` : ''}</div></div>`).join('') || '<div class="card sub">هیچ اعلانی وجود ندارد.</div>'}</div>`;
   if (S.me.is_admin) {
     $('#af')?.addEventListener('submit', async e => {
       e.preventDefault();
@@ -998,17 +870,18 @@ async function viewAnnouncements(el) {
 }
 
 async function viewRequests(el) {
-  const list = await T('app_get_requests');
-  const admin = S.me.is_admin;
+  const admin = !!S.me.is_admin;
+  const [list, polls] = await Promise.all([
+    T('app_get_requests'),
+    T('app_get_polls')
+  ]);
 
-  // تابع کمکی برای نمایش وضعیت
   const statusChip = s => {
-    if (s === 'done')       return '<span class="chip ok">✅ انجام شد</span>';
-    if (s === 'reviewing')  return '<span class="chip pd">🔄 در حال بررسی</span>';
+    if (s === 'done') return '<span class="chip ok">✅ انجام شد</span>';
+    if (s === 'reviewing') return '<span class="chip pd">🔄 در حال بررسی</span>';
     return '<span class="chip ex">⏳ جدید</span>';
   };
 
-  // فرم ثبت درخواست برای ساکنین
   const residentForm = !admin ? `
     <form id="rf2" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)">
       <h2 style="grid-column:1/-1;margin:0">ثبت درخواست جدید</h2>
@@ -1022,63 +895,192 @@ async function viewRequests(el) {
         <textarea id="rq-desc" rows="3" required></textarea>
       </label>
       <div style="grid-column:1/-1"><button class="btn">ارسال به مدیر</button></div>
+    </form>
+    <form id="group-msg-form" class="card grid" style="gap:12px;margin-bottom:20px;border-color:var(--accent)">
+      <h2 style="margin:0">💬 پیام در گروه بله</h2>
+      <p class="sub" style="margin:0">پیام شما در گروه بله منتشر می‌شود و هم‌زمان به‌صورت اعلان داخل برنامه برای همه ساکنان نمایش داده خواهد شد. اطلاعات خصوصی را در این بخش ننویسید.</p>
+      <label class="f">متن پیام
+        <textarea id="group-msg-text" rows="4" maxlength="3000" required placeholder="متن پیام برای همسایه‌ها..."></textarea>
+      </label>
+      <button class="btn">ارسال پیام به گروه</button>
     </form>` : '';
 
-  // قالب اصلی صفحه
-  el.innerHTML = `
-    <h1>${admin ? 'درخواست‌ها' : 'ارتباط با مدیر'}</h1>
-    <p class="sub">${admin ? 'درخواست‌های ساکنین — پاسخ دهید و وضعیت را مشخص کنید' : 'ثبت درخواست تعمیرات، انتقادات'}</p>
-    ${residentForm}
-    <div class="grid g2">
-      ${list.map(r => `
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap">
-            <h2 style="margin:0">${esc(r.type)}</h2>
-            ${statusChip(r.status)}
-          </div>
-          <p class="sub" style="font-size:12px;margin:0 0 8px">
-            ${esc(r.full_name || '')} ${r.unit_no ? '· واحد ' + fa(r.unit_no) : ''}
-          </p>
-          <p style="white-space:pre-wrap;margin:0 0 12px">${esc(r.description)}</p>
-          
-          <!-- باکس نمایش پاسخ مدیر -->
-          ${r.admin_reply ? `
-            <div style="background:var(--bg);border-right:3px solid var(--peach);padding:10px 14px;border-radius:10px;margin-bottom:12px">
-              <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">
-                پاسخ مدیر ${r.replied_at ? '· ' + new Date(r.replied_at).toLocaleString('fa-IR') : ''}
-              </div>
-              <div style="white-space:pre-wrap">${esc(r.admin_reply)}</div>
-            </div>` : ''}
-            
-          <!-- دکمه پاسخ برای مدیر -->
-          ${admin ? `
-            <button class="btn sf sm" data-reply="${r.id}">
-              ${r.admin_reply ? 'ویرایش پاسخ' : 'پاسخ دادن'}
-            </button>` : ''}
-        </div>`).join('') || '<div class="card sub">موردی وجود ندارد.</div>'}
-    </div>`;
+  const pollCreateForm = admin ? `
+    <form id="poll-create-form" class="card grid" style="gap:12px;margin-bottom:20px;border-color:var(--accent)">
+      <h2 style="margin:0">📊 ایجاد نظرسنجی</h2>
+      <label class="f">عنوان نظرسنجی
+        <input id="poll-title" maxlength="180" required placeholder="مثلاً انتخاب زمان نظافت راه‌پله">
+      </label>
+      <label class="f">توضیحات (اختیاری)
+        <textarea id="poll-description" rows="2" maxlength="1000"></textarea>
+      </label>
+      <label class="f">گزینه‌ها (هر گزینه در یک خط؛ حداقل ۲ گزینه)
+        <textarea id="poll-options" rows="4" required placeholder="شنبه&#10;یکشنبه&#10;دوشنبه"></textarea>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px"><input id="poll-active" type="checkbox" checked> بلافاصله فعال شود</label>
+      <button class="btn">ثبت نظرسنجی</button>
+    </form>` : '';
 
-  // ثبت درخواست جدید توسط ساکن
+  const pollCards = (polls || []).map(p => {
+    const options = (p.options || []).map(o => `
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)">
+        <span>${esc(o.text)}</span>
+        <strong style="white-space:nowrap">${fa(Number(o.votes || 0))} رأی · ${fa(Math.round(Number(o.percent || 0)))}٪</strong>
+      </div>`).join('');
+    const canVote = !admin && p.is_active && !p.my_vote;
+    const voteForm = canVote ? `
+      <form data-vote-form="${p.id}" style="margin-top:12px">
+        <div style="display:grid;gap:9px">
+          ${(p.options || []).map(o => `<label style="display:flex;align-items:center;gap:8px"><input type="radio" name="poll-option-${p.id}" value="${o.id}" required> ${esc(o.text)}</label>`).join('')}
+        </div>
+        <button class="btn sm" style="margin-top:12px">ثبت رأی نهایی</button>
+      </form>` : '';
+    const voteStatus = !admin && p.my_vote
+      ? '<p class="sub" style="margin:12px 0 0">✅ رأی شما ثبت شده است؛ امکان تغییر رأی وجود ندارد.</p>'
+      : (!admin && !p.is_active ? '<p class="sub" style="margin:12px 0 0">این نظرسنجی بسته شده است.</p>' : '');
+    const adminToggle = admin ? `
+      <button class="btn ${p.is_active ? 'rd' : 'sf'} sm" data-poll-toggle="${p.id}" data-next="${p.is_active ? 'false' : 'true'}">
+        ${p.is_active ? 'غیرفعال‌کردن نظرسنجی' : 'فعال‌کردن نظرسنجی'}
+      </button>` : '';
+    return `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
+          <h2 style="margin:0">${esc(p.title)}</h2>
+          <span class="chip ${p.is_active ? 'ok' : 'ex'}">${p.is_active ? 'فعال' : 'غیرفعال'}</span>
+        </div>
+        ${p.description ? `<p class="sub" style="white-space:pre-wrap">${esc(p.description)}</p>` : ''}
+        <div style="margin-top:10px">${options}</div>
+        <p class="sub" style="font-size:12px;margin:10px 0 0">مجموع آرای ثبت‌شده: ${fa(Number(p.total_votes || 0))}</p>
+        ${voteForm}${voteStatus}
+        ${adminToggle ? `<div style="margin-top:14px">${adminToggle}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <h1>${admin ? 'درخواست‌ها و نظرسنجی‌ها' : 'ارتباط با مدیر'}</h1>
+    <p class="sub">${admin ? 'درخواست‌های ساکنان، پاسخ‌گویی و مدیریت نظرسنجی‌ها' : 'ثبت درخواست، ارسال پیام عمومی و شرکت در نظرسنجی‌ها'}</p>
+    ${residentForm}
+    ${pollCreateForm}
+    <section style="margin:20px 0">
+      <h2 style="margin:0 0 12px">📊 ${admin ? 'نظرسنجی‌های ساختمان' : 'نظرسنجی‌های فعال'}</h2>
+      <div class="grid g2">${pollCards || '<div class="card sub">در حال حاضر نظرسنجی‌ای وجود ندارد.</div>'}</div>
+    </section>
+    <section style="margin-top:24px">
+      <h2 style="margin:0 0 12px">${admin ? 'درخواست‌های ساکنان' : 'درخواست‌های ثبت‌شده من'}</h2>
+      <div class="grid g2">
+        ${(list || []).map(r => `
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+              <h2 style="margin:0">${esc(r.type)}</h2>
+              ${statusChip(r.status)}
+            </div>
+            <p class="sub" style="font-size:12px;margin:0 0 8px">
+              ${esc(r.full_name || '')} ${r.unit_no ? '· واحد ' + fa(r.unit_no) : ''}
+            </p>
+            <p style="white-space:pre-wrap;margin:0 0 12px">${esc(r.description)}</p>
+            ${r.admin_reply ? `
+              <div style="background:var(--bg);border-right:3px solid var(--peach);padding:10px 14px;border-radius:10px;margin-bottom:12px">
+                <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">
+                  پاسخ مدیر ${r.replied_at ? '· ' + new Date(r.replied_at).toLocaleString('fa-IR') : ''}
+                </div>
+                <div style="white-space:pre-wrap">${esc(r.admin_reply)}</div>
+              </div>` : ''}
+            ${admin ? `<button class="btn sf sm" data-reply="${r.id}">${r.admin_reply ? 'ویرایش پاسخ' : 'پاسخ دادن'}</button>` : ''}
+          </div>`).join('') || '<div class="card sub">موردی وجود ندارد.</div>'}
+      </div>
+    </section>`;
+
   if (!admin) {
     $('#rf2')?.addEventListener('submit', async e => {
       e.preventDefault();
       try {
         const type = $('#rq-type').value;
-        const desc = $('#rq-desc').value;
+        const desc = $('#rq-desc').value.trim();
         await T('app_submit_request', { p_type: type, p_description: desc });
         notifyBale(`🔔 درخواست جدید از واحد ${S.me.unit_no}:\n\n🔹 نوع: ${type}\n📝 توضیحات: ${desc}`);
-        toast('ثبت شد'); go('requests');
+        toast('درخواست ثبت شد'); go('requests');
       } catch (err) { showErr(err); }
     });
-    return;
+
+    $('#group-msg-form')?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const message = $('#group-msg-text').value.trim();
+      if (!message) return;
+      const submit = $('#group-msg-form button[type="submit"], #group-msg-form button');
+      if (submit) submit.disabled = true;
+      try {
+        const saved = await T('app_submit_group_message', { p_message: message });
+        const title = saved?.title || `پیام گروهی از واحد ${S.me.unit_no || '—'}`;
+        const baleSent = await notifyBale(`💬 ${title}\n\n${message}`);
+        toast(
+          baleSent
+            ? 'پیام در اعلان‌های برنامه ثبت و به گروه بله ارسال شد'
+            : 'پیام در اعلان‌های برنامه ثبت شد؛ ارسال به بله ناموفق بود',
+          !baleSent
+        );
+        go('requests');
+      } catch (err) {
+        if (submit) submit.disabled = false;
+        showErr(err);
+      }
+    });
+  } else {
+    $('#poll-create-form')?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const title = $('#poll-title').value.trim();
+      const description = $('#poll-description').value.trim();
+      const options = $('#poll-options').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      if (options.length < 2) { toast('حداقل دو گزینه وارد کنید', true); return; }
+      if (new Set(options).size !== options.length) { toast('گزینه‌های تکراری مجاز نیستند', true); return; }
+      try {
+        await T('app_admin_create_poll', {
+          p_title: title,
+          p_description: description,
+          p_options: options,
+          p_is_active: $('#poll-active').checked
+        });
+        toast('نظرسنجی ایجاد شد');
+        go('requests');
+      } catch (err) { showErr(err); }
+    });
+
+    $$('[data-poll-toggle]').forEach(b => b.addEventListener('click', async () => {
+      try {
+        await T('app_admin_set_poll_active', {
+          p_poll_id: Number(b.dataset.pollToggle),
+          p_active: b.dataset.next === 'true'
+        });
+        toast('وضعیت نظرسنجی تغییر کرد');
+        go('requests');
+      } catch (err) { showErr(err); }
+    }));
+
+    $$('[data-reply]').forEach(b => {
+      b.addEventListener('click', () => {
+        const req = (list || []).find(x => x.id == b.dataset.reply);
+        if (req) replyModal(req);
+      });
+    });
   }
 
-  // اتصال دکمه‌های پاسخ برای مدیر
-  $$('[data-reply]').forEach(b => b.addEventListener('click', () => {
-    const req = list.find(x => x.id == b.dataset.reply);
-    if (req) replyModal(req);
+  $$('[data-vote-form]').forEach(form => form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const pollId = Number(form.dataset.voteForm);
+    const selected = form.querySelector('input[type="radio"]:checked');
+    if (!selected) { toast('یک گزینه را انتخاب کنید', true); return; }
+    const submit = form.querySelector('button');
+    if (submit) submit.disabled = true;
+    try {
+      await T('app_vote_poll', { p_poll_id: pollId, p_option_id: Number(selected.value) });
+      toast('رأی شما ثبت شد؛ امکان تغییر آن وجود ندارد');
+      go('requests');
+    } catch (err) {
+      if (submit) submit.disabled = false;
+      showErr(err);
+    }
   }));
 }
+
 function replyModal(r) {
   const m = modal(`
     <h2>پاسخ به درخواست واحد ${fa(r.unit_no || '—')}</h2>
