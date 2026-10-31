@@ -52,6 +52,38 @@ Deno.serve(async (req) => {
     const safeTitle = String(title || "اعلان ساختمان").slice(0, 120);
     const safeBody = String(body || "یک اعلان جدید دریافت کردید.").slice(0, 500);
 
+    // Verify that the requested notification corresponds to a real recent database record.
+    if (event === "poll_created") {
+      const pollTitle = safeTitle.startsWith("نظرسنجی جدید: ")
+        ? safeTitle.slice("نظرسنجی جدید: ".length) : "";
+      if (!pollTitle) return json({ error: "Invalid poll notification" }, 400);
+      const { data: poll, error: pollError } = await supabase
+        .from("building_polls")
+        .select("id")
+        .eq("building_id", actor.building_id)
+        .eq("created_by", actor.id)
+        .eq("title", pollTitle)
+        .eq("description", safeBody)
+        .gte("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (pollError) throw pollError;
+      if (!poll) return json({ error: "Poll record not found" }, 403);
+    } else if (event === "announcement_created") {
+      const { data: announcement, error: announcementError } = await supabase
+        .from("announcements")
+        .select("id")
+        .eq("title", safeTitle)
+        .eq("content", safeBody)
+        .gte("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (announcementError) throw announcementError;
+      if (!announcement) return json({ error: "Announcement record not found" }, 403);
+    }
+
     let accountQuery = supabase.from("accounts").select("id")
       .eq("building_id", actor.building_id).eq("is_active", true)
       .neq("id", actor.id);
