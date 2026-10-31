@@ -281,7 +281,7 @@ const SUPABASE_URL = 'https://hpgvgoehkcpjmdbfmnse.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_BuJxTaMP2rYWTe5mh-N55Q_gSHE1O8g';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
 
-const PUSH_VAPID_PUBLIC_KEY = 'BHUK9zH9-lVSiHVf8zrlbbTWCa4O9htDsk7O785HAO0cKyy4AjhvudbwN_nEzZEee2onEbNW25j4_I03E2sEQac';
+const PUSH_VAPID_PUBLIC_KEY = 'BPsQSVWi63qlG-AA7tsl68FkSVb-h-FtPu7iIhIypil8bNY3APJih1ph3PvXfYmpGXIzjsfsHl_vVELoOoAYJNo';
 let pushServiceWorkerRegistration = null;
 function pushBase64UrlToBytes(value) {
   const padding = '='.repeat((4 - value.length % 4) % 4);
