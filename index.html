@@ -230,6 +230,37 @@ tr:hover td{background:var(--bg)}
 .fly-payment.fly-debt{background:#ffd6d6;color:#a51d1d}
 .fly-payment{position:fixed;z-index:55;pointer-events:none;background:#c9f2d8;color:#176b3a;border-radius:11px;padding:7px 9px;font-size:12px;font-weight:900;white-space:nowrap;box-shadow:0 5px 18px #0002;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){.fly-payment{display:none!important}}
+
+/* Compact dashboard, four unit tiles per row */
+html,body{overscroll-behavior-y:none}
+.dashboard-money-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.dashboard-money-grid .bank-card{padding:12px 11px;border-radius:14px;min-width:0;box-shadow:0 5px 13px rgba(45,52,99,.16)}
+.dashboard-money-grid .bank-card b{font-size:12px!important}
+.dashboard-money-grid .bank-card .bc-row{margin-top:4px!important;font-size:10px;gap:4px}
+.dashboard-money-grid .bank-card .bc-amt{font-size:clamp(12px,2.6vw,21px);overflow-wrap:anywhere;line-height:1.6}
+.dashboard-money-grid .bank-card .pill{font-size:10px;padding:4px 7px;border-radius:9px}
+.dashboard-money-grid .bank-card .eye{width:25px;height:25px;flex-shrink:0}
+.dashboard-detail-grid{grid-template-columns:minmax(0,1fr)}
+.dashboard-units-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+#building-map{padding:12px 8px}
+#building-map .win{padding:9px 2px;border-radius:10px;min-width:0;min-height:92px;gap:2px;box-shadow:0 2px 7px rgba(0,0,0,.06)}
+#building-map .win>span{font-size:10px!important;max-width:100%;overflow-wrap:anywhere;line-height:1.45;text-align:center}
+#building-map .unit-finance{margin-top:4px;gap:4px}
+#building-map .unit-paid,#building-map .unit-debt{padding:4px 2px;border-radius:6px;font-size:9px;line-height:1.35}
+#building-map .unit-paid strong,#building-map .unit-debt strong{font-size:10px;overflow-wrap:anywhere;line-height:1.4}
+#building-map .unit-settled{font-size:10px}
+@media(max-width:420px){
+ .dashboard-money-grid{gap:5px}
+ .dashboard-money-grid .bank-card{padding:9px 6px;border-radius:11px}
+ .dashboard-money-grid .bank-card b{font-size:10px!important}
+ .dashboard-money-grid .bank-card .bc-amt{font-size:12px}
+ .dashboard-money-grid .bank-card .bc-row{font-size:9px}
+ .dashboard-money-grid .bank-card .pill{font-size:9px;padding:3px 5px}
+ .dashboard-units-grid{gap:5px!important}
+ #building-map .win>span{font-size:9px!important}
+ #building-map .unit-paid strong,#building-map .unit-debt strong{font-size:9px}
+}
+
 </style>
 </head>
 <body>
@@ -659,7 +690,7 @@ function renderShellHeaderState() {
     $('span', dia).innerHTML = (LINE_ICONS[key] || ico(key));
     dia.classList.remove('bump'); void dia.offsetWidth; dia.classList.add('bump');
   }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 function showConnectionError() {
@@ -862,7 +893,7 @@ async function viewDash(el) {
     if (!u.display_name && r.full_name) u.display_name = r.full_name;
   });
   const mapUnits = []; for (let i = 1; i <= 10; i++) { mapUnits.push(unitMap[i] || { unit_no: i, remaining: 0, current_due: 0, accounts: [], display_name: '-' }); }
-  const floors = []; for (let u = 9; u >= 1; u -= 2) { floors.push([mapUnits.find(x => x.unit_no === u), mapUnits.find(x => x.unit_no === u + 1)]); }
+  const floors = []; const orderedUnits = [...mapUnits].reverse(); for (let i = 0; i < orderedUnits.length; i += 4) floors.push(orderedUnits.slice(i, i + 4));
   const totalDebt = mapUnits.reduce((s, r) => s + Math.max(0, r.remaining), 0);
   const winBg = r => r.remaining <= 0 ? '#e9f8ef' : r.remaining > r.current_due ? '#fdeeee' : '#fff4e8';
 
@@ -875,7 +906,7 @@ async function viewDash(el) {
     ${mustChangeBanner()}
     <div><div class="sec-title">دسترسی سریع</div>
       <div class="quick">${[['units','واحدها'],['pay','تایید پرداخت'],['announcements','اعلانات'],['rates','نرخ‌ها']].map(([k,l]) => `<button class="tile" data-go="${k}">${ico(k)}${k==='pay' && +fund.pending_payments ? `<i class="badge">${fa(fund.pending_payments)}</i>` : ''}<span>${l}</span></button>`).join('')}</div></div>
-    <div class="grid g3" style="margin:20px 0 8px">
+    <div class="grid dashboard-money-grid" style="margin:14px 0 12px">
       <div class="bank-card"><i class="shine"></i>
         <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:15px">صندوق ساختمان</b><span style="color:#ffd27a;font-size:20px">★</span></div>
         <div class="bc-row"><span>موجودی فعلی (تومان)</span></div>
@@ -895,12 +926,12 @@ async function viewDash(el) {
         <div class="bc-row" style="margin-top:14px"><span></span><button class="pill" type="button" data-go="units">مشاهده واحدها</button></div>
       </div>
     </div>
-    <div class="grid g2">
+    <div class="grid dashboard-detail-grid">
       <div class="card" id="building-map"><h2>نقشه ساختمان</h2>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px">
+        <div class="dashboard-units-grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:12px">
           ${floors.map(fl => fl.map(r => r ? `<button class="win animated-unit" data-u="${r.unit_no}" style="background:${winBg(r)}">
-            <span style="font-size:14px;font-weight:700;color:#555">واحد ${fa(r.unit_no)}</span>
-            <span style="font-size:16px;font-weight:900;color:#111">${esc(r.display_name)}</span>
+            <span style="font-size:11px;font-weight:700;color:#555">واحد ${fa(r.unit_no)}</span>
+            <span style="font-size:11px;font-weight:900;color:#111">${esc(r.display_name)}</span>
             <div class="unit-finance">
               ${r.paid_this_month > 0 ? `<div class="unit-paid"><span>پرداختی این ماه</span><strong>${fmt(r.paid_this_month)} تومان</strong></div>` : ''}
               ${r.remaining > 0 ? `<div class="unit-debt"><span>بدهی باقی‌مانده</span><strong>${fmt(r.remaining)} تومان</strong></div>` : ''}
