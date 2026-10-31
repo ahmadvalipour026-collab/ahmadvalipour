@@ -218,6 +218,17 @@ tr:hover td{background:var(--bg)}
 .bnav-diamond > span{transform:rotate(-45deg);display:grid;place-items:center;color:var(--peach)}
 .bnav-diamond svg{width:30px;height:30px}
 .bnav-diamond.bump{animation:pop .5s var(--ease)}
+
+/* Dashboard: unit payment/debt and scroll-driven payment fragments */
+.animated-unit{min-width:0;overflow:hidden}
+.unit-finance{display:flex;flex-direction:column;gap:7px;width:100%;margin-top:10px}
+.unit-paid,.unit-debt{display:flex;flex-direction:column;gap:2px;width:100%;padding:7px 4px;border-radius:11px;text-align:center;font-size:11px;line-height:1.6}
+.unit-paid{background:#c9f2d8;color:#176b3a}
+.unit-debt{background:#ffd6d6;color:#a51d1d}
+.unit-paid strong,.unit-debt strong{font-size:clamp(11px,2.7vw,14px);font-weight:900;overflow-wrap:anywhere}
+.unit-settled{font-weight:800;color:#16803d}
+.fly-payment{position:fixed;z-index:55;pointer-events:none;background:#c9f2d8;color:#176b3a;border-radius:11px;padding:7px 9px;font-size:12px;font-weight:900;white-space:nowrap;box-shadow:0 5px 18px #0002;will-change:transform,opacity}
+@media(prefers-reduced-motion:reduce){.fly-payment{display:none!important}}
 </style>
 </head>
 <body>
@@ -740,6 +751,70 @@ function reqTable(list, admin) {
   </tbody></table></div>`;
 }
 
+
+// Scroll-controlled visual only: does not change payments, balances or database.
+let cleanupPaymentScroll = null;
+function setupPaymentScrollAnimation(root, unitMap) {
+  if (cleanupPaymentScroll) { cleanupPaymentScroll(); cleanupPaymentScroll = null; }
+  const source = root.querySelector('#monthly-income-card');
+  const map = root.querySelector('#building-map');
+  if (!source || !map) return;
+  const entries = [...root.querySelectorAll('.animated-unit')].map(unit => ({
+    unit, target: unit.querySelector('.unit-paid'), data: unitMap[Number(unit.dataset.u)]
+  })).filter(x => x.target && Number(x.data?.paid_this_month) > 0);
+  if (!entries.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const chips = entries.map(({data}) => {
+    const chip = document.createElement('div');
+    chip.className = 'fly-payment';
+    chip.textContent = fmt(data.paid_this_month) + ' تومان';
+    chip.style.display = 'none';
+    document.body.appendChild(chip);
+    return chip;
+  });
+  let raf = 0;
+  const clamp = x => Math.max(0, Math.min(1, x));
+  const update = () => {
+    raf = 0;
+    if (!root.isConnected || S.view !== 'dash') { cleanup(); return; }
+    const src = source.getBoundingClientRect();
+    const mr = map.getBoundingClientRect();
+    const viewport = window.innerHeight;
+    // Starts as the map approaches the viewport, finishes as it moves upwards.
+    const progress = clamp((viewport * .85 - mr.top) / Math.max(180, viewport * .55));
+    entries.forEach(({target}, i) => {
+      const chip = chips[i];
+      const t = target.getBoundingClientRect();
+      const stagger = entries.length > 1 ? i / (entries.length - 1) * .34 : 0;
+      const p = clamp((progress - stagger) / .66);
+      target.style.opacity = p >= .99 ? '1' : '0';
+      if (p <= 0 || p >= .99) { chip.style.display = 'none'; return; }
+      chip.style.display = 'block';
+      const x0 = src.left + src.width / 2;
+      const y0 = src.top + src.height / 2;
+      const x1 = t.left + t.width / 2;
+      const y1 = t.top + t.height / 2;
+      const ease = p * p * (3 - 2 * p);
+      chip.style.left = (x0 + (x1-x0)*ease) + 'px';
+      chip.style.top = (y0 + (y1-y0)*ease - 22*Math.sin(Math.PI*p)) + 'px';
+      chip.style.transform = `translate(-50%,-50%) scale(${.78+.22*ease})`;
+      chip.style.opacity = String(Math.min(1,p*8,(1-p)*8));
+    });
+  };
+  const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
+  const cleanup = () => {
+    window.removeEventListener('scroll', schedule);
+    window.removeEventListener('resize', schedule);
+    if (raf) cancelAnimationFrame(raf);
+    chips.forEach(c => c.remove());
+    entries.forEach(x => { x.target.style.opacity = ''; });
+    if (cleanupPaymentScroll === cleanup) cleanupPaymentScroll = null;
+  };
+  cleanupPaymentScroll = cleanup;
+  window.addEventListener('scroll', schedule, {passive:true});
+  window.addEventListener('resize', schedule);
+  schedule();
+}
+
 async function viewDash(el) {
   const rep = await T('app_report', { p_year: S.y, p_month: S.m });
   const missing = rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">مبالغ شارژ/بازسازی برای این ماه‌ها تعریف نشده: ${rep.missing_rates.map(fa).join('، ')}</div>` : '';
@@ -768,9 +843,14 @@ async function viewDash(el) {
   const rows = rep.rows || [];
   const unitMap = {};
   rows.forEach(r => {
-    if (!unitMap[r.unit_no]) unitMap[r.unit_no] = { unit_no: r.unit_no, remaining: 0, current_due: 0, accounts: [], display_name: '' };
-    unitMap[r.unit_no].remaining += r.remaining; unitMap[r.unit_no].current_due += r.current_due; unitMap[r.unit_no].accounts.push(r);
-    if (!unitMap[r.unit_no].display_name && r.full_name) unitMap[r.unit_no].display_name = r.full_name;
+    if (r.unit_no == null) return;
+    if (!unitMap[r.unit_no]) unitMap[r.unit_no] = { unit_no: r.unit_no, remaining: 0, current_due: 0, paid_this_month: 0, accounts: [], display_name: '' };
+    const u = unitMap[r.unit_no];
+    u.remaining += Number(r.remaining) || 0;
+    u.current_due += Number(r.current_due) || 0;
+    u.paid_this_month += Number(r.paid_this_month) || 0;
+    u.accounts.push(r);
+    if (!u.display_name && r.full_name) u.display_name = r.full_name;
   });
   const mapUnits = []; for (let i = 1; i <= 10; i++) { mapUnits.push(unitMap[i] || { unit_no: i, remaining: 0, current_due: 0, accounts: [], display_name: '-' }); }
   const floors = []; for (let u = 9; u >= 1; u -= 2) { floors.push([mapUnits.find(x => x.unit_no === u), mapUnits.find(x => x.unit_no === u + 1)]); }
@@ -793,7 +873,7 @@ async function viewDash(el) {
         <div class="bc-row" style="margin-top:4px;justify-content:flex-start"><button class="eye" type="button">${EYE}</button><span class="bc-amt" data-count="${fund.balance}">${fmt(fund.balance)}</span></div>
         <div class="bc-row" style="margin-top:14px"><span></span><button class="pill" type="button" data-go="tx">گردش حساب</button></div>
       </div>
-      <div class="bank-card soft"><i class="shine"></i>
+      <div class="bank-card soft" id="monthly-income-card"><i class="shine"></i>
         <b style="font-size:15px">درآمد این ماه</b>
         <div class="bc-row"><span>تومان</span></div>
         <div class="bc-amt" data-count="${fund.month_income ?? fund.month_expense}" style="margin-top:4px">${fmt(fund.month_income ?? fund.month_expense)}</div>
@@ -807,9 +887,17 @@ async function viewDash(el) {
       </div>
     </div>
     <div class="grid g2">
-      <div class="card"><h2>نقشه ساختمان</h2>
+      <div class="card" id="building-map"><h2>نقشه ساختمان</h2>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px">
-          ${floors.map(fl => fl.map(r => r ? `<button class="win" data-u="${r.unit_no}" style="background:${winBg(r)}"><span style="font-size:14px;font-weight:700;color:#555">واحد ${fa(r.unit_no)}</span><span style="font-size:16px;font-weight:900;color:#111">${esc(r.display_name)}</span><span style="font-size:14px;font-weight:700;margin-top:8px;color:#222">${r.remaining <= 0 ? 'تسویه' : fmt(r.remaining) + ' تومان'}</span></button>` : '').join('')).join('')}
+          ${floors.map(fl => fl.map(r => r ? `<button class="win animated-unit" data-u="${r.unit_no}" style="background:${winBg(r)}">
+            <span style="font-size:14px;font-weight:700;color:#555">واحد ${fa(r.unit_no)}</span>
+            <span style="font-size:16px;font-weight:900;color:#111">${esc(r.display_name)}</span>
+            <div class="unit-finance">
+              ${r.paid_this_month > 0 ? `<div class="unit-paid"><span>پرداختی این ماه</span><strong>${fmt(r.paid_this_month)} تومان</strong></div>` : ''}
+              ${r.remaining > 0 ? `<div class="unit-debt"><span>بدهی باقی‌مانده</span><strong>${fmt(r.remaining)} تومان</strong></div>` : ''}
+              ${r.remaining <= 0 && r.paid_this_month <= 0 ? `<div class="unit-settled">تسویه</div>` : ''}
+            </div>
+          </button>` : '').join('')).join('')}
         </div>
       </div>
       <div class="grid" style="align-content:start">
@@ -821,6 +909,7 @@ async function viewDash(el) {
   bindPeriod(() => go('dash'));
   $$('[data-go]', el).forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
   countUp(el); bindEyes(el);
+  setupPaymentScrollAnimation(el, unitMap);
   $('#go-pay')?.addEventListener('click', () => go('pay'));
   $('#go-profile')?.addEventListener('click', e => { e.preventDefault(); go('profile'); });
   $$('.win', el).forEach(b => b.addEventListener('click', () => {
