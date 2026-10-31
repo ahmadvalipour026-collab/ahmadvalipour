@@ -4,7 +4,7 @@
 create table if not exists public.push_subscriptions (
   id uuid primary key default gen_random_uuid(),
   account_id uuid not null references public.accounts(id) on delete cascade,
-  building_id uuid not null,
+  building_id integer not null,
   endpoint text not null unique,
   p256dh text not null,
   auth text not null,
