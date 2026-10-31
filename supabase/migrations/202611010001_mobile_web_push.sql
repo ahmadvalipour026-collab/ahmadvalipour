@@ -33,6 +33,7 @@ set search_path = ''
 as $$
 declare
   v_account public.accounts;
+  v_rows integer;
 begin
   v_account := public.bm_auth(p_token);
   if v_account.id is null or coalesce(v_account.is_active, false) = false then
@@ -55,7 +56,13 @@ begin
     p256dh = excluded.p256dh,
     auth = excluded.auth,
     user_agent = excluded.user_agent,
-    updated_at = now();
+    updated_at = now()
+  where public.push_subscriptions.account_id = excluded.account_id;
+
+  get diagnostics v_rows = row_count;
+  if v_rows = 0 then
+    raise exception 'این اشتراک اعلان به حساب دیگری تعلق دارد';
+  end if;
 
   return jsonb_build_object('ok', true);
 end;
