@@ -227,6 +227,7 @@ tr:hover td{background:var(--bg)}
 .unit-debt{background:#ffd6d6;color:#a51d1d}
 .unit-paid strong,.unit-debt strong{font-size:clamp(11px,2.7vw,14px);font-weight:900;overflow-wrap:anywhere}
 .unit-settled{font-weight:800;color:#16803d}
+.fly-payment.fly-debt{background:#ffd6d6;color:#a51d1d}
 .fly-payment{position:fixed;z-index:55;pointer-events:none;background:#c9f2d8;color:#176b3a;border-radius:11px;padding:7px 9px;font-size:12px;font-weight:900;white-space:nowrap;box-shadow:0 5px 18px #0002;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){.fly-payment{display:none!important}}
 </style>
@@ -756,51 +757,31 @@ function reqTable(list, admin) {
 let cleanupPaymentScroll = null;
 function setupPaymentScrollAnimation(root, unitMap) {
   if (cleanupPaymentScroll) { cleanupPaymentScroll(); cleanupPaymentScroll = null; }
-  const source = root.querySelector('#monthly-income-card');
   const map = root.querySelector('#building-map');
-  if (!source || !map) return;
-  const entries = [...root.querySelectorAll('.animated-unit')].map(unit => ({
-    unit, target: unit.querySelector('.unit-paid'), data: unitMap[Number(unit.dataset.u)]
-  })).filter(x => x.target && Number(x.data?.paid_this_month) > 0);
+  const incomeSource = root.querySelector('#monthly-income-card');
+  const debtSource = root.querySelector('#overdue-debt-card');
+  if (!map || !incomeSource || !debtSource) return;
+
+  const entries = [...root.querySelectorAll('.animated-unit')].flatMap(unit => {
+    const data = unitMap[Number(unit.dataset.u)];
+    if (!data) return [];
+    return [
+      { source: incomeSource, target: unit.querySelector('.unit-paid'), amount: Number(data.paid_this_month), kind: 'paid' },
+      { source: debtSource, target: unit.querySelector('.unit-debt'), amount: Number(data.remaining), kind: 'debt' }
+    ].filter(x => x.target && Number.isFinite(x.amount) && x.amount > 0);
+  });
   if (!entries.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const chips = entries.map(({data}) => {
+
+  const chips = entries.map(({ amount, kind }) => {
     const chip = document.createElement('div');
-    chip.className = 'fly-payment';
-    chip.textContent = fmt(data.paid_this_month) + ' تومان';
+    chip.className = 'fly-payment' + (kind === 'debt' ? ' fly-debt' : '');
+    chip.textContent = fmt(amount) + ' تومان';
     chip.style.display = 'none';
     document.body.appendChild(chip);
     return chip;
   });
   let raf = 0;
   const clamp = x => Math.max(0, Math.min(1, x));
-  const update = () => {
-    raf = 0;
-    if (!root.isConnected || S.view !== 'dash') { cleanup(); return; }
-    const src = source.getBoundingClientRect();
-    const mr = map.getBoundingClientRect();
-    const viewport = window.innerHeight;
-    // Starts as the map approaches the viewport, finishes as it moves upwards.
-    const progress = clamp((viewport * .85 - mr.top) / Math.max(180, viewport * .55));
-    entries.forEach(({target}, i) => {
-      const chip = chips[i];
-      const t = target.getBoundingClientRect();
-      const stagger = entries.length > 1 ? i / (entries.length - 1) * .34 : 0;
-      const p = clamp((progress - stagger) / .66);
-      target.style.opacity = p >= .99 ? '1' : '0';
-      if (p <= 0 || p >= .99) { chip.style.display = 'none'; return; }
-      chip.style.display = 'block';
-      const x0 = src.left + src.width / 2;
-      const y0 = src.top + src.height / 2;
-      const x1 = t.left + t.width / 2;
-      const y1 = t.top + t.height / 2;
-      const ease = p * p * (3 - 2 * p);
-      chip.style.left = (x0 + (x1-x0)*ease) + 'px';
-      chip.style.top = (y0 + (y1-y0)*ease - 22*Math.sin(Math.PI*p)) + 'px';
-      chip.style.transform = `translate(-50%,-50%) scale(${.78+.22*ease})`;
-      chip.style.opacity = String(Math.min(1,p*8,(1-p)*8));
-    });
-  };
-  const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
   const cleanup = () => {
     window.removeEventListener('scroll', schedule);
     window.removeEventListener('resize', schedule);
@@ -809,8 +790,36 @@ function setupPaymentScrollAnimation(root, unitMap) {
     entries.forEach(x => { x.target.style.opacity = ''; });
     if (cleanupPaymentScroll === cleanup) cleanupPaymentScroll = null;
   };
+  const update = () => {
+    raf = 0;
+    if (!root.isConnected || S.view !== 'dash') { cleanup(); return; }
+    const mr = map.getBoundingClientRect();
+    const viewport = window.innerHeight;
+    const progress = clamp((viewport * .85 - mr.top) / Math.max(180, viewport * .55));
+    entries.forEach(({ source, target, kind }, i) => {
+      const chip = chips[i];
+      const src = source.getBoundingClientRect();
+      const t = target.getBoundingClientRect();
+      // Keep red and green flights visually staggered but tied to scrolling.
+      const stagger = entries.length > 1 ? i / (entries.length - 1) * .30 : 0;
+      const p = clamp((progress - stagger) / .70);
+      target.style.opacity = p >= .99 ? '1' : '0';
+      if (p <= 0 || p >= .99) { chip.style.display = 'none'; return; }
+      chip.style.display = 'block';
+      const x0 = src.left + src.width / 2;
+      const y0 = src.top + src.height / 2;
+      const x1 = t.left + t.width / 2;
+      const y1 = t.top + t.height / 2;
+      const ease = p * p * (3 - 2 * p);
+      chip.style.left = (x0 + (x1 - x0) * ease) + 'px';
+      chip.style.top = (y0 + (y1 - y0) * ease - (kind === 'debt' ? -18 : 22) * Math.sin(Math.PI * p)) + 'px';
+      chip.style.transform = `translate(-50%,-50%) scale(${.78 + .22 * ease})`;
+      chip.style.opacity = String(Math.min(1, p * 8, (1 - p) * 8));
+    });
+  };
+  const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
   cleanupPaymentScroll = cleanup;
-  window.addEventListener('scroll', schedule, {passive:true});
+  window.addEventListener('scroll', schedule, { passive: true });
   window.addEventListener('resize', schedule);
   schedule();
 }
@@ -879,7 +888,7 @@ async function viewDash(el) {
         <div class="bc-amt" data-count="${fund.month_income ?? fund.month_expense}" style="margin-top:4px">${fmt(fund.month_income ?? fund.month_expense)}</div>
         <div class="bc-row" style="margin-top:14px"><span></span><button class="pill" type="button" data-go="report">گزارش ماه</button></div>
       </div>
-      <div class="bank-card peach"><i class="shine"></i>
+      <div class="bank-card peach" id="overdue-debt-card"><i class="shine"></i>
         <b style="font-size:15px">مطالبات معوق</b>
         <div class="bc-row" style="color:#fff"><span>تومان</span></div>
         <div class="bc-amt" data-count="${totalDebt}" style="margin-top:4px">${fmt(totalDebt)}</div>
