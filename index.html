@@ -232,8 +232,12 @@ tr:hover td{background:var(--bg)}
 @media(prefers-reduced-motion:reduce){.fly-payment{display:none!important}}
 
 /* Compact dashboard, four unit tiles per row */
-html,body{overscroll-behavior-y:none}
-.dashboard-money-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+html{overflow-y:auto!important;overflow-x:hidden;overscroll-behavior-y:auto!important;height:auto!important}
+body{overflow-y:visible!important;overflow-x:hidden;overscroll-behavior-y:auto!important;height:auto!important;min-height:100vh;touch-action:pan-y!important}
+#app,main#view{height:auto!important;max-height:none!important;overflow-y:visible!important;touch-action:pan-y!important}
+.dashboard-money-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.dashboard-money-grid > .bank-card:first-child{grid-column:1 / -1;min-height:0}
+.dashboard-money-grid > .bank-card:not(:first-child){grid-column:auto}
 .dashboard-money-grid .bank-card{padding:12px 11px;border-radius:14px;min-width:0;box-shadow:0 5px 13px rgba(45,52,99,.16)}
 .dashboard-money-grid .bank-card b{font-size:12px!important}
 .dashboard-money-grid .bank-card .bc-row{margin-top:4px!important;font-size:10px;gap:4px}
@@ -250,7 +254,7 @@ html,body{overscroll-behavior-y:none}
 #building-map .unit-paid strong,#building-map .unit-debt strong{font-size:10px;overflow-wrap:anywhere;line-height:1.4}
 #building-map .unit-settled{font-size:10px}
 @media(max-width:420px){
- .dashboard-money-grid{gap:5px}
+ .dashboard-money-grid{gap:7px}
  .dashboard-money-grid .bank-card{padding:9px 6px;border-radius:11px}
  .dashboard-money-grid .bank-card b{font-size:10px!important}
  .dashboard-money-grid .bank-card .bc-amt{font-size:12px}
@@ -690,7 +694,7 @@ function renderShellHeaderState() {
     $('span', dia).innerHTML = (LINE_ICONS[key] || ico(key));
     dia.classList.remove('bump'); void dia.offsetWidth; dia.classList.add('bump');
   }
-  window.scrollTo({ top: 0, behavior: 'instant' });
+  window.scrollTo(0, 0);
 }
 
 function showConnectionError() {
