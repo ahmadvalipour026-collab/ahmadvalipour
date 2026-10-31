@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2d3463">
+<link rel="manifest" href="/manifest.webmanifest">
 <title>مجتمع نگین ۲ | مدیریت ساختمان</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232d3463'/><path d='M20 80 L20 30 L50 10 L80 30 L80 80 Z' fill='white'/><rect x='40' y='60' width='20' height='20' fill='%23f7ae74'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -279,6 +280,46 @@ if (savedTheme !== 'default') document.documentElement.setAttribute('data-theme'
 const SUPABASE_URL = 'https://hpgvgoehkcpjmdbfmnse.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_BuJxTaMP2rYWTe5mh-N55Q_gSHE1O8g';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
+
+const PUSH_VAPID_PUBLIC_KEY = 'BPQFEv_f0euIx2kvfDU0nS0s6w1lJZn23JGC2XlFs0L1mh4Lgj88_9xzgAemCROP622Q4gvwqHg9YhMbGl7tN9s';
+let pushServiceWorkerRegistration = null;
+function pushBase64UrlToBytes(value) {
+  const padding = '='.repeat((4 - value.length % 4) % 4);
+  const raw = atob((value + padding).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from([...raw].map(ch => ch.charCodeAt(0)));
+}
+async function getPushServiceWorker() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) throw new Error('مرورگر شما اعلان مستقیم را پشتیبانی نمی‌کند');
+  if (!window.isSecureContext) throw new Error('برای اعلان موبایلی باید سایت با HTTPS باز شود');
+  if (!pushServiceWorkerRegistration) {
+    pushServiceWorkerRegistration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    await navigator.serviceWorker.ready;
+  }
+  return pushServiceWorkerRegistration;
+}
+async function enableMobilePush() {
+  if (!S.token) throw new Error('ابتدا وارد حساب شوید');
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') throw new Error('اجازه نمایش اعلان داده نشد');
+  const registration = await getPushServiceWorker();
+  let subscription = await registration.pushManager.getSubscription();
+  if (!subscription) subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true, applicationServerKey: pushBase64UrlToBytes(PUSH_VAPID_PUBLIC_KEY)
+  });
+  const json = subscription.toJSON();
+  const { error } = await sb.rpc('app_push_save_subscription', {
+    p_token: S.token, p_endpoint: json.endpoint, p_p256dh: json.keys?.p256dh,
+    p_auth: json.keys?.auth, p_user_agent: navigator.userAgent
+  });
+  if (error) throw error;
+}
+function sendMobilePush(event, title, body) {
+  if (!S.token) return;
+  sb.functions.invoke('send-web-push', { body: { token: S.token, event, title, body } })
+    .then(({ error }) => { if (error) console.warn('Mobile push failed:', error); })
+    .catch(error => console.warn('Mobile push failed:', error));
+}
+
 
 const MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
 const CATS = { charge:'شارژ ماهیانه', water:'قبض آب', gas:'قبض گاز', electric:'برق عمومی', repair:'بازسازی', parking:'اجاره پارکینگ', debt:'پرداخت بدهی معوق', other:'سایر', bill:'کل صورتحساب ماه' };
@@ -652,6 +693,7 @@ async function renderShell() {
   $('#go-req').addEventListener('click', () => go('requests'));
   $$('.bnav-items button').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
   window.addEventListener('resize', debounce(renderShellHeaderState, 100));
+  if ('serviceWorker' in navigator && window.isSecureContext) getPushServiceWorker().catch(err => console.warn('Service worker registration failed:', err));
   go(S.view);
 }
 
@@ -995,6 +1037,7 @@ async function viewAnnouncements(el) {
         const title = $('#a-title').value; const content = $('#a-content').value; const type = $('#a-type').value;
         await T('app_admin_save_announcement', { p_title: title, p_content: content, p_type: type });
         notifyBale(`📢 اعلان جدید در ساختمان:\n\n🔹 ${title}\n\n${content}`);
+        sendMobilePush('announcement_created', title, content);
         toast('ثبت شد'); go('announcements');
       } catch (err) { showErr(err); }
     });
@@ -1134,6 +1177,7 @@ async function viewRequests(el) {
         const desc = $('#rq-desc').value.trim();
         await T('app_submit_request', { p_type: type, p_description: desc });
         notifyBale(`🔔 درخواست جدید از واحد ${S.me.unit_no}:\n\n🔹 نوع: ${type}\n📝 توضیحات: ${desc}`);
+        sendMobilePush('request_created', 'درخواست جدید ساکن', 'واحد ' + S.me.unit_no + ' — ' + type);
         toast('درخواست ثبت شد'); go('requests');
       } catch (err) { showErr(err); }
     });
@@ -1148,6 +1192,7 @@ async function viewRequests(el) {
         const saved = await T('app_submit_group_message', { p_message: message });
         const title = saved?.title || `پیام گروهی از واحد ${S.me.unit_no || '—'}`;
         const baleSent = await notifyBale(`💬 ${title}\n\n${message}`);
+        sendMobilePush('group_message_created', title, message);
         toast(
           baleSent
             ? 'پیام در اعلان‌های برنامه ثبت و به گروه بله ارسال شد'
@@ -1179,6 +1224,7 @@ async function viewRequests(el) {
         if (isActive) {
           const pollText = `📊 نظرسنجی جدید ساختمان\n\n${title}${description ? `\n${description}` : ''}\n\nگزینه‌ها:\n${options.map((x, i) => `${i + 1}) ${x}`).join('\n')}\n\nبرای ثبت رأی وارد برنامه مدیریت ساختمان شوید.`;
           const sent = await notifyBale(pollText);
+        sendMobilePush('poll_created', 'نظرسنجی جدید: ' + title, description || options.join('، '));
           toast(sent ? 'نظرسنجی ایجاد و در گروه بله اعلام شد' : 'نظرسنجی ایجاد شد؛ ارسال اعلان به بله ناموفق بود', !sent);
         } else {
           toast('نظرسنجی به‌صورت غیرفعال ایجاد شد');
@@ -1837,7 +1883,15 @@ async function viewActivity(el) {
 
 async function viewProfile(el) {
   const a = S.me;
-  el.innerHTML = `${mustChangeBanner()}<h1>پروفایل</h1><p class="sub">واحد ${fa(a.unit_no)} · ${esc(a.occupancy || '')}</p><form id="pf2" class="card grid g2" style="max-width:760px"><label class="f">نام<input id="p-n" value="${esc(a.full_name || '')}"></label><label class="f">شماره موبایل<input id="p-ph" dir="ltr" value="${esc(a.phone || '')}"></label><label class="f" style="grid-column:1/-1">ایمیل<input id="p-e" dir="ltr" type="email" value="${esc(a.email || '')}"></label><h2 style="grid-column:1/-1;margin:12px 0 0">نام کاربری و رمز</h2><label class="f">نام کاربری<input id="p-u" dir="ltr" value="${esc(a.username || '')}"></label><label class="f">رمز فعلی<input id="p-c" dir="ltr" type="password"></label><label class="f">رمز جدید<input id="p-np" dir="ltr" type="password"></label><label class="f">تکرار رمز<input id="p-np2" dir="ltr" type="password"></label><div style="grid-column:1/-1"><button class="btn sf">ذخیره</button></div></form>`;
+  el.innerHTML = `${mustChangeBanner()}<h1>پروفایل</h1>
+  <div class="card" style="margin:14px 0 18px;border-color:var(--accent)"><h2 style="margin:0 0 6px">🔔 اعلان‌های موبایلی</h2><p class="sub" style="margin:0 0 12px">با فعال‌کردن این گزینه، اعلان‌های مهم ساختمان حتی هنگام بسته‌بودن صفحه برنامه روی گوشی نمایش داده می‌شوند.</p><button type="button" class="btn sf" id="enable-push-btn">فعال‌سازی اعلان‌ها</button><p id="push-status" class="sub" style="margin:8px 0 0"></p></div><p class="sub">واحد ${fa(a.unit_no)} · ${esc(a.occupancy || '')}</p><form id="pf2" class="card grid g2" style="max-width:760px"><label class="f">نام<input id="p-n" value="${esc(a.full_name || '')}"></label><label class="f">شماره موبایل<input id="p-ph" dir="ltr" value="${esc(a.phone || '')}"></label><label class="f" style="grid-column:1/-1">ایمیل<input id="p-e" dir="ltr" type="email" value="${esc(a.email || '')}"></label><h2 style="grid-column:1/-1;margin:12px 0 0">نام کاربری و رمز</h2><label class="f">نام کاربری<input id="p-u" dir="ltr" value="${esc(a.username || '')}"></label><label class="f">رمز فعلی<input id="p-c" dir="ltr" type="password"></label><label class="f">رمز جدید<input id="p-np" dir="ltr" type="password"></label><label class="f">تکرار رمز<input id="p-np2" dir="ltr" type="password"></label><div style="grid-column:1/-1"><button class="btn sf">ذخیره</button></div></form>`;
+  $('#enable-push-btn')?.addEventListener('click', async e => {
+    const btn = e.currentTarget; const status = $('#push-status');
+    btn.disabled = true; btn.textContent = 'در حال فعال‌سازی...';
+    try { await enableMobilePush(); btn.textContent = 'اعلان‌ها فعال هستند'; if (status) status.textContent = 'اعلان‌های این ساختمان روی این دستگاه فعال شد.'; toast('اعلان‌های موبایلی فعال شد'); }
+    catch (err) { btn.textContent = 'تلاش دوباره برای فعال‌سازی'; if (status) status.textContent = err.message || 'فعال‌سازی اعلان‌ها ناموفق بود'; showErr(err); }
+    finally { btn.disabled = false; }
+  });
   $('#go-profile')?.addEventListener('click', e => e.preventDefault());
   $('#pf2').addEventListener('submit', async e => { e.preventDefault(); if ($('#p-np').value !== $('#p-np2').value) { toast('تکرار رمز یکسان نیست', true); return; } try { S.me = await T('app_update_profile', { p_full_name: $('#p-n').value, p_phone: $('#p-ph').value, p_email: $('#p-e').value, p_username: $('#p-u').value, p_current_password: $('#p-c').value || null, p_new_password: $('#p-np').value || null }); sessionStorage.setItem('bm_me', JSON.stringify(S.me)); toast('ذخیره شد'); renderShell(); } catch (err) { showErr(err); } });
 }
