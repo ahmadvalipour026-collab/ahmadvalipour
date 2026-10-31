@@ -7,8 +7,8 @@ self.addEventListener('push', event => {
   const title = String(data.title || 'اعلان ساختمان');
   const options = {
     body: String(data.body || 'یک اعلان جدید دریافت کردید.'),
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: '/icon.svg',
+    badge: '/icon.svg',
     dir: 'rtl',
     lang: 'fa',
     data: { url: data.url || '/' },
