@@ -1177,7 +1177,6 @@ async function viewRequests(el) {
         const desc = $('#rq-desc').value.trim();
         await T('app_submit_request', { p_type: type, p_description: desc });
         notifyBale(`🔔 درخواست جدید از واحد ${S.me.unit_no}:\n\n🔹 نوع: ${type}\n📝 توضیحات: ${desc}`);
-        sendMobilePush('request_created', 'درخواست جدید ساکن', 'واحد ' + S.me.unit_no + ' — ' + type);
         toast('درخواست ثبت شد'); go('requests');
       } catch (err) { showErr(err); }
     });
@@ -1192,7 +1191,6 @@ async function viewRequests(el) {
         const saved = await T('app_submit_group_message', { p_message: message });
         const title = saved?.title || `پیام گروهی از واحد ${S.me.unit_no || '—'}`;
         const baleSent = await notifyBale(`💬 ${title}\n\n${message}`);
-        sendMobilePush('group_message_created', title, message);
         toast(
           baleSent
             ? 'پیام در اعلان‌های برنامه ثبت و به گروه بله ارسال شد'
