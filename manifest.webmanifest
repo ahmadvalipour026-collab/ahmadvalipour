@@ -1,0 +1,11 @@
+{
+  "name": "سامانه مدیریت ساختمان",
+  "short_name": "مدیریت ساختمان",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f1f1f4",
+  "theme_color": "#2d3463"
+}
