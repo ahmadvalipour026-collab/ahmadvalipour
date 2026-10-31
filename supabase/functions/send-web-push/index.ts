@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     if (!token || typeof token !== "string" || !/^[0-9a-f-]{36}$/i.test(token)) {
       return json({ error: "Unauthorized" }, 401);
     }
-    const allowed = new Set(["announcement_created", "poll_created", "group_message_created", "request_created"]);
+    const allowed = new Set(["announcement_created", "poll_created"]);
     if (!allowed.has(event)) return json({ error: "Unsupported event" }, 400);
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -45,10 +45,7 @@ Deno.serve(async (req) => {
       return json({ error: "Unauthorized" }, 401);
     }
 
-    if ((event === "announcement_created" || event === "poll_created") && !actor.is_admin) {
-      return json({ error: "Forbidden" }, 403);
-    }
-    if ((event === "group_message_created" || event === "request_created") && actor.is_admin) {
+    if (!actor.is_admin) {
       return json({ error: "Forbidden" }, 403);
     }
 
@@ -59,7 +56,6 @@ Deno.serve(async (req) => {
       .eq("building_id", actor.building_id).eq("is_active", true)
       .neq("id", actor.id);
 
-    if (event === "request_created") accountQuery = accountQuery.eq("is_admin", true);
 
     const { data: recipients, error: recipientsError } = await accountQuery;
     if (recipientsError) throw recipientsError;
