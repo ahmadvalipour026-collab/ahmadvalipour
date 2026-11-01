@@ -281,6 +281,15 @@ const SUPABASE_URL = 'https://hpgvgoehkcpjmdbfmnse.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_BuJxTaMP2rYWTe5mh-N55Q_gSHE1O8g';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
 
+// Register the PWA service worker on every normal visit, not only when push notifications are enabled.
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(() => navigator.serviceWorker.ready)
+      .catch(error => console.warn('PWA service worker registration failed:', error));
+  }, { once: true });
+}
+
 let deferredInstallPrompt = null;
 let installPromptDismissed = false;
 function isAppInstalled() {
