@@ -805,9 +805,9 @@ function billCard(r, rep) {
       </div>
       ${park > 0 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)"><span>اجاره پارکینگ: <b>${money(park)}</b> تومان</span><span>${r.ok_parking ? '<span class="chip ok">پرداخت شده</span>' : '<span class="chip no">پرداخت نشده</span>'}</span></div>` : ''}
     </div>
-    <div style="background:var(--bg);padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px;border-top:1px solid var(--line)">
-      <div><small style="color:var(--muted);display:block">بدهی قبلی</small><b>${money(prev)}</b> تومان</div>
-      <div><small style="color:var(--muted);display:block">پرداختی این ماه</small><b>${money(paid)}</b> تومان</div>
+    <div style="background:var(--bg);padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px;border-top:1px solid var(--line)";color:#000">
+      <div><small style="color:var(--muted);display:block">بدهی قبلی</small><b style="color:#000">${money(prev)}</b> <span style="color:#000">تومان</span></div>
+      <div><small style="color:var(--muted);display:block">پرداختی این ماه</small><b style="color:#000">${money(paid)}</b> <span style="color:#000">تومان</span></div>
     </div>
   </div>`;
 }
