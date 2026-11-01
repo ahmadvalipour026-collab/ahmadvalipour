@@ -281,6 +281,38 @@ const SUPABASE_URL = 'https://hpgvgoehkcpjmdbfmnse.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_BuJxTaMP2rYWTe5mh-N55Q_gSHE1O8g';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
 
+let deferredInstallPrompt = null;
+let installPromptDismissed = false;
+function isAppInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function renderInstallBanner() {
+  const view = document.getElementById('view');
+  if (!view || S.view !== 'dash' || isAppInstalled() || installPromptDismissed || !deferredInstallPrompt || document.getElementById('pwa-install-banner')) return;
+  const banner = document.createElement('section');
+  banner.id = 'pwa-install-banner';
+  banner.style.cssText = 'margin:14px 16px 18px;padding:16px;border-radius:18px;background:linear-gradient(135deg,#2d3463,#46528f);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 8px 24px #20264a22';
+  banner.innerHTML = '<div style="min-width:0"><b style="display:block;font-size:15px;margin-bottom:5px">📲 نصب اپلیکیشن ساختمان</b><span style="font-size:12px;opacity:.9">برای دسترسی سریع‌تر، برنامه را روی گوشی نصب کنید.</span></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><button id="pwa-install-action" style="border:0;border-radius:12px;padding:10px 16px;background:#fff;color:#2d3463;font:inherit;font-weight:800">نصب</button><button id="pwa-install-close" aria-label="بستن" style="border:0;background:transparent;color:#fff;font-size:22px;padding:2px 5px">×</button></div>';
+  view.prepend(banner);
+  document.getElementById('pwa-install-action').addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    banner.remove();
+  });
+  document.getElementById('pwa-install-close').addEventListener('click', () => { installPromptDismissed = true; banner.remove(); });
+}
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  renderInstallBanner();
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  document.getElementById('pwa-install-banner')?.remove();
+});
+
 const PUSH_VAPID_PUBLIC_KEY = 'BG2kHbhNer7-oNifxU96_I8AcCmF0PJ-J7SVIeYd28Xo_iYVfG63Ue12kvtrAcM-UM3w8yoZRiphTjuzaG-Mt6I';
 let pushServiceWorkerRegistration = null;
 function pushBase64UrlToBytes(value) {
@@ -708,7 +740,7 @@ function go(v, isBackNavigation = false) {
   el.innerHTML = `<p class="sub">در حال بارگذاری...</p>`;
   renderShellHeaderState();
   const currentRenderId = ++S.renderId;
-  Promise.resolve(views[v](el)).catch(e => {
+  Promise.resolve(views[v](el)).then(() => { if (v === 'dash') renderInstallBanner(); }).catch(e => {
     if (currentRenderId !== S.renderId) return;
     if (e.message === 'AUTH_ERROR') { logout(true); return; }
     if (e.message === 'NETWORK_ERROR') {
