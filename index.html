@@ -297,9 +297,9 @@ async function getPushServiceWorker() {
   }
   return pushServiceWorkerRegistration;
 }
-async function enableMobilePush(permission = null) {
+async function enableMobilePush() {
   if (!S.token) throw new Error('ابتدا وارد حساب شوید');
-  permission = permission || await Notification.requestPermission();
+  const permission = await Notification.requestPermission();
   if (permission !== 'granted') throw new Error('اجازه نمایش اعلان داده نشد');
   const registration = await getPushServiceWorker();
   let subscription = await registration.pushManager.getSubscription();
@@ -563,19 +563,11 @@ async function renderLogin() {
     e.preventDefault();
     const btn = $('#lg-btn'); const old = btn.textContent;
     btn.disabled = true; btn.textContent = 'در حال بررسی...'; $('#lg-err').textContent = '';
-    let pushPermission = null;
     try {
-      // Request permission directly from the login-button gesture.
-      if ('Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window && window.isSecureContext) {
-        try { pushPermission = await Notification.requestPermission(); } catch (_) {}
-      }
       const r = await api('app_login', { p_login: $('#lg-user').value.trim(), p_password: $('#lg-pass').value });
       if (!r.ok) { $('#lg-err').textContent = r.error; return; }
       S.token = r.token; S.me = r.account;
       sessionStorage.setItem('bm_token', S.token); sessionStorage.setItem('bm_me', JSON.stringify(S.me));
-      if (pushPermission === 'granted') {
-        try { await enableMobilePush('granted'); } catch (pushErr) { console.warn('Push subscription failed:', pushErr); }
-      }
       renderShell();
     } catch (err) { showErr(err); }
     finally { btn.disabled = false; btn.textContent = old; }
@@ -814,8 +806,8 @@ function billCard(r, rep) {
       ${park > 0 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)"><span>اجاره پارکینگ: <b>${money(park)}</b> تومان</span><span>${r.ok_parking ? '<span class="chip ok">پرداخت شده</span>' : '<span class="chip no">پرداخت نشده</span>'}</span></div>` : ''}
     </div>
     <div style="background:var(--bg);padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px;border-top:1px solid var(--line)">
-      <div><small style="color:#000;display:block">بدهی قبلی</small><b style="color:#000">${money(prev)}</b> تومان</div>
-      <div><small style="color:#000;display:block">پرداختی این ماه</small><b style="color:#000">${money(paid)}</b> تومان</div>
+      <div><small style="color:var(--muted);display:block">بدهی قبلی</small><b>${money(prev)}</b> تومان</div>
+      <div><small style="color:var(--muted);display:block">پرداختی این ماه</small><b>${money(paid)}</b> تومان</div>
     </div>
   </div>`;
 }
