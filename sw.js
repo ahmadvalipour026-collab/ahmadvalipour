@@ -33,3 +33,10 @@ self.addEventListener('notificationclick', event => {
     if (clients.openWindow) await clients.openWindow(target);
   })());
 });
+
+// Pass network requests through so the service worker also provides
+// the fetch capability expected by Chromium's PWA installation checks.
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(fetch(event.request));
+});
