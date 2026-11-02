@@ -77,6 +77,9 @@ Commits on the branch now include:
 - New registration, manager-created account and password-change paths enforce English usernames and 4–6 numeric-digit passwords. Manager password reset now generates a six-digit numeric temporary password.
 - Owner and owner-resident debt fields are hidden in the new resident balance response; tenant and manager memberships retain balances.
 - `202611030002_import_negin2_as_building.sql`: idempotent import of the existing Negin 2 building, 10 units, 12 accounts and memberships into the isolated schema. Existing account UUIDs and password hashes are retained. Current unpaid tenant/manager balances are calculated by the legacy billing functions and carried as opening debt.
+- `multibuilding.html`: a separate multi-building workspace using the Negin 2 Supabase project and the isolated `mb_*` RPCs. It reuses the same visual design language and enforces the 4–6 digit password rule.
+- The existing Negin 2 `index.html` remains the default UI. Its admin account menu now has a `مدیریت چندساختمانی` entry that securely bridges the current legacy session into the new workspace; the old token remains separate from the new token.
+- `mb_app_bridge_legacy_session` and `mb_app_logout_all` provide the dual-session handoff and revoke both sessions on logout.
 - `supabase/tests/negin2_multibuilding_smoke.sql`: post-import assertions for unit/account/membership counts, one active manager, one active super-admin and the manager pointer.
 
 The import currently bootstraps the existing Negin 2 admin account as the single super-admin while retaining its building-manager membership. This is an explicit migration choice and should be verified against the intended account ownership before production cutover.
