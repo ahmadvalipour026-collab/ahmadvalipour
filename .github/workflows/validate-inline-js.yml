@@ -1,0 +1,19 @@
+name: Validate inline JavaScript
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - integration/negin2-multibuilding-safe
+
+jobs:
+  inline-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Parse inline JavaScript in both app entry points
+        run: node scripts/check-inline-js.mjs
