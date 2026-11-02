@@ -21,14 +21,14 @@ Target Negin 2 database currently contains:
 | buildings | 1 |
 | units | 10 |
 | accounts | 12 |
-| transactions | 547 |
+| transactions | 551 |
 | payment_requests | 64 |
 | rates | 15 |
-| activity_logs | 1,079 |
+| activity_logs | 1,089 |
 | announcements | 4 |
 | resident_requests | 4 |
 | push_subscriptions | 3 |
-| sessions | 87 |
+| sessions | 88 |
 
 The building row is `مجتمع نگین ۲`. Existing account records include the current building admin/manager and owner/tenant accounts. Unit 3 and unit 7 each have both an owner and a tenant account.
 
@@ -86,4 +86,4 @@ The import currently bootstraps the existing Negin 2 admin account as the single
 
 ## Safety status
 
-All repository work is isolated on the integration branch. The two migration files and smoke test have **not** been applied to either Supabase project. No production database rows, schemas, functions, or sessions have been changed. The default branch remains unchanged. The next validation step is to run the migrations in a disposable Supabase development branch, then test the combined old/new login flow and compare financial balances before any production cutover.
+All repository work is isolated on the integration branch. The two migration files and smoke test have **not** been applied persistently to either Supabase project. Both migrations and the smoke test were executed together against the live Negin 2 schema inside a single explicit transaction and then rolled back. PostgreSQL accepted the DDL, imports and all smoke-test assertions; a follow-up query confirmed the `mb` schema was not persisted and the legacy building/account/transaction/payment-request counts were unchanged at 1/12/551/64. The default branch remains unchanged. Remaining validation is browser-level login/session testing and an isolated Supabase branch test before production cutover.
