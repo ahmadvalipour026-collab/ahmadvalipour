@@ -2116,7 +2116,19 @@ async function viewResidentCharges(el) {
   const m = currentMembership(); if (!m) return;
   const s = await T('app_resident_get_financial_summary', { p_building_id: m.building_id, p_membership_id: m.membership_id });
   const charges = s.charges || [], payments = s.payments || [];
-  el.innerHTML = `<h1>صورتحساب</h1><p class="sub">${esc(m.building_name)} · واحد ${fa(s.unit_no)}</p><div class="grid g3" style="margin-bottom:20px"><div class="card"><small class="sub">جمع بدهی</small><div style="font-size:22px;font-weight:900;color:var(--danger)">${fmt(s.debt_balance)}</div></div><div class="card"><small class="sub">بستانکاری</small><div style="font-size:22px;font-weight:900;color:var(--success)">${fmt(s.credit_balance)}</div></div><div class="card"><small class="sub">در انتظار تایید</small><div style="font-size:22px;font-weight:900;color:var(--warning)">${fmt(s.pending_payments)}</div></div></div><div class="sec-title">اقلام صورتحساب</div>${charges.length ? `<div class="tbl-wrap" style="margin-bottom:20px"><table><thead><tr><th>شرح</th><th>مبلغ</th><th>تاریخ</th><th>نوع</th></tr></thead><tbody>${charges.map(c => `<tr><td>${esc(c.description)}</td><td>${fmt(c.amount)}</td><td>${esc(c.item_date)}</td><td>${c.item_type === 'expense' ? '<span class="chip ex">هزینه</span>' : '<span class="chip pd">بدهی اولیه</span>'}</td></tr>`).join('')}</tbody></table></div>` : `<div class="empty"><p>صورتحسابی ثبت نشده</p></div>`}<div class="sec-title">سابقه پرداخت‌ها</div>${payments.length ? `<div class="tbl-wrap"><table><thead><tr><th>مبلغ</th><th>وضعیت</th><th>تاریخ</th></tr></thead><tbody>${payments.map(p => `<tr><td>${fmt(p.amount)}</td><td>${p.status === 'approved' ? '<span class="chip ok">تایید</span>' : p.status === 'pending' ? '<span class="chip pd">در انتظار</span>' : p.status === 'rejected' ? '<span class="chip no">رد</span>' : '<span class="chip ex">' + esc(p.status) + '</span>'}</td><td>${esc(p.payment_date)}</td></tr>`).join('')}</tbody></table></div>` : `<div class="empty"><p>پرداختی ثبت نشده</p></div>`}`;
+  el.innerHTML = `<h1>صورتحساب</h1><p class="sub">${esc(m.building_name)} · واحد ${fa(s.unit_no)}</p>
+  <div class="grid g3" style="margin-bottom:20px">
+    <div class="card"><small class="sub">مانده نهایی حساب</small><div style="font-size:22px;font-weight:900;color:${Number(s.account_balance||0)<0?'var(--success)':'var(--danger)'}">${fmt(s.account_balance||0)}</div><small class="sub">منفی = بستانکاری</small></div>
+    <div class="card"><small class="sub">جمع بدهی</small><div style="font-size:22px;font-weight:900;color:var(--danger)">${fmt(s.debt_balance)}</div></div>
+    <div class="card"><small class="sub">بستانکاری</small><div style="font-size:22px;font-weight:900;color:var(--success)">${fmt(s.credit_balance)}</div></div>
+  </div>
+  <div class="sec-title">ریز اقلام صورتحساب</div>
+  ${charges.length ? `<div class="tbl-wrap" style="margin-bottom:20px"><table><thead><tr><th>شرح</th><th>مبلغ اصلی</th><th>پرداخت‌شده</th><th>مانده ردیف</th><th>تاریخ</th><th>نوع</th></tr></thead><tbody>
+  ${charges.map(c => `<tr><td>${esc(c.description)}</td><td>${fmt(c.amount)}</td><td>${fmt(c.paid_amount||0)}</td><td>${fmt(c.outstanding_amount??c.amount)}</td><td>${esc(c.item_date)}</td><td>${c.item_type === 'expense' ? '<span class="chip ex">هزینه</span>' : '<span class="chip pd">بدهی اولیه</span>'}</td></tr>`).join('')}
+  </tbody></table></div>` : `<div class="empty"><p>صورتحسابی ثبت نشده</p></div>`}
+  <div class="card" style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;gap:12px"><b>بستانکاری منتقل‌شده</b><b style="color:var(--success)">− ${fmt(s.credit_balance||0)} تومان</b></div><div style="display:flex;justify-content:space-between;gap:12px;margin-top:8px"><b>مانده نهایی حساب</b><b>${fmt(s.account_balance||0)} تومان</b></div></div>
+  <div class="sec-title">سابقه پرداخت‌ها</div>
+  ${payments.length ? `<div class="tbl-wrap"><table><thead><tr><th>مبلغ</th><th>شرح</th><th>وضعیت</th><th>تاریخ</th></tr></thead><tbody>${payments.map(p => `<tr><td>${fmt(p.amount)}</td><td>${esc(p.description||'—')}</td><td>${p.status === 'approved' ? '<span class="chip ok">تایید</span>' : p.status === 'pending' ? '<span class="chip pd">در انتظار</span>' : p.status === 'rejected' ? '<span class="chip no">رد</span>' : '<span class="chip ex">' + esc(p.status) + '</span>'}</td><td>${esc(p.payment_date)}</td></tr>`).join('')}</tbody></table></div>` : `<div class="empty"><p>پرداختی ثبت نشده</p></div>`}`;
 }
 
 async function viewManagerMyPay(el) {
@@ -2128,20 +2140,48 @@ async function viewManagerMyPay(el) {
 async function viewResidentPay(el) {
   const m = currentMembership(); if (!m) return;
   const s = await T('app_resident_get_financial_summary', { p_building_id: m.building_id, p_membership_id: m.membership_id });
-  const charges = s.charges || [];
-  el.innerHTML = `<h1>پرداخت</h1><p class="sub">${esc(m.building_name)} · واحد ${fa(s.unit_no)}</p>${charges.length ? `<form id="pay-form" class="card"><h2>انتخاب اقلام پرداختی</h2><p class="sub">مبلغ هر ردیف پس از کسر بستانکاری محاسبه شده و قابل ویرایش نیست.</p><div id="pay-list" style="margin:16px 0">${charges.map(c => `<div class="debt-row" data-item-id="${c.id}" data-item-type="${c.item_type}"><input type="checkbox" class="pay-check" checked><span style="flex:1;font-weight:700">${esc(c.description)}</span><input type="text" class="pay-amount" inputmode="numeric" value="${fmt(Math.floor(Math.max(0, Number(c.payable_amount ?? c.amount) || 0)))}" readonly aria-readonly="true" title="مبلغ پس از کسر بستانکاری" style="background:var(--bg);cursor:not-allowed"><span style="font-size:11px;color:var(--muted)">تومان</span></div>`).join('')}</div><div class="card" style="background:var(--bg);margin-bottom:14px;display:flex;justify-content:space-between;padding:14px 18px"><b>جمع انتخاب‌شده:</b><b id="pay-total" style="color:var(--navy)">0 تومان</b></div><div class="grid g2" style="gap:14px"><label class="f">تاریخ پرداخت<input id="pay-date" class="date-picker-input" readonly placeholder="انتخاب تاریخ" required></label><label class="f">توضیحات (اختیاری)<input id="pay-note" placeholder="مثلاً: فیش بانکی"></label></div><button class="btn" type="submit" style="margin-top:14px;width:100%">ثبت پرداخت</button></form>` : `<div class="empty"><div class="ico">✅</div><p>بدهی برای پرداخت وجود ندارد</p></div>`}`;
-  if (!charges.length) return;
-  $$('.pay-amount', el).forEach(inp => inp.addEventListener('input', e => { const n = toNum(e.target.value); e.target.value = n ? fmt(n) : ''; }));
+  const charges = (s.charges || []).filter(c => Number(c.outstanding_amount ?? c.amount) > 0);
+  const totalOutstanding = charges.reduce((sum,c) => sum + Number(c.outstanding_amount ?? c.amount ?? 0),0);
+  const credit = Number(s.credit_balance || 0);
+  const netPayable = Math.max(0,Math.round(totalOutstanding-credit));
+  const dateOrder = [...charges].sort((a,b) => String(a.item_date).localeCompare(String(b.item_date)));
+  el.innerHTML = `<h1>پرداخت</h1><p class="sub">${esc(m.building_name)} · واحد ${fa(s.unit_no)}</p>
+    ${charges.length ? `<form id="pay-form" class="card">
+      <h2>ریز محاسبه مبلغ پرداخت</h2>
+      <p class="sub">مبلغ اصلی هر شارژ و پرداخت‌های قبلی جداگانه نمایش داده می‌شود. بستانکاری فقط در جمع نهایی کسر می‌شود و مبلغ هیچ ردیفی را صفر نمی‌کند.</p>
+      <div class="tbl-wrap" style="margin:16px 0"><table><thead><tr><th>شرح</th><th>مبلغ اصلی</th><th>پرداخت قبلی</th><th>مانده ردیف</th></tr></thead><tbody>
+      ${charges.map(c => `<tr><td>${esc(c.description)}</td><td>${fmt(c.amount)}</td><td>${fmt(c.paid_amount||0)}</td><td>${fmt(c.outstanding_amount??c.amount)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <div class="card" style="background:var(--bg);margin-bottom:14px;padding:14px 18px">
+        <div style="display:flex;justify-content:space-between;gap:12px"><span>جمع مانده ریز اقلام</span><b>${fmt(totalOutstanding)} تومان</b></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-top:8px;color:var(--success)"><span>کسر بستانکاری قبلی</span><b>− ${fmt(credit)} تومان</b></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;font-size:18px"><b>مبلغ نهایی قابل پرداخت</b><b id="pay-total" style="color:var(--navy)">${fmt(netPayable)} تومان</b></div>
+      </div>
+      <div class="grid g2" style="gap:14px"><label class="f">تاریخ پرداخت<input id="pay-date" class="date-picker-input" readonly placeholder="انتخاب تاریخ" required></label><label class="f">توضیحات (اختیاری)<input id="pay-note" placeholder="مثلاً: فیش بانکی"></label></div>
+      <button class="btn" type="submit" style="margin-top:14px;width:100%" ${netPayable<=0?'disabled':''}>ثبت پرداخت نهایی</button>
+    </form>` : `<div class="card"><div class="sec-title">مانده حساب</div><h2>${fmt(s.account_balance||0)} تومان</h2><p class="sub">${credit>0?'حساب شما بستانکار است و این مبلغ به دوره‌های بعد منتقل می‌شود.':'بدهی قابل پرداختی ثبت نشده است.'}</p></div>`}`;
+  if (!charges.length || netPayable<=0) return;
   bindDatePickers(el);
-  const updateTotal = () => { let total = 0; $$('.debt-row', el).forEach(row => { if ($('.pay-check', row).checked) total += toNum($('.pay-amount', row).value); }); $('#pay-total', el).textContent = fmt(total) + ' تومان'; };
-  $$('.pay-check, .pay-amount', el).forEach(x => x.addEventListener('input', updateTotal)); updateTotal();
   $('#pay-form', el).addEventListener('submit', async e => {
     e.preventDefault();
-    const allocations = [];
-    $$('.debt-row', el).forEach(row => { const cb = $('.pay-check', row); if (!cb.checked) return; const amount = toNum($('.pay-amount', row).value); if (amount <= 0) return; allocations.push({ type: row.dataset.itemType, id: row.dataset.itemId, amount }); });
-    if (!allocations.length) { toastErr('حداقل یک آیتم انتخاب کنید'); return; }
-    const total = allocations.reduce((s, a) => s + a.amount, 0);
-    try { await T('app_submit_itemized_payment', { p_building_id: m.building_id, p_membership_id: m.membership_id, p_payment_date: $('#pay-date', el).dataset.gregorian || $('#pay-date', el).value, p_description: $('#pay-note', el).value || null, p_allocations: allocations, p_total_amount: total }); toastOk('پرداخت ثبت شد'); go('r_dash'); } catch (err) { showErr(err); }
+    let remaining=netPayable;
+    const allocations=[];
+    for (const c of dateOrder) {
+      if (remaining<=0) break;
+      const available=Number(c.outstanding_amount ?? c.amount ?? 0);
+      const amount=Math.min(available,remaining);
+      if (amount>0) { allocations.push({type:'expense',id:c.id,amount}); remaining-=amount; }
+    }
+    const total=allocations.reduce((sum,a)=>sum+a.amount,0);
+    if (!allocations.length || Math.round(total)!==Math.round(netPayable)) { toastErr('محاسبه ریز پرداخت با مانده حساب سازگار نیست'); return; }
+    try {
+      await T('app_submit_itemized_payment', {
+        p_building_id:m.building_id,p_membership_id:m.membership_id,
+        p_payment_date:$('#pay-date',el).dataset.gregorian || $('#pay-date',el).value,
+        p_description:$('#pay-note',el).value || null,p_allocations:allocations,p_total_amount:total
+      });
+      toastOk('پرداخت ثبت شد'); go('r_dash');
+    } catch(err) { showErr(err); }
   });
 }
 
