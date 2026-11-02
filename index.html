@@ -436,7 +436,7 @@ async function notifyBale(msg, imageBase64 = null) {
 
 const S = {
   token: sessionStorage.getItem('bm_token'),
-  me: JSON.parse(sessionStorage.getItem('bm_me') || 'null'),
+  me: (() => { try { return JSON.parse(sessionStorage.getItem('bm_me') || 'null'); } catch (_) { sessionStorage.removeItem('bm_me'); return null; } })(),
   view: 'dash', y: TODAY.y, m: TODAY.m, building: 'مجتمع نگین ۲', txFilter: null, renderId: 0,
 };
 localStorage.removeItem('bm_token');
