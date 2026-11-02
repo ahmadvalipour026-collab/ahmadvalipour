@@ -14,6 +14,10 @@ declare
   v_bridge jsonb;
   v_reset jsonb;
   v_login jsonb;
+  v_legacy_reset text;
+  v_legacy_forgot jsonb;
+  v_account_id uuid;
+  v_phone text;
   v_invalid boolean;
 begin
   select count(*) into v_units from mb.units where building_id=v_building;
@@ -125,6 +129,28 @@ begin
     raise exception 'FAIL: legacy-to-multi-building session bridge failed';
   end if;
   v_multi_token:=(v_bridge->>'token')::uuid;
+
+  -- Verify the old Negin 2 account-management RPCs enforce the same rule.
+  select id,phone into v_account_id,v_phone
+  from public.accounts where username='negin1';
+  v_legacy_reset:=public.app_admin_reset_password(v_legacy_token,v_account_id);
+  if v_legacy_reset !~ '^[0-9]{6}$' then
+    raise exception 'FAIL: legacy manager reset password is not six numeric digits';
+  end if;
+  v_legacy_forgot:=public.app_reset_password('negin1',v_phone,'abcd');
+  if coalesce((v_legacy_forgot->>'ok')::boolean,true) then
+    raise exception 'FAIL: legacy forgot-password accepted a non-numeric password';
+  end if;
+  v_invalid:=false;
+  begin
+    perform public.app_admin_save_account(
+      v_legacy_token,null,10,'invaliduser','Test User',null,'مالک ساکن',
+      false,false,'abcd',140406
+    );
+  exception when others then
+    v_invalid:=true;
+  end;
+  if not v_invalid then raise exception 'FAIL: legacy manager accepted an invalid initial password'; end if;
 
   v_reset:=public.mb_app_admin_reset_manager_password(v_multi_token,v_building);
   if (v_reset->>'temp_password') !~ '^[0-9]{6}$' then
