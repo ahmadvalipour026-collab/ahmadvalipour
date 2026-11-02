@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS mb.building_memberships (
   CONSTRAINT building_memberships_building_id_fkey FOREIGN KEY (building_id) REFERENCES buildings(id) ON DELETE CASCADE,
   CONSTRAINT building_memberships_pkey PRIMARY KEY (id),
   CONSTRAINT building_memberships_unit_id_fkey FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE CASCADE,
-  CONSTRAINT financial_v2_opening_debt_check CHECK ((opening_debt >= (0)::numeric)),
+  CONSTRAINT financial_v2_opening_debt_check CHECK (opening_debt IS NOT NULL),
   CONSTRAINT memberships_date_order_check CHECK (((ended_at IS NULL) OR (ended_at >= joined_at)))
 );
 
@@ -1667,170 +1667,68 @@ END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_resident_get_financial_summary(p_token uuid, p_building_id uuid, p_membership_id uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO ''
+ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path TO ''
 AS $function$
 declare
- v_actor mb.app_accounts;
- v_building record;
- v_member record;
- v_total_exp numeric := 0;
- v_total_paid numeric := 0;
- v_pending numeric := 0;
- v_debt numeric := 0;
- v_credit numeric := 0;
- v_payments jsonb := '[]'::jsonb;
- v_charges jsonb := '[]'::jsonb;
+ v_actor mb.app_accounts; v_building record; v_member record;
+ v_total_exp numeric:=0; v_total_paid numeric:=0; v_pending numeric:=0;
+ v_debt numeric:=0; v_credit numeric:=0; v_net_balance numeric:=0;
+ v_payments jsonb:='[]'::jsonb; v_charges jsonb:='[]'::jsonb;
 begin
- v_actor := public.mb_app_require_session(p_token);
-
- select * into v_building
- from mb.buildings
- where id=p_building_id;
+ v_actor:=public.mb_app_require_session(p_token);
+ select * into v_building from mb.buildings where id=p_building_id;
  if not found then raise exception 'ساختمان پیدا نشد'; end if;
+ select bm.*,u.unit_no,u.area,u.resident_count into v_member
+ from mb.building_memberships bm join mb.units u on u.id=bm.unit_id
+ where bm.id=p_membership_id and bm.building_id=p_building_id and bm.membership_status='active';
+ if not found then raise exception 'عضویت فعال در این ساختمان پیدا نشد'; end if;
+ if v_member.account_id<>v_actor.id then perform public.mb_app_financial_v2_require_manager(p_token,p_building_id); end if;
 
- select bm.*,u.unit_no,u.area,u.resident_count
- into v_member
- from mb.building_memberships bm
- join mb.units u on u.id=bm.unit_id
- where bm.id=p_membership_id
-   and bm.building_id=p_building_id
-   and bm.membership_status='active';
-
- if not found then
-  raise exception 'عضویت فعال در این ساختمان پیدا نشد';
- end if;
-
- if v_member.account_id <> v_actor.id then
-  perform public.mb_app_financial_v2_require_manager(p_token,p_building_id);
- end if;
-
- v_total_exp := coalesce(v_member.opening_debt,0);
+ v_total_exp:=coalesce(v_member.opening_debt,0);
  select v_total_exp+coalesce(sum(ea.amount),0) into v_total_exp
- from mb.building_expense_allocations ea
- join mb.building_expenses e on e.id=ea.expense_id
+ from mb.building_expense_allocations ea join mb.building_expenses e on e.id=ea.expense_id
  where ea.membership_id=p_membership_id and ea.building_id=p_building_id
    and e.building_id=p_building_id and e.expense_status='active';
-
- select coalesce(sum(amount),0) into v_total_paid
- from mb.building_payments
+ select coalesce(sum(amount),0) into v_total_paid from mb.building_payments
  where membership_id=p_membership_id and building_id=p_building_id and status='approved';
-
- select coalesce(sum(amount),0) into v_pending
- from mb.building_payments
+ select coalesce(sum(amount),0) into v_pending from mb.building_payments
  where membership_id=p_membership_id and building_id=p_building_id and status='pending';
 
- v_debt := case when v_member.resident_type='tenant' or v_member.access_role='manager' then greatest(0,round(v_total_exp-v_total_paid,0)) else 0 end;
- v_credit := case when v_member.resident_type='tenant' or v_member.access_role='manager' then greatest(0,round(v_total_paid-v_total_exp,0)) else 0 end;
+ if v_member.resident_type='tenant' or v_member.access_role='manager' then
+  v_net_balance:=round(v_total_exp-v_total_paid,0);
+  v_debt:=greatest(v_net_balance,0);
+  v_credit:=greatest(-v_net_balance,0);
+ end if;
 
- select coalesce(jsonb_agg(to_jsonb(x) order by x.payment_date desc),'[]'::jsonb)
- into v_payments
- from (
-   select id,amount,payment_date,description,status
-   from mb.building_payments
-   where membership_id=p_membership_id and building_id=p_building_id
- ) x;
+ select coalesce(jsonb_agg(to_jsonb(x) order by x.payment_date desc),'[]'::jsonb) into v_payments
+ from (select id,amount,payment_date,description,status from mb.building_payments
+       where membership_id=p_membership_id and building_id=p_building_id) x;
 
- /*
-  * amount = مبلغ اصلی هر بدهی
-  * payable_amount = مانده واقعی قابل پرداخت پس از کسر پرداخت‌های قبلی و
-  *                  بستانکاری باقی‌مانده. بستانکاری از قدیمی‌ترین بدهی
-  *                  به جدیدترین بدهی اعمال می‌شود.
-  */
- select coalesce(jsonb_agg(to_jsonb(x) order by x.item_date desc),'[]'::jsonb)
+ -- Preserve original charge values and show payments per charge. Credit is
+ -- deducted once from the aggregate balance, never used to zero individual rows.
+ select coalesce(jsonb_agg(to_jsonb(x) order by x.item_date desc,x.created_at desc),'[]'::jsonb)
  into v_charges
  from (
-   select
-     q.id,
-     q.description,
-     q.amount,
-     q.payable_amount,
-     q.item_date,
-     q.item_type,
-     q.transfer_note
-   from (
-     select
-       b.id,
-       b.description,
-       b.amount,
-       b.item_date,
-       b.item_type,
-       b.transfer_note,
-       greatest(
-         least(
-           b.outstanding_amount,
-           greatest(
-             v_credit - coalesce(
-               sum(b.outstanding_amount) over (
-                 order by b.item_date asc, b.created_at asc, b.id asc
-                 rows between unbounded preceding and 1 preceding
-               ),0
-             ),
-             0
-           )
-         ),
-         0
-       ) as credit_applied,
-       greatest(
-         b.outstanding_amount - greatest(
-           least(
-             b.outstanding_amount,
-             greatest(
-               v_credit - coalesce(
-                 sum(b.outstanding_amount) over (
-                   order by b.item_date asc, b.created_at asc, b.id asc
-                   rows between unbounded preceding and 1 preceding
-                 ),0
-               ),
-               0
-             )
-           ),
-           0
-         ),
-         0
-       ) as payable_amount
-     from (
-       select
-         ea.id,
-         e.description,
-         ea.amount,
-         e.expense_date as item_date,
-         e.created_at,
-         'expense'::text as item_type,
-         ea.transfer_note,
-         greatest(
-           ea.amount - coalesce((
-             select sum(pa.amount)
-             from mb.building_payment_allocations pa
-             join mb.building_payments pp on pp.id=pa.payment_id
-             where pa.expense_allocation_id=ea.id
-               and pa.building_id=p_building_id
-               and pp.membership_id=p_membership_id
-               and pp.building_id=p_building_id
-               and pp.status='approved'
-           ),0),
-           0
-         ) as outstanding_amount
-       from mb.building_expense_allocations ea
-       join mb.building_expenses e on e.id=ea.expense_id
-       where ea.membership_id=p_membership_id
-         and ea.building_id=p_building_id
-         and e.building_id=p_building_id
-         and e.expense_status='active'
-     ) b
-   ) q
+  select ea.id,e.description,ea.amount,coalesce(paid.paid_amount,0) paid_amount,
+    greatest(ea.amount-coalesce(paid.paid_amount,0),0) outstanding_amount,
+    greatest(ea.amount-coalesce(paid.paid_amount,0),0) payable_amount,
+    e.expense_date item_date,e.created_at,'expense'::text item_type,ea.transfer_note
+  from mb.building_expense_allocations ea join mb.building_expenses e on e.id=ea.expense_id
+  left join lateral (
+   select sum(pa.amount) paid_amount from mb.building_payment_allocations pa
+   join mb.building_payments pp on pp.id=pa.payment_id
+   where pa.expense_allocation_id=ea.id and pa.building_id=p_building_id
+    and pp.membership_id=p_membership_id and pp.building_id=p_building_id and pp.status='approved'
+  ) paid on true
+  where ea.membership_id=p_membership_id and ea.building_id=p_building_id
+    and e.building_id=p_building_id and e.expense_status='active'
  ) x;
 
- return jsonb_build_object(
-   'success',true,'building_id',p_building_id,'building_name',v_building.name,
-   'membership_id',p_membership_id,'unit_no',v_member.unit_no,
-   'resident_type',v_member.resident_type,'debt_balance',v_debt,
-   'credit_balance',v_credit,'pending_payments',v_pending,
-   'payments',v_payments,'charges',v_charges,
-   'opening_debt',coalesce(v_member.opening_debt,0)
- );
+ return jsonb_build_object('success',true,'building_id',p_building_id,'building_name',v_building.name,
+  'membership_id',p_membership_id,'unit_no',v_member.unit_no,'resident_type',v_member.resident_type,
+  'debt_balance',v_debt,'credit_balance',v_credit,'account_balance',v_net_balance,
+  'net_balance',v_net_balance,'pending_payments',v_pending,'payments',v_payments,'charges',v_charges,
+  'opening_debt',coalesce(v_member.opening_debt,0));
 end;
 $function$;
 
