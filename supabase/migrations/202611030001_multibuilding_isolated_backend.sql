@@ -1672,7 +1672,7 @@ AS $function$
 declare
  v_actor mb.app_accounts; v_building record; v_member record;
  v_total_exp numeric:=0; v_total_paid numeric:=0; v_pending numeric:=0;
- v_debt numeric:=0; v_credit numeric:=0; v_net_balance numeric:=0;
+ v_debt numeric:=0; v_credit numeric:=0; v_net_balance numeric:=0; v_item_outstanding numeric:=0; v_credit_applied numeric:=0;
  v_payments jsonb:='[]'::jsonb; v_charges jsonb:='[]'::jsonb;
 begin
  v_actor:=public.mb_app_require_session(p_token);
@@ -1724,9 +1724,16 @@ begin
     and e.building_id=p_building_id and e.expense_status='active'
  ) x;
 
+ select coalesce(sum((item->>'outstanding_amount')::numeric),0)
+ into v_item_outstanding
+ from jsonb_array_elements(v_charges) item;
+ if v_member.resident_type='tenant' or v_member.access_role='manager' then
+  v_credit_applied:=least(v_item_outstanding,greatest(v_item_outstanding-v_debt,0));
+ end if;
+
  return jsonb_build_object('success',true,'building_id',p_building_id,'building_name',v_building.name,
   'membership_id',p_membership_id,'unit_no',v_member.unit_no,'resident_type',v_member.resident_type,
-  'debt_balance',v_debt,'credit_balance',v_credit,'account_balance',v_net_balance,
+  'debt_balance',v_debt,'credit_balance',v_credit,'credit_applied',v_credit_applied,'account_balance',v_net_balance,
   'net_balance',v_net_balance,'pending_payments',v_pending,'payments',v_payments,'charges',v_charges,
   'opening_debt',coalesce(v_member.opening_debt,0));
 end;
