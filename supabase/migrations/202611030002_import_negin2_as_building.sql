@@ -28,7 +28,15 @@ begin
   on conflict (building_id,unit_no) do update
     set area=excluded.area,resident_count=excluded.resident_count;
 
-  -- Existing account UUIDs and password hashes are preserved.
+  -- Preserve the existing global super-admin from the original multi-building project.
+  -- Its UUID, username and bcrypt hash remain unchanged; Negin 2 manager is not super-admin.
+  insert into mb.app_accounts(id,username,password_hash,full_name,account_status,must_change_password,is_superadmin,created_at)
+  values ('f37d021f-2fb2-4911-956f-2371d4ae71a1'::uuid,'admin',
+   '$2a$06$/KHkVuQwQY5JpLT0QDVCVOqZn9wZsTfeAyPYAgbgG7XCYYtGxOpra',
+   'مدیر کل سامانه','active',false,true,now())
+  on conflict (id) do update set is_superadmin=true,account_status='active';
+
+  -- Existing Negin 2 account UUIDs and password hashes are preserved.
   insert into mb.app_accounts(
     id,username,password_hash,full_name,phone,email,account_status,
     must_change_password,is_superadmin,created_at
@@ -37,7 +45,7 @@ begin
          a.phone,a.email,
          case when a.is_active then 'active' else 'suspended' end,
          a.must_change_password,
-         a.is_admin,
+         false, -- Negin 2 local manager is not the global super-admin
          coalesce(a.created_at,now())
   from public.accounts a
   where a.building_id=1
@@ -48,43 +56,28 @@ begin
   -- outstanding balance is carried into opening_debt.
   with recursive months(account_id,unit_no,occupancy,ym) as (
     select a.id,a.unit_no,a.occupancy,coalesce(a.start_ym,140406)
-    from public.accounts a
-    where a.building_id=1 and a.is_active
+    from public.accounts a where a.building_id=1 and a.is_active
     union all
     select m.account_id,m.unit_no,m.occupancy,public.bm_next_ym(m.ym)
-    from months m
-    where m.ym<140508
+    from months m where m.ym<140508
   ),
   dues as (
-    select m.account_id,m.unit_no,m.occupancy,m.ym,
-           d.charge,d.water,d.gas,d.repair,d.parking
-    from months m
-    cross join lateral public.bm_account_month_due(m.account_id,m.ym) d
+    select m.account_id,sum(coalesce(d.charge,0)+coalesce(d.water,0)+coalesce(d.gas,0)
+      +coalesce(d.repair,0)+coalesce(d.parking,0))::numeric total_due
+    from months m cross join lateral public.bm_account_month_due(m.account_id,m.ym) d
+    group by m.account_id
   ),
   paid as (
-    select a.id account_id,t.year*100+t.month ym,
-      coalesce(sum(t.amount) filter(where t.category='charge'),0) charge_paid,
-      coalesce(sum(t.amount) filter(where t.category='water'),0) water_paid,
-      coalesce(sum(t.amount) filter(where t.category='gas'),0) gas_paid,
-      coalesce(sum(t.amount) filter(where t.category='repair'),0) repair_paid,
-      coalesce(sum(t.amount) filter(where t.category='parking'),0) parking_paid
-    from public.accounts a
-    left join public.transactions t
+    select a.id account_id,coalesce(sum(t.amount),0)::numeric total_paid
+    from public.accounts a left join public.transactions t
       on t.unit_no=a.unit_no and t.occupancy=a.occupancy
      and t.tx_type='درآمد' and t.building_id=1
-    where a.building_id=1
-    group by a.id,t.year,t.month
+    where a.building_id=1 group by a.id
   ),
   balances as (
-    select d.account_id,
-      sum(greatest(coalesce(d.charge,0)-coalesce(p.charge_paid,0),0)
-         +greatest(coalesce(d.water,0)-coalesce(p.water_paid,0),0)
-         +greatest(coalesce(d.gas,0)-coalesce(p.gas_paid,0),0)
-         +greatest(coalesce(d.repair,0)-coalesce(p.repair_paid,0),0)
-         +greatest(coalesce(d.parking,0)-coalesce(p.parking_paid,0),0))::numeric debt
-    from dues d
-    left join paid p on p.account_id=d.account_id and p.ym=d.ym
-    group by d.account_id
+    select a.id account_id,coalesce(d.total_due,0)-coalesce(p.total_paid,0) net_balance
+    from public.accounts a left join dues d on d.account_id=a.id
+    left join paid p on p.account_id=a.id where a.building_id=1
   )
   insert into mb.building_memberships(
     building_id,account_id,unit_id,access_role,resident_type,
@@ -96,7 +89,7 @@ begin
       when 'مستأجر' then 'tenant' else 'owner_resident' end,
     case when a.is_active then 'active' else 'inactive' end,
     coalesce(a.created_at,now()),
-    case when a.is_admin or a.occupancy='مستأجر' then coalesce(b.debt,0) else 0 end
+    case when a.is_admin or a.occupancy='مستأجر' then coalesce(b.net_balance,0) else 0 end
   from public.accounts a
   join mb.units u on u.building_id=v_building_id and u.unit_no=a.unit_no
   left join balances b on b.account_id=a.id
@@ -105,6 +98,28 @@ begin
       select 1 from mb.building_memberships x
       where x.building_id=v_building_id and x.account_id=a.id
     );
+
+  -- Positive opening debt becomes an itemized charge; negative balances remain credits.
+  insert into mb.building_expenses(building_id,description,amount,expense_date,allocation_method,tx_type,category,expense_status,payer_roles)
+  select bm.building_id,'مانده بدهی انتقالی #'||bm.id::text,bm.opening_debt,
+    date '2025-08-23','direct','بدهی افتتاحیه','opening','active',
+    case when bm.resident_type='tenant' then array['tenant']::text[] else array['owner_resident']::text[] end
+  from mb.building_memberships bm
+  where bm.building_id=v_building_id and bm.opening_debt>0
+   and not exists(select 1 from mb.building_expenses e where e.building_id=v_building_id
+     and e.description='مانده بدهی انتقالی #'||bm.id::text);
+
+  insert into mb.building_expense_allocations(building_id,expense_id,membership_id,amount)
+  select bm.building_id,e.id,bm.id,e.amount
+  from mb.building_memberships bm join mb.building_expenses e
+   on e.building_id=bm.building_id and e.description='مانده بدهی انتقالی #'||bm.id::text
+  where bm.building_id=v_building_id and bm.opening_debt>0
+   and not exists(select 1 from mb.building_expense_allocations ea where ea.expense_id=e.id and ea.membership_id=bm.id);
+
+  update mb.building_memberships bm set opening_debt=0
+  where bm.building_id=v_building_id and bm.opening_debt>0
+   and exists(select 1 from mb.building_expenses e where e.building_id=v_building_id
+     and e.description='مانده بدهی انتقالی #'||bm.id::text);
 
   select bm.id into v_manager_id
   from mb.building_memberships bm
