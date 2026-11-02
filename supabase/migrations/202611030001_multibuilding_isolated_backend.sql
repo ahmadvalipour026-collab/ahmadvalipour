@@ -284,7 +284,7 @@ BEGIN
     UPDATE mb.buildings SET building_status = 'deleted' WHERE id = p_building_id;
     UPDATE mb.building_memberships SET membership_status = 'inactive' WHERE building_id = p_building_id;
     RETURN jsonb_build_object('success', true);
-END; $function$
+END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_admin_get_db_tables(p_token uuid)
@@ -298,9 +298,9 @@ BEGIN
     SELECT * INTO v_actor FROM public.mb_app_require_session(p_token);
     IF NOT v_actor.is_superadmin THEN RAISE EXCEPTION 'دسترسی غیرمجاز'; END IF;
     SELECT COALESCE(jsonb_agg(jsonb_build_object('table_name', table_name)), '[]'::jsonb) INTO v_tables
-    FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE';
+    FROM information_schema.tables WHERE table_schema = 'mb' AND table_type = 'BASE TABLE';
     RETURN v_tables;
-END; $function$
+END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_admin_get_table_data(p_token uuid, p_table_name text)
@@ -313,9 +313,9 @@ DECLARE v_actor mb.app_accounts; v_data jsonb;
 BEGIN
     SELECT * INTO v_actor FROM public.mb_app_require_session(p_token);
     IF NOT v_actor.is_superadmin THEN RAISE EXCEPTION 'دسترسی غیرمجاز'; END IF;
-    EXECUTE format('SELECT COALESCE(jsonb_agg(t), ''[]''::jsonb) FROM (SELECT * FROM public.%I LIMIT 100) t', p_table_name) INTO v_data;
+    EXECUTE format('SELECT COALESCE(jsonb_agg(t), ''[]''::jsonb) FROM (SELECT * FROM mb.%I LIMIT 100) t', p_table_name) INTO v_data;
     RETURN v_data;
-END; $function$
+END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_admin_list_buildings(p_token uuid)
@@ -339,7 +339,7 @@ BEGIN
     LEFT JOIN mb.app_accounts a ON a.id = bm.account_id;
     
     RETURN jsonb_build_object('buildings', v_buildings);
-END; $function$
+END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_admin_list_registration_requests(p_token uuid)
@@ -362,7 +362,7 @@ BEGIN
     WHERE r.request_status = 'pending' AND r.requested_role = 'building_manager';
     
     RETURN v_reqs;
-END; $function$
+END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_admin_reset_manager_password(p_token uuid, p_building_id uuid)
@@ -381,7 +381,7 @@ BEGIN
     
     UPDATE mb.app_accounts SET password_hash = extensions.crypt(v_temp, extensions.gen_salt('bf')), must_change_password = true WHERE id = v_acc_id;
     RETURN jsonb_build_object('success', true, 'temp_password', v_temp);
-END; $function$
+END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_admin_review_manager_request(p_token uuid, p_request_id uuid, p_approve boolean, p_review_note text DEFAULT NULL::text)
@@ -430,7 +430,7 @@ begin
  end if;
  return jsonb_build_object('success',true,'building_id',v_b_id);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_admin_set_building_status(p_token uuid, p_building_id uuid, p_new_status text, p_reason text DEFAULT NULL::text)
@@ -445,7 +445,7 @@ BEGIN
     IF NOT v_actor.is_superadmin THEN RAISE EXCEPTION 'دسترسی غیرمجاز'; END IF;
     UPDATE mb.buildings SET building_status = p_new_status, suspension_reason = p_reason WHERE id = p_building_id;
     RETURN jsonb_build_object('success', true);
-END; $function$
+END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_change_password(p_token uuid, p_new_password text)
@@ -459,7 +459,7 @@ BEGIN
     v_acc := public.mb_app_require_session(p_token);
     UPDATE mb.app_accounts SET password_hash = extensions.crypt(p_new_password, extensions.gen_salt('bf')), must_change_password = false WHERE id = v_acc.id;
     RETURN jsonb_build_object('success', true);
-END; $function$
+END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_check_registration_status(p_username text, p_password text)
@@ -473,7 +473,7 @@ BEGIN
     SELECT * INTO v_req FROM mb.registration_requests WHERE lower(username) = lower(p_username) ORDER BY created_at DESC LIMIT 1;
     IF NOT FOUND THEN RAISE EXCEPTION 'درخواستی با این نام کاربری یافت نشد'; END IF;
     RETURN jsonb_build_object('requested_role', v_req.requested_role, 'request_status', v_req.request_status, 'review_note', v_req.review_note);
-END; $function$
+END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_financial_v2_close_tenant(p_token uuid, p_building_id uuid, p_membership_id uuid, p_end_date date)
@@ -498,7 +498,7 @@ begin
  credit:=greatest(total_paid-total_alloc,0); due:=greatest(coalesce(t.opening_debt,0)-credit,0);
  if due>0 then update mb.building_memberships set opening_debt=coalesce(opening_debt,0)+due where id=owner_id; update mb.building_memberships set opening_debt=greatest(opening_debt-due,0) where id=p_membership_id; total:=total+due; end if;
  perform public.mb_app_reallocate_member_payments(p_building_id,owner_id); return jsonb_build_object('success',true,'transferred_amount',total,'tenant_membership_id',p_membership_id,'owner_membership_id',owner_id);
-end; $function$
+end; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_financial_v2_create_transaction(p_token uuid, p_building_id uuid, p_description text, p_amount numeric, p_expense_date date, p_allocation_method text, p_tx_type text, p_category text, p_payer_roles text[], p_period_start date DEFAULT NULL::date, p_period_end date DEFAULT NULL::date, p_allocations jsonb DEFAULT '[]'::jsonb)
@@ -560,7 +560,7 @@ begin
   perform public.mb_app_recalculate_expense_allocations(p_token,p_building_id);
  end if;
  return jsonb_build_object('success',true,'expense_id',v_id);
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_financial_v2_edit_transaction_details(p_token uuid, p_id uuid, p_description text, p_category text, p_expense_date date)
@@ -595,7 +595,7 @@ BEGIN
 
     RETURN jsonb_build_object('success', true);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_financial_v2_require_manager(p_token uuid, p_building_id uuid)
@@ -612,7 +612,7 @@ BEGIN
    AND bm.building_id=p_building_id AND bm.membership_status='active' AND bm.access_role='manager'
  ) THEN RAISE EXCEPTION 'دسترسی مدیر این ساختمان لازم است'; END IF;
  RETURN v_actor.id;
-END $function$
+END $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_financial_v2_set_opening_debt(p_token uuid, p_building_id uuid, p_membership_id uuid, p_amount numeric)
@@ -627,7 +627,7 @@ BEGIN
  UPDATE mb.building_memberships SET opening_debt=p_amount WHERE id=p_membership_id AND building_id=p_building_id;
  IF NOT FOUND THEN RAISE EXCEPTION 'عضو پیدا نشد'; END IF;
  RETURN jsonb_build_object('success',true);
-END $function$
+END $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_login(p_username text, p_password text)
@@ -644,7 +644,7 @@ begin
  insert into mb.app_sessions(token_hash,account_id) values(encode(extensions.digest(v_token::text,'sha256'),'hex'),v_acc.id);
  select coalesce(jsonb_agg(jsonb_build_object('membership_id',bm.id,'building_id',b.id,'building_name',b.name,'unit_no',u.unit_no,'access_role',bm.access_role,'resident_type',bm.resident_type,'membership_status',bm.membership_status,'building_status',b.building_status,'address',b.address,'floor_count',b.floor_count) order by b.created_at desc),'[]'::jsonb) into v_memberships from mb.building_memberships bm join mb.buildings b on b.id=bm.building_id left join mb.units u on u.id=bm.unit_id where bm.account_id=v_acc.id and bm.membership_status='active';
  return jsonb_build_object('success',true,'token',v_token,'account_id',v_acc.id,'username',v_acc.username,'full_name',v_acc.full_name,'is_superadmin',v_acc.is_superadmin,'must_change_password',v_acc.must_change_password,'memberships',v_memberships);
-end; $function$
+end; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_logout(p_token uuid)
@@ -656,7 +656,7 @@ AS $function$
 BEGIN
     DELETE FROM mb.app_sessions WHERE token_hash = encode(extensions.digest(p_token::text, 'sha256'), 'hex');
     RETURN jsonb_build_object('success', true);
-END; $function$
+END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_add_unit_and_resident(p_token uuid, p_building_id uuid, p_unit_no integer, p_area numeric, p_resident_count integer, p_full_name text, p_username text, p_password text, p_occupancy text, p_phone text, p_email text, p_joined_at date)
@@ -684,7 +684,7 @@ begin
  insert into mb.building_memberships(building_id,account_id,unit_id,access_role,resident_type,membership_status,joined_at) values(p_building_id,v_account_id,v_unit_id,'resident',p_occupancy,'active',p_joined_at) returning id into v_member_id;
  perform public.mb_app_recalculate_expense_allocations(p_token,p_building_id);
  return jsonb_build_object('success',true,'unit_id',v_unit_id,'membership_id',v_member_id);
-end; $function$
+end; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_create_expense(p_token uuid, p_building_id uuid, p_description text, p_amount numeric, p_expense_date date, p_allocation_method text, p_tx_type text, p_category text, p_allocations jsonb)
@@ -743,7 +743,7 @@ begin
  end if;
  return jsonb_build_object('success',true,'expense_id',v_expense_id);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_delete_payment(p_token uuid, p_payment_id uuid)
@@ -770,7 +770,7 @@ begin
 
  return jsonb_build_object('success',true);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_delete_resident_account(p_token uuid, p_building_id uuid, p_membership_id uuid)
@@ -803,7 +803,7 @@ begin
  end if;
  return jsonb_build_object('success',true);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_delete_transaction(p_token uuid, p_id uuid)
@@ -848,7 +848,7 @@ BEGIN
 
     RETURN jsonb_build_object('success', true);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_get_fund_summary(p_token uuid, p_building_id uuid)
@@ -869,7 +869,7 @@ begin
  'pending_payments_amount',v_pen,'pending_payments_count',(select count(*) from mb.building_payments where building_id=p_building_id and status='pending'),
  'active_expenses_count',(select count(*) from mb.building_expenses where building_id=p_building_id and expense_status='active' and tx_type<>'درآمد'),
  'accounting_start_date',(select accounting_start_date from mb.building_finance_settings where building_id=p_building_id),'opening_balance',v_open);
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_get_member_balances(p_token uuid, p_building_id uuid)
@@ -904,7 +904,7 @@ begin
    'credit_balance',round(greatest(v_total_paid-v_total_exp,0),0),'pending_payments',v_pending));
  end loop;
  return jsonb_build_object('members',v_members);
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_get_monthly_report(p_token uuid, p_building_id uuid, p_year integer, p_month integer)
@@ -927,7 +927,7 @@ begin
  select coalesce(jsonb_agg(jsonb_build_object('id',e.id,'description',e.description,'amount',e.amount,'expense_date',e.expense_date,'tx_type',e.tx_type,'category',e.category) order by e.expense_date desc),'[]'::jsonb)
  into v_expenses from mb.building_expenses e where e.building_id=p_building_id and e.expense_status='active' and e.expense_date between v_start and v_end;
  return jsonb_build_object('month_income',v_inc,'month_expenses',v_exp,'fund_balance_to_month_end',v_bal,'payments',v_payments,'expenses',v_expenses);
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_get_transactions(p_token uuid, p_building_id uuid, p_year integer DEFAULT NULL::integer, p_month integer DEFAULT NULL::integer, p_type text DEFAULT NULL::text, p_unit_no integer DEFAULT NULL::integer)
@@ -958,7 +958,7 @@ begin
    and (p_unit_no is null or exists(select 1 from mb.building_memberships bm join mb.units u on u.id=bm.unit_id where bm.id=p.membership_id and u.unit_no=p_unit_no))
  ) x;
  return v_txs;
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_list_building_members(p_token uuid, p_building_id uuid)
@@ -978,7 +978,7 @@ begin
  left join mb.units u on u.id=bm.unit_id where bm.building_id=p_building_id
   and bm.membership_status='active' and (a.account_status is null or a.account_status<>'deleted');
  return jsonb_build_object('members',v_members);
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_list_building_requests(p_token uuid, p_building_id uuid)
@@ -996,7 +996,7 @@ begin
  left join mb.app_accounts a on a.id=bm.account_id left join mb.units u on u.id=bm.unit_id
  where r.building_id=p_building_id;
  return jsonb_build_object('requests',v_reqs);
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_list_pending_payments(p_token uuid, p_building_id uuid)
@@ -1021,7 +1021,7 @@ begin
  where p.building_id=p_building_id and p.status='pending';
  return jsonb_build_object('payments',v_payments);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_list_resident_requests(p_token uuid)
@@ -1042,7 +1042,7 @@ begin
  where r.request_status='pending' and r.requested_role in ('owner','tenant','owner_resident')
  and (v_actor.is_superadmin or exists(select 1 from mb.building_memberships bm where bm.account_id=v_actor.id and bm.building_id=r.building_id and bm.access_role='manager' and bm.membership_status='active'));
  return v_reqs;
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_reply_building_request(p_token uuid, p_building_id uuid, p_request_id uuid, p_new_status text, p_manager_reply text)
@@ -1058,7 +1058,7 @@ begin
  where id=p_request_id and building_id=p_building_id;
  if not found then raise exception 'درخواست در این ساختمان پیدا نشد'; end if;
  return jsonb_build_object('success',true);
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_report_matrix(p_token uuid, p_building_id uuid, p_start date, p_end date)
@@ -1126,7 +1126,7 @@ BEGIN
   ),'[]'::jsonb)
  ) INTO v_result;
  RETURN v_result;
-END $function$
+END $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_review_payment(p_token uuid, p_payment_id uuid, p_approve boolean, p_review_note text DEFAULT NULL::text)
@@ -1152,7 +1152,7 @@ begin
  end if;
  return jsonb_build_object('success',true);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_review_resident_request(p_token uuid, p_request_id uuid, p_approve boolean, p_review_note text DEFAULT NULL::text, p_join_date date DEFAULT CURRENT_DATE, p_opening_debt numeric DEFAULT 0)
@@ -1233,7 +1233,7 @@ BEGIN
  PERFORM public.mb_app_recalculate_expense_allocations(p_token,r.building_id);
  RETURN jsonb_build_object('success',true,'membership_id',v_member_id);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_set_finance_settings(p_token uuid, p_building_id uuid, p_accounting_start_date date, p_opening_balance numeric)
@@ -1252,7 +1252,7 @@ begin
   opening_balance=excluded.opening_balance,updated_by=v_actor,updated_at=now();
  perform public.mb_app_recalculate_expense_allocations(p_token,p_building_id);
  return jsonb_build_object('success',true);
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_transfer_management(p_token uuid, p_building_id uuid, p_target_membership_id uuid)
@@ -1272,7 +1272,7 @@ begin
  update mb.building_memberships set access_role='manager' where id=target.id;
  update mb.buildings set current_manager_membership_id=target.id where id=p_building_id;
  return jsonb_build_object('success',true,'new_manager_membership_id',target.id,'old_manager_membership_id',current_mid);
-end; $function$
+end; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_update_member_profile(p_token uuid, p_building_id uuid, p_membership_id uuid, p_full_name text, p_phone text, p_email text, p_resident_type text, p_resident_count integer, p_joined_at date)
@@ -1293,7 +1293,7 @@ begin
  update mb.units set resident_count=p_resident_count where id=target.unit_id and building_id=p_building_id;
  update mb.app_accounts set full_name=p_full_name,phone=p_phone,email=p_email where id=target.account_id;
  perform public.mb_app_recalculate_expense_allocations(p_token,p_building_id); return jsonb_build_object('success',true);
-end; $function$
+end; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_manager_update_payment(p_token uuid, p_payment_id uuid, p_amount numeric, p_payment_date date, p_description text)
@@ -1337,7 +1337,7 @@ BEGIN
 
     RETURN jsonb_build_object('success', true);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_public_buildings()
@@ -1350,7 +1350,7 @@ DECLARE v_buildings jsonb;
 BEGIN
     SELECT COALESCE(jsonb_agg(jsonb_build_object('building_id', id, 'building_name', name)), '[]'::jsonb) INTO v_buildings FROM mb.buildings WHERE building_status = 'active';
     RETURN v_buildings;
-END; $function$
+END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_push_delete_subscription(p_token uuid, p_endpoint text)
@@ -1364,7 +1364,7 @@ begin
   v_acc := public.mb_app_require_session(p_token);
   delete from mb.push_subscriptions where account_id=v_acc.id and endpoint=p_endpoint;
   return jsonb_build_object('success',true);
-end $function$
+end $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_push_save_subscription(p_token uuid, p_subscription jsonb)
@@ -1389,7 +1389,7 @@ begin
   on conflict(endpoint) do update set account_id=excluded.account_id,p256dh=excluded.p256dh,
     auth=excluded.auth,user_agent=excluded.user_agent,updated_at=now();
   return jsonb_build_object('success',true);
-end $function$
+end $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_reallocate_member_payments(p_building_id uuid, p_membership_id uuid)
@@ -1463,7 +1463,7 @@ begin
   end if;
  end loop;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_recalculate_expense_allocations(p_token uuid, p_building_id uuid)
@@ -1587,7 +1587,7 @@ begin
   perform public.mb_app_reallocate_member_payments(p_building_id,m.id);
  end loop;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_reconcile_inactive_tenant_debts(p_token uuid, p_building_id uuid)
@@ -1643,7 +1643,7 @@ begin
   perform public.mb_app_reallocate_member_payments(p_building_id,t.id);
  end loop;
  return jsonb_build_object('success',true,'processed_memberships',n,'transferred_allocations',transfer,'transferred_opening_debt',opening);
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_require_session(p_token uuid)
@@ -1660,7 +1660,7 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'نشست منقضی شده است'; END IF;
     IF v_account.account_status <> 'active' THEN RAISE EXCEPTION 'حساب شما فعال نیست'; END IF;
     RETURN v_account;
-END; $function$
+END; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_resident_get_financial_summary(p_token uuid, p_building_id uuid, p_membership_id uuid)
@@ -1829,7 +1829,7 @@ begin
    'opening_debt',coalesce(v_member.opening_debt,0)
  );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_resident_list_building_requests(p_token uuid, p_building_id uuid, p_membership_id uuid)
@@ -1849,7 +1849,7 @@ begin
   'request_type',request_type,'request_status',request_status,'manager_reply',manager_reply) order by created_at desc),'[]'::jsonb)
  into v_reqs from mb.building_requests where building_id=p_building_id and membership_id=p_membership_id;
  return v_reqs;
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_submit_building_request(p_token uuid, p_building_id uuid, p_membership_id uuid, p_request_type text, p_title text, p_description text)
@@ -1864,7 +1864,7 @@ begin
  if p_request_type not in ('repair','criticism','suggestion','complaint','other') then raise exception 'نوع درخواست نامعتبر است'; end if;
  if nullif(btrim(p_title),'') is null or nullif(btrim(p_description),'') is null then raise exception 'عنوان و شرح درخواست الزامی است'; end if;
  insert into mb.building_requests(building_id,membership_id,request_type,title,description,request_status) values(p_building_id,p_membership_id,p_request_type,btrim(p_title),btrim(p_description),'pending'); return jsonb_build_object('success',true);
-end; $function$
+end; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_submit_itemized_payment(p_token uuid, p_building_id uuid, p_membership_id uuid, p_payment_date date, p_description text, p_allocations jsonb, p_total_amount numeric)
@@ -1967,7 +1967,7 @@ begin
  end loop;
  return jsonb_build_object('success',true,'payment_id',v_payment_id);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_app_submit_registration(p_username text, p_password text, p_full_name text, p_phone text, p_email text, p_requested_role text, p_building_id uuid DEFAULT NULL::uuid, p_unit_no integer DEFAULT NULL::integer, p_area numeric DEFAULT NULL::numeric, p_resident_count integer DEFAULT NULL::integer, p_new_building_name text DEFAULT NULL::text, p_new_building_unit_count integer DEFAULT NULL::integer, p_new_building_address text DEFAULT NULL::text, p_new_building_floor_count integer DEFAULT NULL::integer)
@@ -2075,7 +2075,7 @@ BEGIN
  );
  RETURN jsonb_build_object('success',true);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.mb_recalculate_membership_expenses(p_membership_id uuid)
@@ -2090,7 +2090,7 @@ BEGIN
     IF v_building_id IS NOT NULL THEN
         PERFORM public.mb_app_reallocate_member_payments(v_building_id, p_membership_id);
     END IF;
-END; $function$
+END; $function$;
 
 
 commit;
