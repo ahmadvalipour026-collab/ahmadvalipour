@@ -66,6 +66,21 @@ The reference database already has its own data and must not be cleared or overw
 - Enforce the product password rule: English username; password of 4–6 numeric digits.
 - Run the import first in a non-production copy/staging database, compare per-table counts and financial totals, and only then plan a production cutover.
 
+## Implementation branch progress
+
+Branch: `integration/negin2-multibuilding-safe`
+
+Commits on the branch now include:
+
+- `202611030001_multibuilding_isolated_backend.sql`: isolated `mb` schema with 14 tables, 29 supporting indexes and 53 RPC/helper functions. Every copied RPC is prefixed `mb_`, so legacy `public.app_login`, `public.app_logout` and other Negin 2 RPCs are not replaced.
+- The multi-building login bridge can return a separate `legacy_token` for existing Negin 2 accounts, allowing the old UI and its legacy RPCs to continue working while the new UI uses the multi-building token.
+- New registration, manager-created account and password-change paths enforce English usernames and 4–6 numeric-digit passwords. Manager password reset now generates a six-digit numeric temporary password.
+- Owner and owner-resident debt fields are hidden in the new resident balance response; tenant and manager memberships retain balances.
+- `202611030002_import_negin2_as_building.sql`: idempotent import of the existing Negin 2 building, 10 units, 12 accounts and memberships into the isolated schema. Existing account UUIDs and password hashes are retained. Current unpaid tenant/manager balances are calculated by the legacy billing functions and carried as opening debt.
+- `supabase/tests/negin2_multibuilding_smoke.sql`: post-import assertions for unit/account/membership counts, one active manager, one active super-admin and the manager pointer.
+
+The import currently bootstraps the existing Negin 2 admin account as the single super-admin while retaining its building-manager membership. This is an explicit migration choice and should be verified against the intended account ownership before production cutover.
+
 ## Safety status
 
-This audit was performed using read-only repository and database inspection. No production database rows, schemas, or functions were changed. No default branch was changed. The work branch is ready for the implementation commits.
+All repository work is isolated on the integration branch. The two migration files and smoke test have **not** been applied to either Supabase project. No production database rows, schemas, functions, or sessions have been changed. The default branch remains unchanged. The next validation step is to run the migrations in a disposable Supabase development branch, then test the combined old/new login flow and compare financial balances before any production cutover.
