@@ -2173,4 +2173,46 @@ begin
 end;
 $function$;
 
+CREATE OR REPLACE FUNCTION public.mb_app_bridge_legacy_session(p_legacy_token uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+ v_legacy public.accounts;
+ v_acc mb.app_accounts;
+ v_token uuid;
+ v_memberships jsonb;
+begin
+ v_legacy:=public.bm_auth(p_legacy_token);
+ select * into v_acc from mb.app_accounts
+ where id=v_legacy.id and account_status='active';
+ if not found then raise exception 'حساب فعالی برای ورود چندساختمانی پیدا نشد'; end if;
+
+ v_token:=gen_random_uuid();
+ insert into mb.app_sessions(token_hash,account_id)
+ values(encode(extensions.digest(v_token::text,'sha256'),'hex'),v_acc.id);
+
+ select coalesce(jsonb_agg(jsonb_build_object(
+   'membership_id',bm.id,'building_id',b.id,'building_name',b.name,
+   'unit_no',u.unit_no,'access_role',bm.access_role,'resident_type',bm.resident_type,
+   'membership_status',bm.membership_status,'building_status',b.building_status,
+   'address',b.address,'floor_count',b.floor_count
+ ) order by b.created_at desc),'[]'::jsonb)
+ into v_memberships
+ from mb.building_memberships bm
+ join mb.buildings b on b.id=bm.building_id
+ left join mb.units u on u.id=bm.unit_id
+ where bm.account_id=v_acc.id and bm.membership_status='active';
+
+ return jsonb_build_object(
+   'success',true,'token',v_token,'legacy_token',p_legacy_token,
+   'account_id',v_acc.id,'username',v_acc.username,'full_name',v_acc.full_name,
+   'is_superadmin',v_acc.is_superadmin,'must_change_password',v_acc.must_change_password,
+   'memberships',v_memberships
+ );
+end;
+$function$;
+
 commit;
