@@ -903,8 +903,8 @@ begin
   v_members:=v_members||jsonb_build_array(jsonb_build_object(
    'membership_id',v_member.membership_id,'unit_no',v_member.unit_no,'full_name',v_member.full_name,
    'access_role',v_member.access_role,'resident_type',v_member.resident_type,
-   'outstanding_debt',round(greatest(v_total_exp-v_total_paid,0),0),
-   'credit_balance',round(greatest(v_total_paid-v_total_exp,0),0),'pending_payments',v_pending));
+   'outstanding_debt',case when v_member.resident_type='tenant' or v_member.access_role='manager' then round(greatest(v_total_exp-v_total_paid,0),0) else 0 end,
+   'credit_balance',case when v_member.resident_type='tenant' or v_member.access_role='manager' then round(greatest(v_total_paid-v_total_exp,0),0) else 0 end,'pending_payments',v_pending));
  end loop;
  return jsonb_build_object('members',v_members);
 end;$function$;
@@ -1722,8 +1722,8 @@ begin
  from mb.building_payments
  where membership_id=p_membership_id and building_id=p_building_id and status='pending';
 
- v_debt := greatest(0,round(v_total_exp-v_total_paid,0));
- v_credit := greatest(0,round(v_total_paid-v_total_exp,0));
+ v_debt := case when v_member.resident_type='tenant' or v_member.access_role='manager' then greatest(0,round(v_total_exp-v_total_paid,0)) else 0 end;
+ v_credit := case when v_member.resident_type='tenant' or v_member.access_role='manager' then greatest(0,round(v_total_paid-v_total_exp,0)) else 0 end;
 
  select coalesce(jsonb_agg(to_jsonb(x) order by x.payment_date desc),'[]'::jsonb)
  into v_payments
@@ -2098,5 +2098,79 @@ BEGIN
     END IF;
 END; $function$;
 
+
+
+-- Compatibility bridge: the same Negin 2 account can use the new multi-building
+-- session while retaining a separate legacy session for the untouched old UI.
+CREATE OR REPLACE FUNCTION public.mb_app_login(p_username text, p_password text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+ v_acc mb.app_accounts;
+ v_token uuid;
+ v_memberships jsonb;
+ v_legacy jsonb;
+ v_legacy_token uuid;
+begin
+ select * into v_acc
+ from mb.app_accounts
+ where lower(username)=lower(btrim(p_username))
+   and account_status='active'
+   and password_hash=extensions.crypt(p_password,password_hash);
+ if not found then
+   return jsonb_build_object('success',false,'error','نام کاربری یا رمز عبور اشتباه است');
+ end if;
+
+ v_token:=gen_random_uuid();
+ insert into mb.app_sessions(token_hash,account_id)
+ values(encode(extensions.digest(v_token::text,'sha256'),'hex'),v_acc.id);
+
+ select coalesce(jsonb_agg(jsonb_build_object(
+   'membership_id',bm.id,'building_id',b.id,'building_name',b.name,
+   'unit_no',u.unit_no,'access_role',bm.access_role,'resident_type',bm.resident_type,
+   'membership_status',bm.membership_status,'building_status',b.building_status,
+   'address',b.address,'floor_count',b.floor_count
+ ) order by b.created_at desc),'[]'::jsonb)
+ into v_memberships
+ from mb.building_memberships bm
+ join mb.buildings b on b.id=bm.building_id
+ left join mb.units u on u.id=bm.unit_id
+ where bm.account_id=v_acc.id and bm.membership_status='active';
+
+ begin
+   v_legacy:=public.app_login(p_login=>p_username,p_password=>p_password);
+   if coalesce((v_legacy->>'success')::boolean,false) then
+     v_legacy_token:=nullif(v_legacy->>'token','')::uuid;
+   end if;
+ exception when others then
+   v_legacy_token:=null;
+ end;
+
+ return jsonb_build_object(
+   'success',true,'token',v_token,'legacy_token',v_legacy_token,
+   'account_id',v_acc.id,'username',v_acc.username,'full_name',v_acc.full_name,
+   'is_superadmin',v_acc.is_superadmin,'must_change_password',v_acc.must_change_password,
+   'memberships',v_memberships
+ );
+end;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.mb_app_logout_all(p_token uuid, p_legacy_token uuid DEFAULT NULL)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+begin
+ perform public.mb_app_logout(p_token);
+ if p_legacy_token is not null then
+   perform public.app_logout(p_legacy_token);
+ end if;
+ return jsonb_build_object('success',true);
+end;
+$function$;
 
 commit;
