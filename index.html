@@ -731,6 +731,16 @@ async function renderShell() {
   $$('.theme-dot').forEach(d => d.addEventListener('click', () => setTheme(d.dataset.t)));
 
   $('#go-prof').addEventListener('click', () => { $('#who-pop').classList.remove('show'); go('profile'); });
+  $('#go-multi')?.addEventListener('click', async () => {
+    try {
+      const { data, error } = await sb.rpc('mb_app_bridge_legacy_session', { p_legacy_token: S.token });
+      if (error) throw new Error(error.message);
+      sessionStorage.setItem('mb_token', data.token);
+      sessionStorage.setItem('mb_me', JSON.stringify(data));
+      sessionStorage.setItem('legacy_bm_token', S.token);
+      window.location.href = 'multibuilding.html';
+    } catch (err) { showErr(err); }
+  });
   $('#go-req').addEventListener('click', () => go('requests'));
   $$('.bnav-items button').forEach(b => b.addEventListener('click', () => go(b.dataset.v)));
   window.addEventListener('resize', debounce(renderShellHeaderState, 100));
