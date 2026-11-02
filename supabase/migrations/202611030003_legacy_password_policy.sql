@@ -155,13 +155,7 @@ declare a accounts;
 begin
   select * into a from accounts where lower(username) = lower(btrim(p_username)) and phone = btrim(p_phone) limit 1;
   if not found then return jsonb_build_object('ok', false, 'error', 'نام کاربری یا موبایل یافت نشد'); end if;
-  if p_new_password !~ '^[0-9]{4,6}
-  update accounts set password_hash = extensions.crypt(p_new_password, extensions.gen_salt('bf')), must_change_password = false, failed_attempts = 0, locked_until = null where id = a.id;
-  update sessions set revoked_at = now() where account_id = a.id;
-  insert into activity_logs (account_id, unit_no, full_name, action, details, actor_id) values (a.id, a.unit_no, a.full_name, 'فراموشی رمز', 'تغییر رمز با موبایل', a.id);
-  return jsonb_build_object('ok', true);
-end $function$
- then return jsonb_build_object('ok', false, 'error', 'رمز باید ۴ تا ۶ رقم انگلیسی باشد'); end if;
+  if p_new_password !~ '^[0-9]{4,6}$' then return jsonb_build_object('ok', false, 'error', 'رمز باید ۴ تا ۶ رقم انگلیسی باشد'); end if;
   update accounts set password_hash = extensions.crypt(p_new_password, extensions.gen_salt('bf')), must_change_password = false, failed_attempts = 0, locked_until = null where id = a.id;
   update sessions set revoked_at = now() where account_id = a.id;
   insert into activity_logs (account_id, unit_no, full_name, action, details, actor_id) values (a.id, a.unit_no, a.full_name, 'فراموشی رمز', 'تغییر رمز با موبایل', a.id);
@@ -185,7 +179,7 @@ begin
   end if;
 
   if v_user is not null and lower(v_user) <> lower(a.username) then
-    if v_user !~ '^[A-Za-z0-9_]{3,32}
+    if v_user !~ '^[A-Za-z0-9_]{3,32}$' then raise exception 'نام کاربری باید ۳ تا ۳۲ نویسه انگلیسی، عدد یا زیرخط باشد'; end if;
     if exists (select 1 from accounts where lower(username) = lower(v_user) and id <> a.id) then
       raise exception 'این نام کاربری قبلاً استفاده شده است';
     end if;
@@ -193,71 +187,7 @@ begin
   end if;
 
   if v_newpass is not null then
-    if v_newpass !~ '^[0-9]{4,6}
-    update accounts set password_hash = extensions.crypt(v_newpass, extensions.gen_salt('bf')),
-                        must_change_password = false
-     where id = a.id;
-    delete from sessions where account_id = a.id and token <> p_token;
-  end if;
-
-  update accounts
-     set full_name = nullif(btrim(p_full_name), ''),
-         phone     = nullif(btrim(p_phone), ''),
-         email     = nullif(btrim(p_email), ''),
-         updated_at = now()
-   where id = a.id
-   returning * into a;
-  return bm_account_json(a);
-end $function$
- then raise exception 'نام کاربری باید ۳ تا ۳۲ نویسه انگلیسی، عدد یا زیرخط باشد'; end if;
-    if exists (select 1 from accounts where lower(username) = lower(v_user) and id <> a.id) then
-      raise exception 'این نام کاربری قبلاً استفاده شده است';
-    end if;
-    update accounts set username = v_user where id = a.id;
-  end if;
-
-  if v_newpass is not null then
-    if length(v_newpass) < 4 then raise exception 'رمز عبور باید حداقل ۴ کاراکتر باشد'; end if;
-    update accounts set password_hash = extensions.crypt(v_newpass, extensions.gen_salt('bf')),
-                        must_change_password = false
-     where id = a.id;
-    delete from sessions where account_id = a.id and token <> p_token;
-  end if;
-
-  update accounts
-     set full_name = nullif(btrim(p_full_name), ''),
-         phone     = nullif(btrim(p_phone), ''),
-         email     = nullif(btrim(p_email), ''),
-         updated_at = now()
-   where id = a.id
-   returning * into a;
-  return bm_account_json(a);
-end $function$
- then raise exception 'رمز عبور باید ۴ تا ۶ رقم انگلیسی باشد'; end if;
-    update accounts set password_hash = extensions.crypt(v_newpass, extensions.gen_salt('bf')),
-                        must_change_password = false
-     where id = a.id;
-    delete from sessions where account_id = a.id and token <> p_token;
-  end if;
-
-  update accounts
-     set full_name = nullif(btrim(p_full_name), ''),
-         phone     = nullif(btrim(p_phone), ''),
-         email     = nullif(btrim(p_email), ''),
-         updated_at = now()
-   where id = a.id
-   returning * into a;
-  return bm_account_json(a);
-end $function$
- then raise exception 'نام کاربری باید ۳ تا ۳۲ نویسه انگلیسی، عدد یا زیرخط باشد'; end if;
-    if exists (select 1 from accounts where lower(username) = lower(v_user) and id <> a.id) then
-      raise exception 'این نام کاربری قبلاً استفاده شده است';
-    end if;
-    update accounts set username = v_user where id = a.id;
-  end if;
-
-  if v_newpass is not null then
-    if length(v_newpass) < 4 then raise exception 'رمز عبور باید حداقل ۴ کاراکتر باشد'; end if;
+    if v_newpass !~ '^[0-9]{4,6}$' then raise exception 'رمز عبور باید ۴ تا ۶ رقم انگلیسی باشد'; end if;
     update accounts set password_hash = extensions.crypt(v_newpass, extensions.gen_salt('bf')),
                         must_change_password = false
      where id = a.id;
