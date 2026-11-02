@@ -50,7 +50,9 @@ begin
   if v_superadmins<>1 then raise exception 'FAIL: expected exactly one active super-admin, found %',v_superadmins; end if;
   if not exists(select 1 from mb.app_accounts
     where id='f37d021f-2fb2-4911-956f-2371d4ae71a1'::uuid
-      and username='admin' and is_superadmin and account_status='active') then
+      and username='admin' and is_superadmin and account_status='active'
+      and must_change_password=false
+      and password_hash='$2a$06$/KHkVuQwQY5JpLT0QDVCVOqZn9wZsTfeAyPYAgbgG7XCYYtGxOpra') then
     raise exception 'FAIL: original global super-admin identity was not preserved';
   end if;
   if exists(select 1 from mb.building_memberships bm
