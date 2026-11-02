@@ -42,6 +42,20 @@ begin
   if v_memberships<>12 then raise exception 'FAIL: expected 12 memberships, found %',v_memberships; end if;
   if v_managers<>1 then raise exception 'FAIL: expected exactly one active manager, found %',v_managers; end if;
   if v_superadmins<>1 then raise exception 'FAIL: expected exactly one active super-admin, found %',v_superadmins; end if;
+  if not exists(select 1 from mb.app_accounts
+    where id='f37d021f-2fb2-4911-956f-2371d4ae71a1'::uuid
+      and username='admin' and is_superadmin and account_status='active') then
+    raise exception 'FAIL: original global super-admin identity was not preserved';
+  end if;
+  if exists(select 1 from mb.building_memberships bm
+    join mb.app_accounts a on a.id=bm.account_id
+    where bm.building_id=v_building and bm.access_role='manager' and a.is_superadmin) then
+    raise exception 'FAIL: Negin 2 building manager was incorrectly promoted to super-admin';
+  end if;
+  if not exists(select 1 from mb.buildings where id=v_building
+    and building_status='active') then
+    raise exception 'FAIL: Negin 2 must be imported as an already-approved active building';
+  end if;
 
   if not exists(
     select 1 from mb.buildings b
@@ -78,7 +92,8 @@ begin
         or m.password_hash is distinct from a.password_hash)
   ) then raise exception 'FAIL: legacy account identity/hash was not preserved'; end if;
 
-  -- Check that opening debt exactly matches the legacy billing engine.
+  -- Check net opening balances against the legacy billing engine.
+  -- Positive balances are materialized as charge items; negative balances stay as account credit.
   if exists(
     with recursive months(account_id,unit_no,occupancy,ym) as (
       select a.id,a.unit_no,a.occupancy,coalesce(a.start_ym,140406)
@@ -88,38 +103,38 @@ begin
       from months m where m.ym<140508
     ),
     dues as (
-      select m.account_id,m.ym,d.charge,d.water,d.gas,d.repair,d.parking
+      select m.account_id,
+        sum(coalesce(d.charge,0)+coalesce(d.water,0)+coalesce(d.gas,0)
+          +coalesce(d.repair,0)+coalesce(d.parking,0))::numeric total_due
       from months m cross join lateral public.bm_account_month_due(m.account_id,m.ym) d
+      group by m.account_id
     ),
     paid as (
-      select a.id account_id,t.year*100+t.month ym,
-        coalesce(sum(t.amount) filter(where t.category='charge'),0) charge_paid,
-        coalesce(sum(t.amount) filter(where t.category='water'),0) water_paid,
-        coalesce(sum(t.amount) filter(where t.category='gas'),0) gas_paid,
-        coalesce(sum(t.amount) filter(where t.category='repair'),0) repair_paid,
-        coalesce(sum(t.amount) filter(where t.category='parking'),0) parking_paid
-      from public.accounts a
-      left join public.transactions t on t.unit_no=a.unit_no and t.occupancy=a.occupancy
-        and t.tx_type='درآمد' and t.building_id=1
-      where a.building_id=1 group by a.id,t.year,t.month
+      select a.id account_id,coalesce(sum(t.amount),0)::numeric total_paid
+      from public.accounts a left join public.transactions t
+        on t.unit_no=a.unit_no and t.occupancy=a.occupancy
+       and t.tx_type='درآمد' and t.building_id=1
+      where a.building_id=1 group by a.id
     ),
-    balances as (
-      select d.account_id,
-        sum(greatest(coalesce(d.charge,0)-coalesce(p.charge_paid,0),0)
-          +greatest(coalesce(d.water,0)-coalesce(p.water_paid,0),0)
-          +greatest(coalesce(d.gas,0)-coalesce(p.gas_paid,0),0)
-          +greatest(coalesce(d.repair,0)-coalesce(p.repair_paid,0),0)
-          +greatest(coalesce(d.parking,0)-coalesce(p.parking_paid,0),0))::numeric debt
-      from dues d left join paid p on p.account_id=d.account_id and p.ym=d.ym
-      group by d.account_id
+    expected as (
+      select a.id account_id,
+        case when a.is_admin or a.occupancy='مستأجر'
+          then coalesce(d.total_due,0)-coalesce(p.total_paid,0) else 0 end net_balance
+      from public.accounts a left join dues d on d.account_id=a.id
+      left join paid p on p.account_id=a.id where a.building_id=1
     )
     select 1
-    from public.accounts a
-    join mb.building_memberships bm on bm.account_id=a.id and bm.building_id=v_building
-    left join balances b on b.account_id=a.id
-    where bm.opening_debt is distinct from
-      case when a.is_admin or a.occupancy='مستأجر' then coalesce(b.debt,0) else 0 end
-  ) then raise exception 'FAIL: imported opening debt differs from the legacy billing engine'; end if;
+    from expected x
+    join mb.building_memberships bm on bm.account_id=x.account_id and bm.building_id=v_building
+    where (x.net_balance<=0 and bm.opening_debt is distinct from x.net_balance)
+       or (x.net_balance>0 and (
+         bm.opening_debt<>0 or
+         round(coalesce((select sum(ea.amount) from mb.building_expense_allocations ea
+           join mb.building_expenses e on e.id=ea.expense_id
+           where ea.membership_id=bm.id and e.description='مانده بدهی انتقالی #'||bm.id::text),0),2)
+           <>round(x.net_balance,2)
+       ))
+  ) then raise exception 'FAIL: opening debt/credit ledger differs from legacy net balance'; end if;
 
   -- Test the bridge using a temporary legacy session.
   select id into v_admin_id from public.accounts where building_id=1 and is_admin=true limit 1;
