@@ -23,6 +23,28 @@ begin
   from mb.app_accounts a
   where a.is_superadmin and a.account_status='active';
 
+  if to_regprocedure('public.app_login(text,text)') is null
+     or to_regprocedure('public.app_logout(uuid)') is null then
+    raise exception 'FAIL: legacy Negin 2 login/logout RPCs were replaced';
+  end if;
+  if to_regprocedure('public.mb_app_login(text,text)') is null
+     or to_regprocedure('public.mb_app_bridge_legacy_session(uuid)') is null then
+    raise exception 'FAIL: multi-building login bridge RPCs are missing';
+  end if;
+  if (select count(*) from pg_tables where schemaname='mb' and rowsecurity)<>14 then
+    raise exception 'FAIL: not all 14 isolated tables have RLS enabled';
+  end if;
+  if has_table_privilege('anon','mb.app_accounts','SELECT')
+     or has_table_privilege('authenticated','mb.app_accounts','SELECT') then
+    raise exception 'FAIL: direct client access to isolated account table is not revoked';
+  end if;
+  if exists(
+    select 1 from public.accounts a
+    join mb.app_accounts m on m.id=a.id
+    where a.building_id=1
+      and (m.username is distinct from a.username
+        or m.password_hash is distinct from a.password_hash)
+  ) then raise exception 'FAIL: legacy account identity/hash was not preserved'; end if;
   if not exists(select 1 from mb.buildings where id=v_building and name='مجتمع نگین ۲') then
     raise exception 'FAIL: Negin 2 building row missing';
   end if;
