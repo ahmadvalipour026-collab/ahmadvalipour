@@ -20,6 +20,11 @@ declare
   v_account_id uuid;
   v_phone text;
   v_invalid boolean;
+  v_manager_membership uuid;
+  v_test_expense uuid;
+  v_test_allocation uuid;
+  v_financial_summary jsonb;
+  v_payment_result jsonb;
 begin
   select count(*) into v_units from mb.units where building_id=v_building;
   select count(*) into v_accounts
@@ -151,6 +156,34 @@ begin
   insert into mb.app_sessions(token_hash,account_id)
   values(encode(extensions.digest(v_super_token::text,'sha256'),'hex'),
     'f37d021f-2fb2-4911-956f-2371d4ae71a1'::uuid);
+
+  -- Regression test: keep each charge visible and subtract carried credit only once at the final total.
+  select id into v_manager_membership from mb.building_memberships
+  where building_id=v_building and access_role='manager' and membership_status='active' limit 1;
+  update mb.building_memberships set opening_debt=-300 where id=v_manager_membership;
+  insert into mb.building_expenses(building_id,description,amount,expense_date,allocation_method,tx_type,category,expense_status)
+  values(v_building,'Regression test charge',1000,current_date,'direct','هزینه','سایر','active')
+  returning id into v_test_expense;
+  insert into mb.building_expense_allocations(building_id,expense_id,membership_id,amount)
+  values(v_building,v_test_expense,v_manager_membership,1000)
+  returning id into v_test_allocation;
+
+  v_financial_summary:=public.mb_app_resident_get_financial_summary(v_multi_token,v_building,v_manager_membership);
+  if (v_financial_summary->>'account_balance')::numeric<>700
+     or (v_financial_summary->>'debt_balance')::numeric<>700
+     or (v_financial_summary->>'credit_applied')::numeric<>300
+     or (v_financial_summary->>'credit_balance')::numeric<>0
+     or ((v_financial_summary->'charges'->0->>'amount')::numeric)<>1000
+     or ((v_financial_summary->'charges'->0->>'outstanding_amount')::numeric)<>1000 then
+    raise exception 'FAIL: credit must be deducted at the final total while the original charge remains visible';
+  end if;
+  v_payment_result:=public.mb_app_submit_itemized_payment(
+    v_multi_token,v_building,v_manager_membership,current_date,'Regression test payment',
+    jsonb_build_array(jsonb_build_object('type','expense','id',v_test_allocation::text,'amount',700)),700
+  );
+  if coalesce((v_payment_result->>'success')::boolean,false) is not true then
+    raise exception 'FAIL: net itemized payment after credit deduction was not accepted';
+  end if;
 
   -- Verify the old Negin 2 account-management RPCs enforce the same rule.
   select id,phone into v_account_id,v_phone
