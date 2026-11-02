@@ -2126,7 +2126,7 @@ async function viewResidentCharges(el) {
   ${charges.length ? `<div class="tbl-wrap" style="margin-bottom:20px"><table><thead><tr><th>شرح</th><th>مبلغ اصلی</th><th>پرداخت‌شده</th><th>مانده ردیف</th><th>تاریخ</th><th>نوع</th></tr></thead><tbody>
   ${charges.map(c => `<tr><td>${esc(c.description)}</td><td>${fmt(c.amount)}</td><td>${fmt(c.paid_amount||0)}</td><td>${fmt(c.outstanding_amount??c.amount)}</td><td>${esc(c.item_date)}</td><td>${c.item_type === 'expense' ? '<span class="chip ex">هزینه</span>' : '<span class="chip pd">بدهی اولیه</span>'}</td></tr>`).join('')}
   </tbody></table></div>` : `<div class="empty"><p>صورتحسابی ثبت نشده</p></div>`}
-  <div class="card" style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;gap:12px"><b>بستانکاری منتقل‌شده</b><b style="color:var(--success)">− ${fmt(s.credit_balance||0)} تومان</b></div><div style="display:flex;justify-content:space-between;gap:12px;margin-top:8px"><b>مانده نهایی حساب</b><b>${fmt(s.account_balance||0)} تومان</b></div></div>
+  <div class="card" style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;gap:12px"><b>بستانکاری کسرشده از این صورتحساب</b><b style="color:var(--success)">− ${fmt(s.credit_applied||0)} تومان</b></div><div style="display:flex;justify-content:space-between;gap:12px;margin-top:8px"><b>بستانکاری باقی‌مانده</b><b style="color:var(--success)">${fmt(s.credit_balance||0)} تومان</b></div><div style="display:flex;justify-content:space-between;gap:12px;margin-top:8px"><b>مانده نهایی حساب</b><b>${fmt(s.account_balance||0)} تومان</b></div></div>
   <div class="sec-title">سابقه پرداخت‌ها</div>
   ${payments.length ? `<div class="tbl-wrap"><table><thead><tr><th>مبلغ</th><th>شرح</th><th>وضعیت</th><th>تاریخ</th></tr></thead><tbody>${payments.map(p => `<tr><td>${fmt(p.amount)}</td><td>${esc(p.description||'—')}</td><td>${p.status === 'approved' ? '<span class="chip ok">تایید</span>' : p.status === 'pending' ? '<span class="chip pd">در انتظار</span>' : p.status === 'rejected' ? '<span class="chip no">رد</span>' : '<span class="chip ex">' + esc(p.status) + '</span>'}</td><td>${esc(p.payment_date)}</td></tr>`).join('')}</tbody></table></div>` : `<div class="empty"><p>پرداختی ثبت نشده</p></div>`}`;
 }
@@ -2142,7 +2142,7 @@ async function viewResidentPay(el) {
   const s = await T('app_resident_get_financial_summary', { p_building_id: m.building_id, p_membership_id: m.membership_id });
   const charges = (s.charges || []).filter(c => Number(c.outstanding_amount ?? c.amount) > 0);
   const totalOutstanding = charges.reduce((sum,c) => sum + Number(c.outstanding_amount ?? c.amount ?? 0),0);
-  const credit = Number(s.credit_balance || 0);
+  const credit = Number(s.credit_applied || 0);
   const netPayable = Math.max(0,Math.round(totalOutstanding-credit));
   const dateOrder = [...charges].sort((a,b) => String(a.item_date).localeCompare(String(b.item_date)));
   el.innerHTML = `<h1>پرداخت</h1><p class="sub">${esc(m.building_name)} · واحد ${fa(s.unit_no)}</p>
