@@ -11,6 +11,7 @@ declare
   v_admin_id uuid;
   v_legacy_token uuid;
   v_multi_token uuid;
+  v_super_token uuid;
   v_bridge jsonb;
   v_reset jsonb;
   v_login jsonb;
@@ -145,6 +146,12 @@ begin
   end if;
   v_multi_token:=(v_bridge->>'token')::uuid;
 
+  -- Use a transaction-local session for the original global super-admin.
+  v_super_token:=gen_random_uuid();
+  insert into mb.app_sessions(token_hash,account_id)
+  values(encode(extensions.digest(v_super_token::text,'sha256'),'hex'),
+    'f37d021f-2fb2-4911-956f-2371d4ae71a1'::uuid);
+
   -- Verify the old Negin 2 account-management RPCs enforce the same rule.
   select id,phone into v_account_id,v_phone
   from public.accounts where username='negin1';
@@ -167,7 +174,7 @@ begin
   end;
   if not v_invalid then raise exception 'FAIL: legacy manager accepted an invalid initial password'; end if;
 
-  v_reset:=public.mb_app_admin_reset_manager_password(v_multi_token,v_building);
+  v_reset:=public.mb_app_admin_reset_manager_password(v_super_token,v_building);
   if (v_reset->>'temp_password') !~ '^[0-9]{6}$' then
     raise exception 'FAIL: manager reset password is not six numeric digits';
   end if;
