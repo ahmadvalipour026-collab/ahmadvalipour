@@ -232,35 +232,35 @@ CREATE TABLE IF NOT EXISTS mb.push_subscriptions (
 
 ALTER TABLE mb.buildings ADD CONSTRAINT fk_manager FOREIGN KEY (current_manager_membership_id) REFERENCES mb.building_memberships(id) ON DELETE SET NULL;
 
-CREATE INDEX IF NOT EXISTS idx_bp_created_by ON mb.building_payments USING btree (created_by)
-CREATE INDEX IF NOT EXISTS idx_br_membership_id ON mb.building_requests USING btree (membership_id)
-CREATE UNIQUE INDEX IF NOT EXISTS ux_active_tenant_per_unit ON mb.building_memberships USING btree (unit_id) WHERE ((membership_status = 'active'::text) AND (resident_type = 'tenant'::text))
-CREATE UNIQUE INDEX IF NOT EXISTS ux_active_owner_per_unit ON mb.building_memberships USING btree (unit_id) WHERE ((membership_status = 'active'::text) AND (resident_type = ANY (ARRAY['owner'::text, 'owner_resident'::text])))
-CREATE INDEX IF NOT EXISTS idx_bea_membership_id ON mb.building_expense_allocations USING btree (membership_id)
-CREATE INDEX IF NOT EXISTS idx_bpa_expense_allocation_id ON mb.building_payment_allocations USING btree (expense_allocation_id)
-CREATE INDEX IF NOT EXISTS idx_bm_account_id ON mb.building_memberships USING btree (account_id)
-CREATE INDEX IF NOT EXISTS idx_bfs_created_by ON mb.building_finance_settings USING btree (created_by)
-CREATE INDEX IF NOT EXISTS idx_rr_reviewed_by ON mb.registration_requests USING btree (reviewed_by)
-CREATE INDEX IF NOT EXISTS idx_buildings_manager_membership_id ON mb.buildings USING btree (current_manager_membership_id)
-CREATE INDEX IF NOT EXISTS idx_bpa_building_id ON mb.building_payment_allocations USING btree (building_id)
-CREATE INDEX IF NOT EXISTS idx_bp_building_id ON mb.building_payments USING btree (building_id)
-CREATE INDEX IF NOT EXISTS idx_rr_building_id ON mb.registration_requests USING btree (building_id)
-CREATE INDEX IF NOT EXISTS idx_bpa_payment_id ON mb.building_payment_allocations USING btree (payment_id)
-CREATE INDEX IF NOT EXISTS idx_app_sessions_account_id ON mb.app_sessions USING btree (account_id)
-CREATE UNIQUE INDEX IF NOT EXISTS ux_active_manager_per_building ON mb.building_memberships USING btree (building_id) WHERE ((membership_status = 'active'::text) AND (access_role = 'manager'::text))
-CREATE UNIQUE INDEX IF NOT EXISTS ux_buildings_name_ci ON mb.buildings USING btree (lower(name))
-CREATE INDEX IF NOT EXISTS idx_bm_building_id ON mb.building_memberships USING btree (building_id)
-CREATE INDEX IF NOT EXISTS idx_bea_original_membership_id ON mb.building_expense_allocations USING btree (original_membership_id)
-CREATE INDEX IF NOT EXISTS idx_payment_item_requests_expense_allocation_id ON mb.building_payment_item_requests USING btree (expense_allocation_id)
-CREATE INDEX IF NOT EXISTS idx_bea_building_id ON mb.building_expense_allocations USING btree (building_id)
-CREATE INDEX IF NOT EXISTS idx_be_building_id ON mb.building_expenses USING btree (building_id)
-CREATE INDEX IF NOT EXISTS idx_be_created_by ON mb.building_expenses USING btree (created_by)
-CREATE INDEX IF NOT EXISTS idx_br_building_id ON mb.building_requests USING btree (building_id)
-CREATE INDEX IF NOT EXISTS idx_bp_membership_id ON mb.building_payments USING btree (membership_id)
-CREATE INDEX IF NOT EXISTS idx_payment_item_requests_building_id ON mb.building_payment_item_requests USING btree (building_id)
-CREATE INDEX IF NOT EXISTS idx_bea_expense_id ON mb.building_expense_allocations USING btree (expense_id)
-CREATE INDEX IF NOT EXISTS idx_bfs_updated_by ON mb.building_finance_settings USING btree (updated_by)
-CREATE INDEX IF NOT EXISTS idx_bm_unit_id ON mb.building_memberships USING btree (unit_id)
+CREATE INDEX IF NOT EXISTS idx_bp_created_by ON mb.building_payments USING btree (created_by);
+CREATE INDEX IF NOT EXISTS idx_br_membership_id ON mb.building_requests USING btree (membership_id);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_active_tenant_per_unit ON mb.building_memberships USING btree (unit_id) WHERE ((membership_status = 'active'::text) AND (resident_type = 'tenant'::text));
+CREATE UNIQUE INDEX IF NOT EXISTS ux_active_owner_per_unit ON mb.building_memberships USING btree (unit_id) WHERE ((membership_status = 'active'::text) AND (resident_type = ANY (ARRAY['owner'::text, 'owner_resident'::text])));
+CREATE INDEX IF NOT EXISTS idx_bea_membership_id ON mb.building_expense_allocations USING btree (membership_id);
+CREATE INDEX IF NOT EXISTS idx_bpa_expense_allocation_id ON mb.building_payment_allocations USING btree (expense_allocation_id);
+CREATE INDEX IF NOT EXISTS idx_bm_account_id ON mb.building_memberships USING btree (account_id);
+CREATE INDEX IF NOT EXISTS idx_bfs_created_by ON mb.building_finance_settings USING btree (created_by);
+CREATE INDEX IF NOT EXISTS idx_rr_reviewed_by ON mb.registration_requests USING btree (reviewed_by);
+CREATE INDEX IF NOT EXISTS idx_buildings_manager_membership_id ON mb.buildings USING btree (current_manager_membership_id);
+CREATE INDEX IF NOT EXISTS idx_bpa_building_id ON mb.building_payment_allocations USING btree (building_id);
+CREATE INDEX IF NOT EXISTS idx_bp_building_id ON mb.building_payments USING btree (building_id);
+CREATE INDEX IF NOT EXISTS idx_rr_building_id ON mb.registration_requests USING btree (building_id);
+CREATE INDEX IF NOT EXISTS idx_bpa_payment_id ON mb.building_payment_allocations USING btree (payment_id);
+CREATE INDEX IF NOT EXISTS idx_app_sessions_account_id ON mb.app_sessions USING btree (account_id);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_active_manager_per_building ON mb.building_memberships USING btree (building_id) WHERE ((membership_status = 'active'::text) AND (access_role = 'manager'::text));
+CREATE UNIQUE INDEX IF NOT EXISTS ux_buildings_name_ci ON mb.buildings USING btree (lower(name));
+CREATE INDEX IF NOT EXISTS idx_bm_building_id ON mb.building_memberships USING btree (building_id);
+CREATE INDEX IF NOT EXISTS idx_bea_original_membership_id ON mb.building_expense_allocations USING btree (original_membership_id);
+CREATE INDEX IF NOT EXISTS idx_payment_item_requests_expense_allocation_id ON mb.building_payment_item_requests USING btree (expense_allocation_id);
+CREATE INDEX IF NOT EXISTS idx_bea_building_id ON mb.building_expense_allocations USING btree (building_id);
+CREATE INDEX IF NOT EXISTS idx_be_building_id ON mb.building_expenses USING btree (building_id);
+CREATE INDEX IF NOT EXISTS idx_be_created_by ON mb.building_expenses USING btree (created_by);
+CREATE INDEX IF NOT EXISTS idx_br_building_id ON mb.building_requests USING btree (building_id);
+CREATE INDEX IF NOT EXISTS idx_bp_membership_id ON mb.building_payments USING btree (membership_id);
+CREATE INDEX IF NOT EXISTS idx_payment_item_requests_building_id ON mb.building_payment_item_requests USING btree (building_id);
+CREATE INDEX IF NOT EXISTS idx_bea_expense_id ON mb.building_expense_allocations USING btree (expense_id);
+CREATE INDEX IF NOT EXISTS idx_bfs_updated_by ON mb.building_finance_settings USING btree (updated_by);
+CREATE INDEX IF NOT EXISTS idx_bm_unit_id ON mb.building_memberships USING btree (unit_id);
 
 do $$
 declare t record;
