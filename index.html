@@ -710,6 +710,7 @@ async function renderShell() {
             <div class="theme-dot ocean ${curTheme==='ocean'?'active':''}" data-t="ocean" title="اقیانوسی"></div>
           </div>
           <button class="btn lt sm" id="go-prof">پروفایل کاربری</button>
+          ${S.me.is_admin ? '<button class="btn lt sm" id="go-multi">مدیریت چندساختمانی</button>' : ''}
           <button class="btn rd" id="lo">خروج از حساب</button>
         </div>
       </div>
