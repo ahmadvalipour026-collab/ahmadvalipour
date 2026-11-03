@@ -1068,54 +1068,30 @@ $('#m-pay', m)?.addEventListener('click', () => {
 }
 
 async function viewAnnouncements(el) {
-  const admin = !!S.me.is_admin;
-  const pair = await Promise.all([T('app_get_announcements'), T('app_get_polls')]);
-  const list = pair[0] || [], polls = pair[1] || [];
-  const dt = v => { const d = new Date(v); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('fa-IR'); };
-  const announcementForm = admin ? '<form id="af" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)"><h2 style="grid-column:1/-1;margin:0">ثبت اطلاعیه جدید</h2><label class="f">عنوان<input id="a-title" maxlength="180" required></label><label class="f">نوع<select id="a-type"><option value="general">اطلاعیه عمومی</option><option value="meeting">دعوت به جلسه</option></select></label><label class="f" style="grid-column:1/-1">متن کامل<textarea id="a-content" rows="4" maxlength="10000" required></textarea></label><div style="grid-column:1/-1"><button class="btn">انتشار اطلاعیه</button></div></form>' : '';
-  const pollForm = admin ? '<form id="poll-create-form" class="card grid" style="gap:12px;margin-bottom:20px;border-color:var(--accent)"><h2 style="margin:0">📊 ایجاد نظرسنجی</h2><label class="f">عنوان نظرسنجی<input id="poll-title" maxlength="180" required placeholder="مثلاً انتخاب زمان نظافت راه‌پله"></label><label class="f">توضیحات (اختیاری)<textarea id="poll-description" rows="2" maxlength="1000"></textarea></label><label class="f">گزینه‌ها (هر گزینه در یک خط؛ حداقل ۲ و حداکثر ۱۰ گزینه)<textarea id="poll-options" rows="4" required placeholder="شنبه&#10;یکشنبه&#10;دوشنبه"></textarea></label><label style="display:flex;align-items:center;gap:8px"><input id="poll-active" type="checkbox" checked> بلافاصله فعال شود</label><button class="btn">ثبت نظرسنجی</button></form>' : '';
-  const pollCards = polls.map(p => {
-    const options = (p.options || []).map(o => '<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;gap:10px"><span>'+esc(o.text)+'</span><strong>'+fa(Number(o.votes||0))+' رأی · '+fa(Math.round(Number(o.percent||0)))+'٪</strong></div><div style="height:7px;background:var(--line);border-radius:9px;margin-top:7px;overflow:hidden"><div style="height:7px;width:'+Math.max(0,Math.min(100,Number(o.percent||0)))+'%;background:var(--navy);border-radius:9px"></div></div></div>').join('');
-    const canVote = !admin && p.is_active && !p.my_vote;
-    const voteForm = canVote ? '<form data-vote-form="'+p.id+'" style="margin-top:12px"><div style="display:grid;gap:9px">'+(p.options||[]).map(o=>'<label style="display:flex;align-items:center;gap:8px"><input type="radio" name="poll-option-'+p.id+'" value="'+o.id+'" required> '+esc(o.text)+'</label>').join('')+'</div><button class="btn sm" style="margin-top:12px">ثبت رأی نهایی</button></form>' : '';
-    const status = admin ? '<span class="chip '+(p.is_active?'ok':'ex')+'">'+(p.is_active?'فعال':'غیرفعال')+'</span>' : (p.my_vote ? '<span class="chip ok">رأی شما ثبت شده</span>' : '<span class="chip '+(p.is_active?'ok':'ex')+'">'+(p.is_active?'در حال رأی‌گیری':'بسته شده')+'</span>');
-    const adminActions = admin ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn '+(p.is_active?'rd':'sf')+' sm" data-poll-toggle="'+p.id+'" data-next="'+(p.is_active?'false':'true')+'">'+(p.is_active?'بستن نظرسنجی':'فعال‌کردن نظرسنجی')+'</button><button class="btn rd sm" data-poll-delete="'+p.id+'">حذف نظرسنجی</button></div>' : '';
-    return '<div class="card"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap"><h2 style="margin:0">'+esc(p.title)+'</h2>'+status+'</div>'+(p.description?'<p class="sub" style="white-space:pre-wrap">'+esc(p.description)+'</p>':'')+'<div style="margin-top:10px">'+(options||'<p class="sub">هنوز رأیی ثبت نشده است.</p>')+'</div><p class="sub" style="font-size:12px;margin:10px 0 0">مجموع آرا: '+fa(Number(p.total_votes||0))+' · '+dt(p.created_at)+'</p>'+voteForm+(!admin&&p.my_vote?'<p class="sub">امکان تغییر رأی ثبت‌شده وجود ندارد.</p>':'')+(!admin&&!p.is_active?'<p class="sub">این نظرسنجی بسته شده است.</p>':'')+adminActions+'</div>';
-  }).join('');
-  const announcementCards = list.map(a => '<article class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap"><h2 style="margin:0">'+esc(a.title)+'</h2><span class="chip '+(a.type==='meeting'?'pd':'ex')+'">'+(a.type==='meeting'?'جلسه':(a.type==='resident_message'?'پیام گروهی ساکن':'اطلاعیه'))+'</span></div><p style="white-space:pre-wrap;margin:12px 0">'+esc(a.content)+'</p><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span class="sub">'+dt(a.created_at)+'</span>'+(admin?'<button class="btn rd sm" data-announcement-delete="'+a.id+'">حذف اطلاعیه</button>':'')+'</div></article>').join('');
-  el.innerHTML = '<h1>اعلانات ساختمان</h1><p class="sub">'+(admin?'انتشار اطلاعیه، ایجاد نظرسنجی و مشاهده آرشیو ساختمان':'اطلاعیه‌های ساختمان و نظرسنجی‌های قابل شرکت')+'</p>'+announcementForm+pollForm+'<section style="margin:20px 0"><h2 style="margin:0 0 12px">📊 '+(admin?'نظرسنجی‌های ساختمان':'نظرسنجی‌ها')+'</h2><div class="grid g2">'+(pollCards||'<div class="card sub">در حال حاضر نظرسنجی‌ای وجود ندارد.</div>')+'</div></section><section style="margin-top:24px"><h2 style="margin:0 0 12px">📢 آرشیو اطلاعیه‌ها</h2><div class="grid g2">'+(announcementCards||'<div class="card sub">هیچ اطلاعیه‌ای وجود ندارد.</div>')+'</div></section>';
-
-  if (admin) {
+  const list = await T('app_get_announcements');
+  const adminForm = S.me.is_admin ? `<form id="af" class="card grid g3" style="margin-bottom:20px;border-color:var(--accent)"><h2 style="grid-column:1/-1;margin:0">ارسال اعلان جدید</h2><label class="f">عنوان<input id="a-title" required></label><label class="f">نوع<select id="a-type"><option value="general">اطلاعیه عمومی</option><option value="meeting">دعوت به جلسه</option></select></label><label class="f" style="grid-column:1/-1">متن کامل<textarea id="a-content" rows="3" required></textarea></label><div style="grid-column:1/-1"><button class="btn">ثبت اعلان</button></div></form>` : '';
+  el.innerHTML = `<h1>اعلانات ساختمان</h1><p class="sub">اطلاعیه‌ها و دعوت‌نامه‌ها</p>${adminForm}<div class="grid g2">${list.map(a => `<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap"><h2 style="margin:0">${esc(a.title)}</h2><span class="chip ${a.type === 'meeting' ? 'pd' : 'ex'}">${a.type === 'meeting' ? 'جلسه' : (a.type === 'resident_message' ? 'پیام گروهی ساکن' : 'اطلاعیه')}</span></div><p style="white-space:pre-wrap;margin:0 0 16px">${esc(a.content)}</p><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span style="font-size:12px;color:var(--muted)">${new Date(a.created_at).toLocaleDateString('fa-IR')}</span>${S.me.is_admin ? `<button class="btn rd sm" data-del="${a.id}">حذف</button>` : ''}</div></div>`).join('') || '<div class="card sub">هیچ اعلانی وجود ندارد.</div>'}</div>`;
+  if (S.me.is_admin) {
     $('#af')?.addEventListener('submit', async e => {
       e.preventDefault();
-      const title=$('#a-title').value.trim(), content=$('#a-content').value.trim(), type=$('#a-type').value;
-      try { await T('app_admin_save_announcement',{p_title:title,p_content:content,p_type:type}); notifyBale('📢 اعلان جدید در ساختمان:\n\n🔹 '+title+'\n\n'+content); sendMobilePush('announcement_created',title,content); toast('اطلاعیه منتشر شد'); go('announcements'); }
-      catch(err){showErr(err);}
+      try {
+        const title = $('#a-title').value; const content = $('#a-content').value; const type = $('#a-type').value;
+        await T('app_admin_save_announcement', { p_title: title, p_content: content, p_type: type });
+        notifyBale(`📢 اعلان جدید در ساختمان:\n\n🔹 ${title}\n\n${content}`);
+        sendMobilePush('announcement_created', title, content);
+        toast('ثبت شد'); go('announcements');
+      } catch (err) { showErr(err); }
     });
-    $('#poll-create-form')?.addEventListener('submit',async e=>{
-      e.preventDefault();
-      const title=$('#poll-title').value.trim(), description=$('#poll-description').value.trim(), options=$('#poll-options').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
-      if(options.length<2||options.length>10){toast('حداقل ۲ و حداکثر ۱۰ گزینه وارد کنید',true);return;}
-      if(new Set(options).size!==options.length){toast('گزینه‌های تکراری مجاز نیستند',true);return;}
-      try{
-        const active=$('#poll-active').checked;
-        await T('app_admin_create_poll',{p_title:title,p_description:description,p_options:options,p_is_active:active});
-        if(active){const sent=await notifyBale('📊 نظرسنجی جدید ساختمان\n\n'+title+(description?'\n'+description:'')+'\n\nگزینه‌ها:\n'+options.map((x,i)=>(i+1)+') '+x).join('\n')+'\n\nبرای ثبت رأی وارد برنامه مدیریت ساختمان شوید.');sendMobilePush('poll_created','نظرسنجی جدید: '+title,description||options.join('، '));toast(sent?'نظرسنجی ایجاد و در گروه بله اعلام شد':'نظرسنجی ایجاد شد؛ ارسال اعلان به بله ناموفق بود',!sent);}
-        else toast('نظرسنجی به‌صورت غیرفعال ایجاد شد');
-        go('announcements');
-      }catch(err){showErr(err);}
-    });
-    $$('[data-announcement-delete]').forEach(b=>b.addEventListener('click',async()=>{if(!confirm('این اطلاعیه حذف شود؟'))return;try{await T('app_admin_delete_announcement',{p_id:Number(b.dataset.announcementDelete)});toast('اطلاعیه حذف شد');go('announcements');}catch(err){showErr(err);}}));
-    $$('[data-poll-toggle]').forEach(b=>b.addEventListener('click',async()=>{try{await T('app_admin_set_poll_active',{p_poll_id:Number(b.dataset.pollToggle),p_active:b.dataset.next==='true'});toast('وضعیت نظرسنجی تغییر کرد');go('announcements');}catch(err){showErr(err);}}));
-    $$('[data-poll-delete]').forEach(b=>b.addEventListener('click',async()=>{if(!confirm('این نظرسنجی، گزینه‌ها و آرای آن برای همیشه حذف می‌شود. ادامه می‌دهید؟'))return;b.disabled=true;try{await T('app_admin_delete_poll',{p_poll_id:Number(b.dataset.pollDelete)});toast('نظرسنجی حذف شد');go('announcements');}catch(err){b.disabled=false;showErr(err);}}));
+    $$('[data-del]').forEach(b => b.addEventListener('click', async () => { if (!confirm('حذف شود؟')) return; try { await T('app_admin_delete_announcement', { p_id: +b.dataset.del }); toast('حذف شد'); go('announcements'); } catch (e) { showErr(e); } }));
   }
-  $$('[data-vote-form]').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();const pollId=Number(form.dataset.voteForm),selected=form.querySelector('input[type="radio"]:checked');if(!selected){toast('یک گزینه را انتخاب کنید',true);return;}const submit=form.querySelector('button');if(submit)submit.disabled=true;try{await T('app_vote_poll',{p_poll_id:pollId,p_option_id:Number(selected.value)});toast('رأی شما با موفقیت ثبت شد');go('announcements');}catch(err){if(submit)submit.disabled=false;showErr(err);}}));
 }
-
 
 async function viewRequests(el) {
   const admin = !!S.me.is_admin;
-  const list = await T('app_get_requests');
+  const [list, polls] = await Promise.all([
+    T('app_get_requests'),
+    T('app_get_polls')
+  ]);
 
   const statusChip = s => {
     if (s === 'done') return '<span class="chip ok">✅ انجام شد</span>';
@@ -1146,11 +1122,70 @@ async function viewRequests(el) {
       <button class="btn">ارسال پیام به گروه</button>
     </form>` : '';
 
+  const pollCreateForm = admin ? `
+    <form id="poll-create-form" class="card grid" style="gap:12px;margin-bottom:20px;border-color:var(--accent)">
+      <h2 style="margin:0">📊 ایجاد نظرسنجی</h2>
+      <label class="f">عنوان نظرسنجی
+        <input id="poll-title" maxlength="180" required placeholder="مثلاً انتخاب زمان نظافت راه‌پله">
+      </label>
+      <label class="f">توضیحات (اختیاری)
+        <textarea id="poll-description" rows="2" maxlength="1000"></textarea>
+      </label>
+      <label class="f">گزینه‌ها (هر گزینه در یک خط؛ حداقل ۲ گزینه)
+        <textarea id="poll-options" rows="4" required placeholder="شنبه&#10;یکشنبه&#10;دوشنبه"></textarea>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px"><input id="poll-active" type="checkbox" checked> بلافاصله فعال شود</label>
+      <button class="btn">ثبت نظرسنجی</button>
+    </form>` : '';
+
+  const pollCards = (polls || []).map(p => {
+    const options = (p.options || []).map(o => `
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)">
+        <span>${esc(o.text)}</span>
+        <strong style="white-space:nowrap">${fa(Number(o.votes || 0))} رأی · ${fa(Math.round(Number(o.percent || 0)))}٪</strong>
+      </div>`).join('');
+    const canVote = !admin && p.is_active && !p.my_vote;
+    const voteForm = canVote ? `
+      <form data-vote-form="${p.id}" style="margin-top:12px">
+        <div style="display:grid;gap:9px">
+          ${(p.options || []).map(o => `<label style="display:flex;align-items:center;gap:8px"><input type="radio" name="poll-option-${p.id}" value="${o.id}" required> ${esc(o.text)}</label>`).join('')}
+        </div>
+        <button class="btn sm" style="margin-top:12px">ثبت رأی نهایی</button>
+      </form>` : '';
+    const voteStatus = !admin && p.my_vote
+      ? '<p class="sub" style="margin:12px 0 0">✅ رأی شما ثبت شده است؛ امکان تغییر رأی وجود ندارد.</p>'
+      : (!admin && !p.is_active ? '<p class="sub" style="margin:12px 0 0">این نظرسنجی بسته شده است.</p>' : '');
+    const adminToggle = admin ? `
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ${p.is_active ? 'rd' : 'sf'} sm" data-poll-toggle="${p.id}" data-next="${p.is_active ? 'false' : 'true'}">
+          ${p.is_active ? 'غیرفعال‌کردن نظرسنجی' : 'فعال‌کردن نظرسنجی'}
+        </button>
+        <button class="btn rd sm" data-poll-delete="${p.id}">حذف کامل نظرسنجی</button>
+      </div>` : '';
+    return `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
+          <h2 style="margin:0">${esc(p.title)}</h2>
+          <span class="chip ${p.is_active ? 'ok' : 'ex'}">${p.is_active ? 'فعال' : 'غیرفعال'}</span>
+        </div>
+        ${p.description ? `<p class="sub" style="white-space:pre-wrap">${esc(p.description)}</p>` : ''}
+        <div style="margin-top:10px">${options}</div>
+        <p class="sub" style="font-size:12px;margin:10px 0 0">مجموع آرای ثبت‌شده: ${fa(Number(p.total_votes || 0))}</p>
+        ${voteForm}${voteStatus}
+        ${adminToggle ? `<div style="margin-top:14px">${adminToggle}</div>` : ''}
+      </div>`;
+  }).join('');
 
   el.innerHTML = `
     <h1>${admin ? 'درخواست‌ها و نظرسنجی‌ها' : 'ارتباط با مدیر'}</h1>
     <p class="sub">${admin ? 'درخواست‌های ساکنان، پاسخ‌گویی و مدیریت نظرسنجی‌ها' : 'ثبت درخواست، ارسال پیام عمومی و شرکت در نظرسنجی‌ها'}</p>
-    ${residentForm}<section style="margin-top:24px">
+    ${residentForm}
+    ${pollCreateForm}
+    <section style="margin:20px 0">
+      <h2 style="margin:0 0 12px">📊 ${admin ? 'نظرسنجی‌های ساختمان' : 'نظرسنجی‌های فعال'}</h2>
+      <div class="grid g2">${pollCards || '<div class="card sub">در حال حاضر نظرسنجی‌ای وجود ندارد.</div>'}</div>
+    </section>
+    <section style="margin-top:24px">
       <h2 style="margin:0 0 12px">${admin ? 'درخواست‌های ساکنان' : 'درخواست‌های ثبت‌شده من'}</h2>
       <div class="grid g2">
         ${(list || []).map(r => `
@@ -1210,6 +1245,58 @@ async function viewRequests(el) {
       }
     });
   } else {
+    $('#poll-create-form')?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const title = $('#poll-title').value.trim();
+      const description = $('#poll-description').value.trim();
+      const options = $('#poll-options').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      if (options.length < 2) { toast('حداقل دو گزینه وارد کنید', true); return; }
+      if (new Set(options).size !== options.length) { toast('گزینه‌های تکراری مجاز نیستند', true); return; }
+      try {
+        const isActive = $('#poll-active').checked;
+        await T('app_admin_create_poll', {
+          p_title: title,
+          p_description: description,
+          p_options: options,
+          p_is_active: isActive
+        });
+        if (isActive) {
+          const pollText = `📊 نظرسنجی جدید ساختمان\n\n${title}${description ? `\n${description}` : ''}\n\nگزینه‌ها:\n${options.map((x, i) => `${i + 1}) ${x}`).join('\n')}\n\nبرای ثبت رأی وارد برنامه مدیریت ساختمان شوید.`;
+          const sent = await notifyBale(pollText);
+        sendMobilePush('poll_created', 'نظرسنجی جدید: ' + title, description || options.join('، '));
+          toast(sent ? 'نظرسنجی ایجاد و در گروه بله اعلام شد' : 'نظرسنجی ایجاد شد؛ ارسال اعلان به بله ناموفق بود', !sent);
+        } else {
+          toast('نظرسنجی به‌صورت غیرفعال ایجاد شد');
+        }
+        go('requests');
+      } catch (err) { showErr(err); }
+    });
+
+    $$('[data-poll-toggle]').forEach(b => b.addEventListener('click', async () => {
+      try {
+        await T('app_admin_set_poll_active', {
+          p_poll_id: Number(b.dataset.pollToggle),
+          p_active: b.dataset.next === 'true'
+        });
+        toast('وضعیت نظرسنجی تغییر کرد');
+        go('requests');
+      } catch (err) { showErr(err); }
+    }));
+
+    $$('[data-poll-delete]').forEach(b => b.addEventListener('click', async () => {
+      const ok = confirm('این نظرسنجی، همه گزینه‌ها و تمام آرای آن برای همیشه حذف می‌شود و دیگر در صفحه هیچ‌کس نمایش داده نخواهد شد. ادامه می‌دهید؟');
+      if (!ok) return;
+      b.disabled = true;
+      try {
+        await T('app_admin_delete_poll', { p_poll_id: Number(b.dataset.pollDelete) });
+        toast('نظرسنجی به‌طور کامل حذف شد');
+        go('requests');
+      } catch (err) {
+        b.disabled = false;
+        showErr(err);
+      }
+    }));
+
     $$('[data-reply]').forEach(b => {
       b.addEventListener('click', () => {
         const req = (list || []).find(x => x.id == b.dataset.reply);
@@ -1218,8 +1305,42 @@ async function viewRequests(el) {
     });
   }
 
+  $$('[data-vote-form]').forEach(form => form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const pollId = Number(form.dataset.voteForm);
+    const selected = form.querySelector('input[type="radio"]:checked');
+    if (!selected) { toast('یک گزینه را انتخاب کنید', true); return; }
+    const submit = form.querySelector('button');
+    if (submit) submit.disabled = true;
+    try {
+      await T('app_vote_poll', { p_poll_id: pollId, p_option_id: Number(selected.value) });
+      let baleSent = false;
+      try {
+        const allPolls = await T('app_get_polls');
+        const current = (allPolls || []).find(p => Number(p.id) === pollId);
+        if (current) {
+          const lines = (current.options || []).map(o =>
+            `• ${o.text}: ${o.votes} رأی (${Number(o.percent || 0).toFixed(1)}٪)`
+          );
+          const resultsText = `📊 به‌روزرسانی نتیجه نظرسنجی\n${current.title}\n\n${lines.join('\n')}\n\nمجموع آرا: ${current.total_votes}`;
+          baleSent = await notifyBale(resultsText);
+        }
+      } catch (notifyErr) {
+        console.warn('Poll results notification failed:', notifyErr);
+      }
+      toast(
+        baleSent
+          ? 'رأی ثبت شد؛ نتیجه به‌روز در گروه بله ارسال شد'
+          : 'رأی شما ثبت شد؛ ارسال نتیجه به بله انجام نشد',
+        !baleSent
+      );
+      go('requests');
+    } catch (err) {
+      if (submit) submit.disabled = false;
+      showErr(err);
+    }
+  }));
 }
-
 function replyModal(r) {
   const m = modal(`
     <h2>پاسخ به درخواست واحد ${fa(r.unit_no || '—')}</h2>
