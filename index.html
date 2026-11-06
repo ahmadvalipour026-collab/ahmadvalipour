@@ -365,8 +365,11 @@ async function getPushServiceWorker() {
 }
 async function enableMobilePush() {
   if (!S.token) throw new Error('ابتدا وارد حساب شوید');
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') throw new Error('اجازه نمایش اعلان داده نشد');
+  if (!('Notification' in window)) throw new Error('مرورگر شما اعلان را پشتیبانی نمی‌کند');
+  const permission = Notification.permission === 'default'
+    ? await Notification.requestPermission()
+    : Notification.permission;
+  if (permission !== 'granted') throw new Error('اجازه نمایش اعلان داده نشد. می‌توانید از تنظیمات مرورگر آن را فعال کنید.');
   const registration = await getPushServiceWorker();
   let subscription = await registration.pushManager.getSubscription();
   if (!subscription) subscription = await registration.pushManager.subscribe({
@@ -378,6 +381,36 @@ async function enableMobilePush() {
     p_auth: json.keys?.auth, p_user_agent: navigator.userAgent
   });
   if (error) throw error;
+}
+function maybeAskForPushPermission() {
+  if (!S.token || !('Notification' in window) || Notification.permission !== 'default') return;
+  if (sessionStorage.getItem('bm_push_prompt_shown') === '1') return;
+  sessionStorage.setItem('bm_push_prompt_shown', '1');
+  const prompt = modal(`
+    <div style="text-align:center;padding:10px 4px">
+      <div style="font-size:38px;margin-bottom:8px">🔔</div>
+      <h2 style="margin:0 0 8px">فعال‌سازی اعلان‌های ساختمان</h2>
+      <p class="sub" style="line-height:1.9">برای دریافت اطلاعیه‌ها و پیام‌های مهم ساختمان، اجازه نمایش اعلان‌ها را صادر کنید.</p>
+      <button type="button" class="btn sf" id="allow-push-now" style="width:100%;margin-top:10px">اجازه می‌دهم</button>
+      <button type="button" class="btn lt" id="skip-push-now" style="width:100%;margin-top:8px">فعلاً نه</button>
+      <p id="push-prompt-status" class="sub" style="margin:8px 0 0"></p>
+    </div>`);
+  $('#skip-push-now', prompt)?.addEventListener('click', () => prompt.remove());
+  $('#allow-push-now', prompt)?.addEventListener('click', async e => {
+    const button = e.currentTarget;
+    const status = $('#push-prompt-status', prompt);
+    button.disabled = true;
+    button.textContent = 'در حال فعال‌سازی...';
+    try {
+      await enableMobilePush();
+      prompt.remove();
+      toast('اعلان‌های موبایلی فعال شد');
+    } catch (error) {
+      if (status) status.textContent = error.message || 'فعال‌سازی اعلان‌ها ناموفق بود';
+      button.disabled = false;
+      button.textContent = 'تلاش دوباره';
+    }
+  });
 }
 function sendMobilePush(event, title, body) {
   if (!S.token) return;
@@ -761,6 +794,7 @@ async function renderShell() {
   window.addEventListener('resize', debounce(renderShellHeaderState, 100));
   if ('serviceWorker' in navigator && window.isSecureContext) getPushServiceWorker().catch(err => console.warn('Service worker registration failed:', err));
   go(S.view);
+  setTimeout(maybeAskForPushPermission, 500);
 }
 
 function go(v, isBackNavigation = false) {
