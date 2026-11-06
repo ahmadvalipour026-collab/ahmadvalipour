@@ -760,7 +760,8 @@ async function renderShell() {
   $('#app').innerHTML = `
     <header class="top">
       <div class="top-in">
-        <button class="ic-btn avatar" id="who-btn" aria-label="حساب کاربری">${ICONS.profile.replace('<svg','<svg width="26" height="26"')}</button>
+        <button class="ic-btn avatar" id="who-btn" aria-label="رفتن به پروفایل" title="پروفایل">${ICONS.profile.replace('<svg','<svg width="26" height="26"')}</button>
+        <button class="ic-btn" id="who-menu-btn" aria-label="تنظیمات و تم" title="تنظیمات و تم"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
         <div class="appbar-title" id="appbar-title"></div>
         <button class="ic-btn" id="go-req" aria-label="پیام‌ها"><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"><path d="M8 12a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H20l-8 7v-7a4 4 0 0 1-4-4z"/><g fill="#fff" stroke="none"><circle cx="17" cy="20" r="2.4"/><circle cx="24" cy="20" r="2.4"/><circle cx="31" cy="20" r="2.4"/></g></svg></button>
         <button class="ic-btn logout-top" id="direct-logout" title="خروج از حساب">${ICONS.logout.replace('<svg','<svg width="22" height="22"')}</button>
@@ -790,7 +791,8 @@ async function renderShell() {
 
   $('#lo').addEventListener('click', () => logout());
   $('#direct-logout').addEventListener('click', () => logout());
-  $('#who-btn').addEventListener('click', e => { e.stopPropagation(); $('#who-pop').classList.toggle('show'); });
+  $('#who-btn').addEventListener('click', () => { $('#who-pop').classList.remove('show'); go('profile'); });
+  $('#who-menu-btn').addEventListener('click', e => { e.stopPropagation(); $('#who-pop').classList.toggle('show'); });
   document.addEventListener('click', e => { if (!e.target.closest('#who-pop')) $('#who-pop')?.classList.remove('show'); });
   
   $$('.theme-dot').forEach(d => d.addEventListener('click', () => setTheme(d.dataset.t)));
