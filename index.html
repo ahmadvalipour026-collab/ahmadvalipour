@@ -1396,7 +1396,7 @@ async function viewRequests(el) {
     });
   }
 
-  $('[data-vote-form]').forEach(form => form.addEventListener('submit', async e => {
+  $$('[data-vote-form]').forEach(form => form.addEventListener('submit', async e => {
     e.preventDefault();
     const pollId = Number(form.dataset.voteForm);
     const selected = form.querySelector('input[type="radio"]:checked');
