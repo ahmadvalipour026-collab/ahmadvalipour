@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "سامانه مدیریت ساختمان",
-  "short_name": "مدیریت ساختمان",
+  "name": "مجتمع نگین ۲ | مدیریت ساختمان",
+  "short_name": "نگین ۲",
   "lang": "fa",
   "dir": "rtl",
   "start_url": "/",
@@ -32,5 +32,6 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "description": "سامانه مدیریت مجتمع مسکونی نگین ۲"
 }
