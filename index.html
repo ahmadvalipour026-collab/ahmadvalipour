@@ -243,6 +243,7 @@ body{overflow-y:visible!important;overflow-x:hidden;overscroll-behavior-y:auto!i
 .dashboard-money-grid .bank-card b{font-size:12px!important}
 .dashboard-money-grid .bank-card .bc-row{margin-top:6px!important;font-size:14px;gap:6px}
 .dashboard-money-grid .bank-card .bc-amt{font-size:clamp(22px,5vw,28px);overflow-wrap:anywhere;line-height:1.5}
+.dashboard-money-grid > .bank-card:first-child .bc-amt{font-size:clamp(30px,5.8vw,36px)!important;overflow-wrap:anywhere;line-height:1.35}
 .dashboard-money-grid .bank-card .pill{font-size:10px;padding:4px 7px;border-radius:9px}
 .dashboard-money-grid .bank-card .eye{width:25px;height:25px;flex-shrink:0}
 .dashboard-detail-grid{grid-template-columns:minmax(0,1fr)}
@@ -259,6 +260,7 @@ body{overflow-y:visible!important;overflow-x:hidden;overscroll-behavior-y:auto!i
  .dashboard-money-grid .bank-card{padding:9px 6px;border-radius:11px}
  .dashboard-money-grid .bank-card b{font-size:10px!important}
  .dashboard-money-grid .bank-card .bc-amt{font-size:12px}
+ .dashboard-money-grid > .bank-card:first-child .bc-amt{font-size:clamp(28px,7vw,34px)!important;line-height:1.35}
  .dashboard-money-grid .bank-card .bc-row{font-size:9px}
  .dashboard-money-grid .bank-card .pill{font-size:9px;padding:3px 5px}
  .dashboard-units-grid{gap:5px!important}
@@ -349,6 +351,7 @@ window.addEventListener('appinstalled', () => {
 
 const PUSH_VAPID_PUBLIC_KEY = 'BG2kHbhNer7-oNifxU96_I8AcCmF0PJ-J7SVIeYd28Xo_iYVfG63Ue12kvtrAcM-UM3w8yoZRiphTjuzaG-Mt6I';
 let pushServiceWorkerRegistration = null;
+let pushPromptShown = false;
 function pushBase64UrlToBytes(value) {
   const padding = '='.repeat((4 - value.length % 4) % 4);
   const raw = atob((value + padding).replace(/-/g, '+').replace(/_/g, '/'));
@@ -383,18 +386,15 @@ async function enableMobilePush() {
   if (error) throw error;
 }
 function maybeAskForPushPermission() {
-  if (!S.token || !('Notification' in window) || Notification.permission !== 'default') return;
-  if (sessionStorage.getItem('bm_push_prompt_shown') === '1') return;
-  sessionStorage.setItem('bm_push_prompt_shown', '1');
-  const prompt = modal(`
-    <div style="text-align:center;padding:10px 4px">
-      <div style="font-size:38px;margin-bottom:8px">🔔</div>
-      <h2 style="margin:0 0 8px">فعال‌سازی اعلان‌های ساختمان</h2>
-      <p class="sub" style="line-height:1.9">برای دریافت اطلاعیه‌ها و پیام‌های مهم ساختمان، اجازه نمایش اعلان‌ها را صادر کنید.</p>
-      <button type="button" class="btn sf" id="allow-push-now" style="width:100%;margin-top:10px">اجازه می‌دهم</button>
-      <button type="button" class="btn lt" id="skip-push-now" style="width:100%;margin-top:8px">فعلاً نه</button>
-      <p id="push-prompt-status" class="sub" style="margin:8px 0 0"></p>
-    </div>`);
+  if (!S.token || !('Notification' in window) || Notification.permission === 'granted' || pushPromptShown) return;
+  pushPromptShown = true;
+  const permissionBlocked = Notification.permission === 'denied';
+  const message = permissionBlocked
+    ? 'دسترسی اعلان‌ها در تنظیمات مرورگر مسدود شده است. برای فعال‌سازی، مجوز اعلان این سایت را از تنظیمات مرورگر روی اجازه قرار دهید.'
+    : 'برای دریافت اطلاعیه‌ها و پیام‌های مهم ساختمان، اجازه نمایش اعلان‌ها را صادر کنید.';
+  const actionButton = permissionBlocked ? '' : '<button type="button" class="btn sf" id="allow-push-now" style="width:100%;margin-top:10px">اجازه می‌دهم</button>';
+  const closeLabel = permissionBlocked ? 'متوجه شدم' : 'فعلاً نه';
+  const prompt = modal('<div style="text-align:center;padding:10px 4px"><div style="font-size:38px;margin-bottom:8px">🔔</div><h2 style="margin:0 0 8px">فعال‌سازی اعلان‌های ساختمان</h2><p class="sub" style="line-height:1.9">' + message + '</p>' + actionButton + '<button type="button" class="btn lt" id="skip-push-now" style="width:100%;margin-top:8px">' + closeLabel + '</button><p id="push-prompt-status" class="sub" style="margin:8px 0 0"></p></div>');
   $('#skip-push-now', prompt)?.addEventListener('click', () => prompt.remove());
   $('#allow-push-now', prompt)?.addEventListener('click', async e => {
     const button = e.currentTarget;
