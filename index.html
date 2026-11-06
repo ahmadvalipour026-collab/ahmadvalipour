@@ -1156,10 +1156,9 @@ async function viewAnnouncements(el) {
 
 async function viewRequests(el) {
   const admin = !!S.me.is_admin;
-  const [list, polls, transferInfo] = await Promise.all([
+  const [list, polls] = await Promise.all([
     T('app_get_requests'),
-    T('app_get_polls'),
-    T('app_management_transfer_info')
+    T('app_get_polls')
   ]);
 
   const statusChip = s => {
@@ -1207,40 +1206,6 @@ async function viewRequests(el) {
       <button class="btn">ثبت نظرسنجی</button>
     </form>` : '';
 
-  const transferPanel = admin ? (() => {
-    const outgoing = transferInfo?.outgoing;
-    if (outgoing?.status === 'pending') return `
-      <div class="card" style="margin-bottom:20px;border-color:var(--accent)">
-        <h2 style="margin:0 0 8px">🔁 انتقال مدیریت</h2>
-        <p class="sub">درخواست انتقال برای ${esc(outgoing.target_name)} · واحد ${fa(outgoing.target_unit)} ارسال شده و منتظر پاسخ است. تا زمان پذیرش، اختیارات شما حفظ می‌شود.</p>
-        <button class="btn rd sm" id="transfer-cancel">لغو درخواست انتقال</button>
-      </div>`;
-    const statusText = outgoing ? ({accepted:'آخرین درخواست پذیرفته شد',rejected:'آخرین درخواست رد شد',cancelled:'آخرین درخواست لغو شد'}[outgoing.status] || '') : '';
-    return `
-      <div class="card" style="margin-bottom:20px;border-color:var(--accent)">
-        <h2 style="margin:0 0 8px">🔁 انتقال مدیریت</h2>
-        ${statusText ? `<p class="sub">${statusText}</p>` : ''}
-        <p class="sub">یکی از ساکنان فعال ساختمان را به‌عنوان مدیر بعدی انتخاب کنید. تا زمان پذیرش درخواست، مدیریت و تمام اختیارات شما باقی می‌ماند.</p>
-        <form id="transfer-create-form" class="grid" style="gap:10px">
-          <label class="f">انتخاب جانشین
-            <select id="transfer-target" required>
-              <option value="">انتخاب کنید</option>
-              ${(transferInfo?.candidates || []).map(a => `<option value="${a.id}">${esc(a.name)} · واحد ${fa(a.unit_no)}</option>`).join('')}
-            </select>
-          </label>
-          <button class="btn">ارسال درخواست انتقال</button>
-        </form>
-      </div>`;
-  })() : (transferInfo?.incoming ? `
-    <div class="card" style="margin-bottom:20px;border-color:var(--accent)">
-      <h2 style="margin:0 0 8px">🔔 درخواست پذیرش مدیریت ساختمان</h2>
-      <p class="sub">${esc(transferInfo.incoming.manager_name)} · مدیر فعلی، شما را برای انتقال مدیریت انتخاب کرده است. با پذیرش، نقش شما به مدیر ساختمان تغییر می‌کند و مدیر فعلی به ساکن تبدیل می‌شود.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn" data-transfer-respond="accept" data-transfer-id="${transferInfo.incoming.id}">پذیرش انتقال</button>
-        <button class="btn rd" data-transfer-respond="reject" data-transfer-id="${transferInfo.incoming.id}">رد درخواست</button>
-      </div>
-    </div>` : '');
-
   const pollCards = (polls || []).map(p => {
     const options = (p.options || []).map(o => `
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)">
@@ -1283,7 +1248,6 @@ async function viewRequests(el) {
     <h1>${admin ? 'درخواست‌ها و نظرسنجی‌ها' : 'ارتباط با مدیر'}</h1>
     <p class="sub">${admin ? 'درخواست‌های ساکنان، پاسخ‌گویی و مدیریت نظرسنجی‌ها' : 'ثبت درخواست، ارسال پیام عمومی و شرکت در نظرسنجی‌ها'}</p>
     ${residentForm}
-    ${transferPanel}
     ${pollCreateForm}
     <section style="margin:20px 0">
       <h2 style="margin:0 0 12px">📊 ${admin ? 'نظرسنجی‌های ساختمان' : 'نظرسنجی‌های فعال'}</h2>
@@ -1431,33 +1395,6 @@ async function viewRequests(el) {
       });
     });
   }
-
-  $('[data-transfer-respond]').forEach(b => b.addEventListener('click', async () => {
-    const accept = b.dataset.transferRespond === 'accept';
-    const message = accept
-      ? 'با پذیرش، مدیریت ساختمان به حساب شما منتقل و مدیر فعلی به نقش ساکن برمی‌گردد. ادامه می‌دهید؟'
-      : 'درخواست انتقال مدیریت رد شود؟';
-    if (!confirm(message)) return;
-    $('[data-transfer-respond]').forEach(x => x.disabled = true);
-    try {
-      await T('app_management_transfer_respond', {
-        p_request_id: Number(b.dataset.transferId),
-        p_accept: accept
-      });
-      if (accept) {
-        S.me = await T('app_me');
-        sessionStorage.setItem('bm_me', JSON.stringify(S.me));
-        toast('مدیریت ساختمان با موفقیت به شما منتقل شد');
-        renderShell();
-      } else {
-        toast('درخواست انتقال رد شد');
-        go('requests');
-      }
-    } catch (err) {
-      $('[data-transfer-respond]').forEach(x => x.disabled = false);
-      showErr(err);
-    }
-  }));
 
   $('[data-vote-form]').forEach(form => form.addEventListener('submit', async e => {
     e.preventDefault();
@@ -2078,6 +2015,103 @@ async function viewProfile(el) {
   const a = S.me;
   el.innerHTML = `${mustChangeBanner()}<h1>پروفایل</h1>
   <div class="card" style="margin:14px 0 18px;border-color:var(--accent)"><h2 style="margin:0 0 6px">🔔 اعلان‌های موبایلی</h2><p class="sub" style="margin:0 0 12px">با فعال‌کردن این گزینه، اعلان‌های مهم ساختمان حتی هنگام بسته‌بودن صفحه برنامه روی گوشی نمایش داده می‌شوند.</p><button type="button" class="btn sf" id="enable-push-btn">فعال‌سازی اعلان‌ها</button><p id="push-status" class="sub" style="margin:8px 0 0"></p></div><p class="sub">واحد ${fa(a.unit_no)} · ${esc(a.occupancy || '')}</p><form id="pf2" class="card grid g2" style="max-width:760px"><label class="f">نام<input id="p-n" value="${esc(a.full_name || '')}"></label><label class="f">شماره موبایل<input id="p-ph" dir="ltr" value="${esc(a.phone || '')}"></label><label class="f" style="grid-column:1/-1">ایمیل<input id="p-e" dir="ltr" type="email" value="${esc(a.email || '')}"></label><h2 style="grid-column:1/-1;margin:12px 0 0">نام کاربری و رمز</h2><label class="f">نام کاربری<input id="p-u" dir="ltr" value="${esc(a.username || '')}"></label><label class="f">رمز فعلی<input id="p-c" dir="ltr" type="password"></label><label class="f">رمز جدید<input id="p-np" dir="ltr" type="password"></label><label class="f">تکرار رمز<input id="p-np2" dir="ltr" type="password"></label><div style="grid-column:1/-1"><button class="btn sf">ذخیره</button></div></form>`;
+  if (a.is_admin) {
+    try {
+      const info = await T('app_management_transfer_info');
+      const outgoing = info?.outgoing;
+      const panel = document.createElement('section');
+      panel.id = 'manager-transfer-panel';
+      panel.style.margin = '14px 0 18px';
+      if (outgoing?.status === 'pending') {
+        panel.innerHTML = `<div class="card" style="border-color:var(--accent)">
+          <h2 style="margin:0 0 8px">🔁 تحویل مدیریت ساختمان</h2>
+          <p class="sub">درخواست انتقال برای ${esc(outgoing.target_name)} · واحد ${fa(outgoing.target_unit)} ارسال شده است. تا زمان پذیرش، اختیارات شما حفظ می‌شود.</p>
+          <button type="button" class="btn rd sm" id="profile-transfer-cancel">لغو درخواست انتقال</button>
+        </div>`;
+      } else {
+        const statusText = outgoing ? ({accepted:'آخرین درخواست پذیرفته شد',rejected:'آخرین درخواست رد شد',cancelled:'آخرین درخواست لغو شد'}[outgoing.status] || '') : '';
+        panel.innerHTML = `<div class="card" style="border-color:var(--accent)">
+          <h2 style="margin:0 0 8px">🔁 تحویل مدیریت ساختمان</h2>
+          ${statusText ? `<p class="sub">${statusText}</p>` : ''}
+          <p class="sub">یکی از ساکنان فعال ساختمان را به‌عنوان مدیر بعدی انتخاب کنید. تا زمان پذیرش درخواست، مدیریت و تمام اختیارات شما باقی می‌ماند.</p>
+          <form id="profile-transfer-create" class="grid" style="gap:10px">
+            <label class="f">انتخاب جانشین
+              <select id="profile-transfer-target" required>
+                <option value="">انتخاب کنید</option>
+                ${(info?.candidates || []).map(x => `<option value="${x.id}">${esc(x.name)} · واحد ${fa(x.unit_no)}</option>`).join('')}
+              </select>
+            </label>
+            <button class="btn" type="submit">ارسال درخواست انتقال</button>
+          </form>
+        </div>`;
+      }
+      const profileForm = $('#pf2');
+      profileForm?.parentNode?.insertBefore(panel, profileForm);
+      $('#profile-transfer-create')?.addEventListener('submit', async e => {
+        e.preventDefault();
+        const target = $('#profile-transfer-target')?.value;
+        if (!target) { toast('جانشین را انتخاب کنید', true); return; }
+        const submit = $('#profile-transfer-create button[type="submit"]');
+        if (submit) submit.disabled = true;
+        try {
+          await T('app_management_transfer_create', { p_target_account_id: target });
+          toast('درخواست انتقال برای جانشین ارسال شد');
+          viewProfile(el);
+        } catch (err) { if (submit) submit.disabled = false; showErr(err); }
+      });
+      $('#profile-transfer-cancel')?.addEventListener('click', async () => {
+        if (!confirm('درخواست انتقال مدیریت لغو شود؟')) return;
+        try {
+          await T('app_management_transfer_cancel');
+          toast('درخواست انتقال لغو شد');
+          viewProfile(el);
+        } catch (err) { showErr(err); }
+      });
+    } catch (err) {
+      const panel = document.createElement('div');
+      panel.className = 'card';
+      panel.style.margin = '14px 0';
+      panel.textContent = 'بخش تحویل مدیریت فعلاً بارگذاری نشد: ' + (err.message || 'خطای نامشخص');
+      $('#pf2')?.parentNode?.insertBefore(panel, $('#pf2'));
+    }
+  } else {
+    try {
+      const info = await T('app_management_transfer_info');
+      if (info?.incoming) {
+        const panel = document.createElement('section');
+        panel.style.margin = '14px 0 18px';
+        panel.innerHTML = `<div class="card" style="border-color:var(--accent)">
+          <h2 style="margin:0 0 8px">🔔 درخواست پذیرش مدیریت ساختمان</h2>
+          <p class="sub">${esc(info.incoming.manager_name)} · مدیر فعلی، شما را برای انتقال مدیریت انتخاب کرده است. با پذیرش، نقش شما به مدیر ساختمان تغییر می‌کند و مدیر فعلی به ساکن تبدیل می‌شود.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" class="btn" data-profile-transfer-respond="accept" data-transfer-id="${info.incoming.id}">پذیرش انتقال</button>
+            <button type="button" class="btn rd" data-profile-transfer-respond="reject" data-transfer-id="${info.incoming.id}">رد درخواست</button>
+          </div>
+        </div>`;
+        $('#pf2')?.parentNode?.insertBefore(panel, $('#pf2'));
+        $$('[data-profile-transfer-respond]', panel).forEach(btn => btn.addEventListener('click', async () => {
+          const accept = btn.dataset.profileTransferRespond === 'accept';
+          if (!confirm(accept ? 'با پذیرش، مدیریت ساختمان به حساب شما منتقل و مدیر فعلی به نقش ساکن برمی‌گردد. ادامه می‌دهید؟' : 'درخواست انتقال مدیریت رد شود؟')) return;
+          $$('[data-profile-transfer-respond]', panel).forEach(x => x.disabled = true);
+          try {
+            await T('app_management_transfer_respond', { p_request_id: Number(btn.dataset.transferId), p_accept: accept });
+            if (accept) {
+              S.me = await T('app_me');
+              sessionStorage.setItem('bm_me', JSON.stringify(S.me));
+              toast('مدیریت ساختمان با موفقیت به شما منتقل شد');
+              renderShell();
+            } else {
+              toast('درخواست انتقال رد شد');
+              viewProfile(el);
+            }
+          } catch (err) {
+            $$('[data-profile-transfer-respond]', panel).forEach(x => x.disabled = false);
+            showErr(err);
+          }
+        }));
+      }
+    } catch (err) { console.warn('Transfer info unavailable in profile:', err); }
+  }
   $('#enable-push-btn')?.addEventListener('click', async e => {
     const btn = e.currentTarget; const status = $('#push-status');
     btn.disabled = true; btn.textContent = 'در حال فعال‌سازی...';
