@@ -651,12 +651,19 @@ async function renderLogin() {
     </div>
   </div>`;
 
-  try {
-    const info = await api('app_public_info');
-    if (info?.building_name) { S.building = info.building_name; const el = $('#login-title'); if (el) el.textContent = S.building; }
-  } catch (e) {
-    if (e.message === 'NETWORK_ERROR') { const err = $('#lg-err'); if (err) err.textContent = 'اتصال به سرور برقرار نیست. اتصال اینترنت را بررسی کنید.'; }
-  }
+  // Load the optional building title in the background; never block login handlers on this request.
+  api('app_public_info').then(info => {
+    if (info?.building_name) {
+      S.building = info.building_name;
+      const title = $('#login-title');
+      if (title) title.textContent = S.building;
+    }
+  }).catch(e => {
+    if (e.message === 'NETWORK_ERROR') {
+      const err = $('#lg-err');
+      if (err) err.textContent = 'اتصال به سرور برقرار نیست. اتصال اینترنت را بررسی کنید.';
+    }
+  });
 
   $('#lg').addEventListener('submit', async e => {
     e.preventDefault();
