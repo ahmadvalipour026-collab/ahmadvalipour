@@ -758,7 +758,12 @@ async function renderShell() {
     showErr(e); return;
   }
 
-  try { S.avatarData = await T('app_profile_avatar_get'); } catch (avatarErr) { console.warn('Profile photo could not be loaded:', avatarErr); S.avatarData = null; }
+  // Load the optional profile image in the background; it must not delay the app shell.
+  S.avatarData = null;
+  const avatarRequest = T('app_profile_avatar_get').catch(avatarErr => {
+    console.warn('Profile photo could not be loaded:', avatarErr);
+    return null;
+  });
 
   const curTheme = localStorage.getItem('bm_theme') || 'default';
 
@@ -793,6 +798,13 @@ async function renderShell() {
         ${navItems().map(([k, l]) => `<button data-v="${k}">${LINE_ICONS[k] || ico(k)}<span>${esc(l)}</span></button>`).join('')}
       </div>
     </div></nav>`;
+
+  avatarRequest.then(data => {
+    if (!data) return;
+    S.avatarData = data;
+    const avatarButton = $('#who-btn');
+    if (avatarButton) avatarButton.innerHTML = `<img src="${esc(data)}" alt="عکس پروفایل" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  });
 
   $('#lo').addEventListener('click', () => logout());
   $('#direct-logout').addEventListener('click', () => logout());
@@ -1024,11 +1036,16 @@ function setupPaymentScrollAnimation(root, unitMap) {
 }
 
 async function viewDash(el) {
-  const rep = await T('app_report', { p_year: S.y, p_month: S.m });
-  const missing = rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">مبالغ شارژ/بازسازی برای این ماه‌ها تعریف نشده: ${rep.missing_rates.map(fa).join('، ')}</div>` : '';
+  const reportArgs = { p_year: S.y, p_month: S.m };
 
   if (!S.me.is_admin) {
-    const r = rep.rows[0]; const reqs = await T('app_get_payment_requests');
+    // The report and payment history are independent reads; run them together.
+    const [rep, reqs] = await Promise.all([
+      T('app_report', reportArgs),
+      T('app_get_payment_requests')
+    ]);
+    const missing = rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">مبالغ شارژ/بازسازی برای این ماه‌ها تعریف نشده: ${rep.missing_rates.map(fa).join('، ')}</div>` : '';
+    const r = rep.rows[0];
     el.innerHTML = `${mustChangeBanner()}
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:8px">
         <div><h1>سلام ${esc(S.me.full_name || ('واحد ' + fa(S.me.unit_no)))} 👋</h1><p class="sub" style="margin:0">صورتحساب ${rep.month_name} ${fa(rep.year)}</p></div>
@@ -1048,7 +1065,12 @@ async function viewDash(el) {
     return;
   }
 
-  const fund = await T('app_fund_summary', { p_year: S.y, p_month: S.m });
+  // Managers need both datasets; fetch them concurrently instead of serially.
+  const [rep, fund] = await Promise.all([
+    T('app_report', reportArgs),
+    T('app_fund_summary', reportArgs)
+  ]);
+  const missing = rep.missing_rates?.length ? `<div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:20px">مبالغ شارژ/بازسازی برای این ماه‌ها تعریف نشده: ${rep.missing_rates.map(fa).join('، ')}</div>` : '';
   const rows = rep.rows || [];
   const unitMap = {};
   rows.forEach(r => {
